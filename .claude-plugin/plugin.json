@@ -1,0 +1,12 @@
+{
+  "name": "no-short",
+  "version": "0.1.0",
+  "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
+  "author": {
+    "name": "Long",
+    "url": "https://github.com/longlonglong173"
+  },
+  "homepage": "https://github.com/longlonglong173/no-short",
+  "repository": "https://github.com/longlonglong173/no-short"
+}
+

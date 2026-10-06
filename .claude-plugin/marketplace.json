@@ -1,0 +1,16 @@
+{
+  "name": "no-short",
+  "description": "Reusable skills for Codex, Claude Code, and other AI agents.",
+  "owner": {
+    "name": "Long"
+  },
+  "plugins": [
+    {
+      "name": "no-short",
+      "source": "./",
+      "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
+      "version": "0.1.0"
+    }
+  ]
+}
+
