@@ -2,7 +2,7 @@
 
 A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.
 
-`no-short` is a multi-skill repository and installable plugin. Its first skill, `no-ai-slop`, edits drafts without flattening the writer's voice and can audit drafts for named AI-writing patterns.
+`no-short` is a multi-skill repository and installable plugin. It currently includes writing cleanup and evidence-based personal work reporting workflows.
 
 ## Project status
 
@@ -11,12 +11,14 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 - Skills CLI-compatible `skills/` layout
 - Dependency-free local validation and GitHub Actions validation
 - `no-ai-slop` skill with edit and detection modes
+- `personal-work-report` skill for evidence-based reports from Jira, GitHub, and Slack
 
 ## Available skills
 
 | Skill | Purpose |
 | --- | --- |
 | [`no-ai-slop`](skills/no-ai-slop/SKILL.md) | Edit writing into clearer, more human prose while preserving personal voice, or flag specific AI-slop patterns without guessing authorship. |
+| [`personal-work-report`](skills/personal-work-report/SKILL.md) | Build personal standup, weekly, sprint, monthly, or custom-period reports from verified Jira, GitHub, and Slack activity. |
 
 ## Repository layout
 
@@ -53,6 +55,7 @@ Install one skill for selected agents:
 
 ```bash
 npx skills add longlonglong173/no-short --skill no-ai-slop --agent codex claude-code
+npx skills add longlonglong173/no-short --skill personal-work-report --agent codex claude-code
 ```
 
 ### Claude Code plugin
@@ -96,7 +99,7 @@ The local validator checks manifest consistency, marketplace wiring, and every d
 
 ## Distribution roadmap
 
-1. Test `no-ai-slop` from clean Skills CLI, Claude Code, and Codex installations.
+1. Test each published skill from clean Skills CLI, Claude Code, and Codex installations.
 2. Add release notes and choose a license before the first public release.
 3. Add more focused skills based on real workflows and observed gaps.
 4. Consider submission to the public OpenAI plugin directory after the collection has tested skills and complete listing metadata.

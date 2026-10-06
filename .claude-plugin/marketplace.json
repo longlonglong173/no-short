@@ -9,7 +9,7 @@
       "name": "no-short",
       "source": "./",
       "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
-      "version": "0.2.0"
+      "version": "0.3.0"
     }
   ]
 }
