@@ -29,6 +29,7 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 ├── .claude-plugin/
 │   ├── plugin.json                    Claude Code plugin manifest
 │   └── marketplace.json               Claude Code marketplace catalog
+├── assets/long-mini.png               Plugin logo and composer icon
 ├── skills/                            One folder per reusable skill
 └── scripts/validate.mjs               Repository validation
 ```
