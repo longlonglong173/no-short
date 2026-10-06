@@ -2,7 +2,7 @@
 
 A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.
 
-`no-short` is being prepared as a multi-skill repository and an installable plugin. The repository currently contains the packaging and validation foundation; the first public skill has not been selected yet.
+`no-short` is a multi-skill repository and installable plugin. Its first skill, `no-ai-slop`, edits drafts without flattening the writer's voice and can audit drafts for named AI-writing patterns.
 
 ## Project status
 
@@ -10,7 +10,13 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 - Claude Code plugin and marketplace metadata
 - Skills CLI-compatible `skills/` layout
 - Dependency-free local validation and GitHub Actions validation
-- No public skill yet
+- `no-ai-slop` skill with edit and detection modes
+
+## Available skills
+
+| Skill | Purpose |
+| --- | --- |
+| [`no-ai-slop`](skills/no-ai-slop/SKILL.md) | Edit writing into clearer, more human prose while preserving personal voice, or flag specific AI-slop patterns without guessing authorship. |
 
 ## Repository layout
 
@@ -29,8 +35,6 @@ Each skill will live at `skills/<skill-name>/SKILL.md`. Supporting files may be 
 
 ## Install
 
-The commands below become useful after the first skill is published.
-
 ### Skills CLI
 
 List the skills available in the repository:
@@ -48,7 +52,7 @@ npx skills add longlonglong173/no-short --all
 Install one skill for selected agents:
 
 ```bash
-npx skills add longlonglong173/no-short --skill <skill-name> --agent codex claude-code
+npx skills add longlonglong173/no-short --skill no-ai-slop --agent codex claude-code
 ```
 
 ### Claude Code plugin
@@ -92,12 +96,11 @@ The local validator checks manifest consistency, marketplace wiring, and every d
 
 ## Distribution roadmap
 
-1. Publish the first useful skill through this GitHub repository and Skills CLI.
-2. Test the GitHub-hosted marketplace with Claude Code and Codex.
-3. Add release notes and choose a license before the first public release.
-4. Consider submission to the public OpenAI plugin directory after the collection has a clear purpose, tested skills, and complete listing metadata.
+1. Test `no-ai-slop` from clean Skills CLI, Claude Code, and Codex installations.
+2. Add release notes and choose a license before the first public release.
+3. Add more focused skills based on real workflows and observed gaps.
+4. Consider submission to the public OpenAI plugin directory after the collection has tested skills and complete listing metadata.
 
 ## Security
 
 Review a skill and its bundled scripts before installing it. Skills can guide an agent to read files, run commands, or use connected tools with the same permissions granted to that agent.
-
