@@ -1,33 +1,29 @@
-# Edit self-check
+# Final edit check
 
-Use this checklist after editing and before returning the draft. Do not include the checklist or its answers in the response.
+Use this privately after an edit.
 
-## Meaning and voice
+## Fidelity
 
-- The core point, intended audience, and requested outcome are clear.
-- No claim, example, statistic, source, or opinion was invented.
-- The edited draft still preserves the writer's vocabulary, cadence, bluntness, humor, uncertainty, or useful digressions.
-- Strong or distinctive lines were left alone unless they were unclear or incorrect.
-- Any structural reorganization was necessary and will be mentioned under **What changed**.
+- The draft still makes the same central point for the same audience.
+- No fact, quote, source, number, motivation, or result was invented.
+- The writer's original confidence, uncertainty, humour, and roughness remain where they carry personality.
+- Any restructuring has a clear reading benefit and can be explained plainly.
 
-## Clarity and specificity
+## Readability
 
-- The opening reaches the point without generic throat-clearing.
-- Abstract claims were replaced with concrete facts only when those facts existed in the draft.
-- Weak verb phrases, tangled sentences, repetition, and empty qualifiers were removed without flattening the rhythm.
-- Sources are named for attributed claims; unsupported attribution was removed or left for clarification.
+- The opening reaches a meaningful point without ceremonial setup.
+- General language was made more precise only with details already present in the draft.
+- Subjects and verbs make responsibility clear where that matters.
+- Repetition and tangled sentences were reduced without creating a sterile, uniform rhythm.
 
-## Pattern scan
+## Pattern review
 
-- No banned word or empty stock phrase remains.
-- No binary contrast, negative list, faux-insight setup, or rhetorical setup remains.
-- No dramatic colon reveal, superficial `-ing` analysis, importance puffery, or fake-strong verb remains.
-- No synonym cycling, repeated robotic structure, stacked fragments, or decorative em-dash cluster remains.
-- The ending does not recap the whole piece or force a profound final line.
-- Formatting follows the content and does not decorate it with unnecessary emoji, emphasis, headings, or bullets.
+- Unsupported consensus, expert, and study claims were removed, sourced, or left for clarification.
+- False contrasts, dramatic reveals, inflated importance, and empty conclusions are gone where they added no meaning.
+- Headings, bullets, emphasis, and punctuation help the reader instead of decorating the page.
+- The ending lands on a concrete point or action instead of summarising the entire draft.
 
-## Output
+## Response
 
-- The response contains the full edited draft.
-- The response ends with a short **What changed** section grounded in the edits actually made.
-
+- The complete edited draft appears before **What changed**.
+- **What changed** names only changes actually made.

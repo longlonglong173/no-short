@@ -1,6 +1,6 @@
 {
   "name": "no-short",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "private": true,
   "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
   "type": "module",
