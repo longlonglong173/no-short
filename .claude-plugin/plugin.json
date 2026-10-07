@@ -1,7 +1,7 @@
 {
   "name": "no-short",
-  "version": "0.3.1",
-  "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
+  "version": "0.3.3",
+  "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
   "author": {
     "name": "Long",
     "url": "https://github.com/longlonglong173"

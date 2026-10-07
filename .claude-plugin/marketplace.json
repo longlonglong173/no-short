@@ -1,6 +1,6 @@
 {
   "name": "no-short",
-  "description": "Reusable skills for Codex, Claude Code, and other AI agents.",
+  "description": "Human-first skills for writing cleanup and evidence-based work reports.",
   "owner": {
     "name": "Long"
   },
@@ -8,8 +8,8 @@
     {
       "name": "no-short",
       "source": "./",
-      "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
-      "version": "0.3.1"
+      "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
+      "version": "0.3.3"
     }
   ]
 }

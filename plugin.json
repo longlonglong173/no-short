@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "no-short",
-  "version": "0.3.1",
-  "description": "A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.",
+  "version": "0.3.3",
+  "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
   "author": {
     "name": "Long",
     "url": "https://github.com/longlonglong173"
@@ -18,11 +18,13 @@
     "com.openai": {
       "interface": {
         "displayName": "No Short",
-        "shortDescription": "Reusable skills for AI coding agents.",
-        "longDescription": "A growing collection of reusable skills for Codex, Claude Code, and other compatible AI agents.",
+        "shortDescription": "Human-first agent skills",
+        "longDescription": "Reusable skills for writing cleanup and evidence-based personal work reports. Skills provide guidance and do not replace review of source material or output.",
         "developerName": "Long",
         "category": "Productivity",
         "websiteURL": "https://github.com/longlonglong173/no-short",
+        "supportURL": "https://github.com/longlonglong173/no-short/issues",
+        "privacyPolicyURL": "https://github.com/longlonglong173/no-short/blob/main/PRIVACY.md",
         "composerIcon": "./assets/long-mini.png",
         "logo": "./assets/long-mini.png"
       }
