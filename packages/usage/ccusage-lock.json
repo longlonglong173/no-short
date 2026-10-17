@@ -1,0 +1,13 @@
+{
+  "version": "20.0.34",
+  "platforms": {
+    "darwin-arm64": {
+      "url": "https://registry.npmjs.org/@ccusage/ccusage-darwin-arm64/-/ccusage-darwin-arm64-20.0.34.tgz",
+      "integrity": "sha512-5nxESxlJXpGwNDmQied945d+lSxgTr9X32Jc+acOhyEE7EsRoZGQlgoHJc17CTdow1rVxWHOC2VqEJ1QeRZtMA=="
+    },
+    "darwin-x64": {
+      "url": "https://registry.npmjs.org/@ccusage/ccusage-darwin-x64/-/ccusage-darwin-x64-20.0.34.tgz",
+      "integrity": "sha512-+p9HnxpUF8/IfjwRmBeXQN3zbFUtyAuVhPOXZ5OEA4moKd5/zukQEzeoZ6JjdxBaF+8PtUcDgXt+r7+kTmD3Jw=="
+    }
+  }
+}

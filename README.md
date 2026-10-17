@@ -2,7 +2,9 @@
 
 A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.
 
-`no-short` is a multi-skill repository and installable plugin. It currently includes writing cleanup and evidence-based personal work reporting workflows.
+`no-short` is a multi-skill repository and installable plugin. It includes writing cleanup, evidence-based personal work reports, and **No Short Usage**, a local Codex usage panel for macOS Desktop.
+
+No Short Usage estimates API-equivalent costs using ccusage 20.0.34. These are not ChatGPT bills or credit deductions. Install the complete plugin to use the panel; no separate app, DMG, Node/Bun installation or API key is required. See [installation, development and verification](docs/no-short-usage.md). Source-only runtime downloads require a matching published release; local packages can be tested without publishing.
 
 ## Project status
 
@@ -12,6 +14,12 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 - Dependency-free local validation and GitHub Actions validation
 - `no-ai-slop` skill with edit and detection modes
 - `personal-work-report` skill for evidence-based reports from Jira, GitHub, and Slack
+- Local MCP server and conversation panel for Codex usage on macOS 14+ (Apple Silicon and Intel build targets)
+- Pinned native runtime, checksum-verified launcher and browser/protocol tests
+
+## macOS menu bar app
+
+An optional native **No Short Usage.app** keeps local Codex usage visible on the menu bar when the conversation panel is closed. It bundles its runtime, shows API-equivalent USD estimates, and offers an opt-in login item. See [installation, build commands and verification limits](docs/no-short-usage-menubar.md). The companion is a separate local artifact; installing the plugin does not install the app.
 
 ## Available skills
 
@@ -31,6 +39,8 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 │   └── marketplace.json               Claude Code marketplace catalog
 ├── assets/long-mini.png               Plugin logo and composer icon
 ├── skills/                            One folder per reusable skill
+├── mcp.json                           macOS local usage server
+├── packages/usage/                    Usage engine, MCP server, React panel and release scripts
 └── scripts/validate.mjs               Repository validation
 ```
 
@@ -77,6 +87,8 @@ codex plugin marketplace add longlonglong173/no-short
 ```
 
 Then open the plugin browser in Codex, select the **No Short** marketplace, and install **no-short**. Start a new chat after installation.
+
+For No Short Usage, use the complete local/release plugin package and open its conversation panel in a local Desktop chat. Installing only skills does not install its runtime. See [No Short Usage](docs/no-short-usage.md) for the no-DMG installation flow and release prerequisites.
 
 ## Add a skill
 

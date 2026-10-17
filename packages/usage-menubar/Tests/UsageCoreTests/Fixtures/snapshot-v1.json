@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1, "source": "ccusage", "ccusageVersion": "20.0.34",
+  "generatedAt": "2026-10-18T05:00:00.000Z", "timeZone": "Asia/Ho_Chi_Minh", "status": "ready", "pricingSource": "cached",
+  "today": {"tokens":{"input":1200,"output":80,"cacheRead":800,"cacheWrite":0,"total":2080},"cost":{"amountUSD":2.35,"knownCostUSD":2.35,"status":"estimated"},"models":[]},
+  "month": {"tokens":{"input":1200,"output":80,"cacheRead":800,"cacheWrite":0,"total":2080},"cost":{"amountUSD":2.35,"knownCostUSD":2.35,"status":"estimated"},"models":[]},
+  "sessions": [
+    {"id":"child","title":"Child","kind":"subagent","lastActivity":"2026-10-18T05:00:00.000Z","tokens":{"input":1,"output":1,"cacheRead":0,"cacheWrite":0,"total":2},"cost":{"amountUSD":0.1,"knownCostUSD":0.1,"status":"estimated"},"models":[]},
+    {"id":"unknown","title":"Unknown","kind":"unknown","lastActivity":null,"tokens":{"input":1,"output":1,"cacheRead":0,"cacheWrite":0,"total":2},"cost":{"amountUSD":0.1,"knownCostUSD":0.1,"status":"estimated"},"models":[]},
+    {"id":"main","title":"Phiên chính 🪷","kind":"main","lastActivity":null,"tokens":{"input":1200,"output":80,"cacheRead":800,"cacheWrite":0,"total":2080},"cost":{"amountUSD":2.35,"knownCostUSD":2.35,"status":"estimated"},"models":[]}
+  ], "chart": []
+}

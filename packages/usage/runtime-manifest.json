@@ -1,0 +1,22 @@
+{
+  "version": "0.4.1",
+  "ccusageVersion": "20.0.34",
+  "platforms": {
+    "darwin-arm64": {
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.4.1/no-short-usage-darwin-arm64.tar.gz",
+      "sha256": "579164f8ad5fc709f40e941fffd79ad7a0b45d72873d77e0dffb1ebc7596c199",
+      "binaries": {
+        "no-short-usage": "50f6ee71a01d10ad5733b08b38cdb10dc83ea9e0833f84c1feb4f1c5dc53cdab",
+        "ccusage": "09f0591a1ba17267373e6490caa838c748224199b4bc196ea79de4ae9a287c90"
+      }
+    },
+    "darwin-x64": {
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.4.1/no-short-usage-darwin-x64.tar.gz",
+      "sha256": "9923e8b203e55488c6abc1cf2433cd6bfc8d93b9787538c84802282a70c3c945",
+      "binaries": {
+        "no-short-usage": "1684bba4225637215de16cf37ca62482834ff561d1081e59039976e245dc379f",
+        "ccusage": "5227130f9194d69d3fa5beafa7dfc6e8ae7ef92e5ed089e1d75ab62ae07a9885"
+      }
+    }
+  }
+}
