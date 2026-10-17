@@ -69,3 +69,13 @@ Setting `NO_SHORT_SIGN_IDENTITY` requests Developer ID signing. It must refer to
 | GitHub CI / published release | Workflow added; no remote run, push or release performed |
 
 The tests use synthetic usage fixtures. Local logs/session names are not committed or included in screenshots in this document. See [Usage privacy and runtime details](no-short-usage.md).
+
+## Implementation decisions
+
+- Work remained on the existing feature checkout to preserve the uncommitted Usage foundation. Only new feature files and isolated root-file hunks were committed. That foundation must be included before publishing a complete source release.
+- The Unicode source-path process test compares the returned environment value as a Swift string, avoiding shell byte comparisons between canonically equivalent Unicode forms; this makes no product behavior change.
+- Folder names containing commas are rejected by the single-folder picker because the engine interprets commas as root separators. Other valid paths, including spaces and Unicode, are preserved.
+- Runtime provenance records both original and packaged hashes because signing changes executable bytes. Verification checks the source manifest, packaged hashes and the app's signature seal.
+- A separate macOS CI job avoids folding pre-existing uncommitted workflow edits into the feature commit. In the current full workflow, this duplicates the existing runtime build.
+- Integration stays local; no merge, push, public release, automatic installation or automatic login registration was performed.
+- Visual menu acceptance, live login registration/sleep and the other environments listed above remain explicitly unverified. These limits do not replace the recorded unit/process/build checks.
