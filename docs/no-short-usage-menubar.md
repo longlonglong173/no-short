@@ -104,3 +104,21 @@ After linking SwiftUI/Charts, cold launching the test worker can exceed 300 ms. 
 ## Footer alignment refinement on 2026-10-18
 
 The sessions, refresh and settings controls now share a 34-point height and an explicit high-contrast enabled style. Disabled refresh remains visually distinct while loading. The settings glyph is centered independently of the native borderless menu's reserved indicator space; its overlay does not intercept clicks. Normal panel height is slightly reduced to tighten the gap above source information. The panel resizes while open if a warning or unpriced-day note appears, preserving complete warning text and the footer. Existing native render checks cover light/dark, sessions and the combined warning/partial-price case.
+# Codex + Claude Code and automatic following (2026-10-18)
+
+The native companion now explicitly enables Codex and Claude Code. The MCP panel remains Codex-only unless its service is explicitly configured with `NO_SHORT_USAGE_CLAUDE_ROOTS`; existing consumers retain schema-v1 compatibility.
+
+- Choose **Tất cả / Codex / Claude Code**. All shows today's combined API estimate and a per-tool split; tool views show session tokens plus their own daily/monthly aggregates and chart. The filter and explicit session pin survive reopening.
+- **Tự theo dõi chat vừa gửi tin nhắn** follows the newest submitted session. Selecting a session pins it. New sessions with no token records show `—` and wait for usage, never another session's cost. `SessionStart` and other sessions' Stop events do not steal selection. Known turn IDs prevent old-turn completion from ending a newer turn.
+- Hooks store only provider, session ID, optional turn ID, event type and timestamp in `~/Library/Application Support/no-short/usage/activity`, with directory mode 0700 and record mode 0600. Prompt, response, cwd and transcript path are discarded. Keep at most approximately 512 records, and consume only records from the last 24 hours. Explicit subagent IDs/paths/events are ignored.
+- A native activity-directory watcher and one-second reconciliation deliver events; recursive FSEvents on log roots coalesce cost refreshes over two seconds. The existing 15-second report timer remains a fallback. Native report cache freshness is one second; process single-flight, cancellation, sleep/wake and last-good data behavior remain in place.
+- Cost estimates still depend on log writes and available prices. Activity is informational; it is not proof of a billable request or exact monetary streaming. Claude can issue `UserPromptSubmit` for automatic main-session activity without an origin field, so perfect human-only detection is not guaranteed. Claude Stop events without turn IDs cannot provide the stronger same-turn correlation that Codex turn IDs allow.
+
+## Hook connection
+
+Settings → **Kết nối tự theo dõi chat…** merges owned command hooks into Codex `hooks.json` and Claude Code `settings.json`, preserving other settings. A `.no-short-backup` copy is made before the first change to an existing file. **Gỡ hooks theo dõi chat** removes only Usage handlers. It does not change Codex trust state. Configurations use the host's `CODEX_HOME` / `CLAUDE_CONFIG_DIR`, defaulting to `~/.codex` / `~/.claude`; selecting archived log roots separately does not redirect host settings.
+
+After connecting, review/trust the new Codex definitions through `/hooks`; restart/reopen Claude Code so its hooks are loaded. Installation alone does not establish that hooks have run. Do not use hook-trust bypass flags. The bundled app also supports `--install-usage-hooks` and `--remove-usage-hooks` for the same configuration operations. Hooks are local executable commands with a two-second host timeout, silent successful exit on invalid event/write failure, and no model calls.
+
+Claude log detection combines valid `~/.config/claude/projects` and `~/.claude/projects` roots, or a configured custom root. A missing Claude installation remains an empty provider and does not prevent Codex reports. Settings allow independent Codex and Claude log directories. Unknown or partial pricing remains visible as unknown or a known lower bound.
+

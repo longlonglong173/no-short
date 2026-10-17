@@ -6,6 +6,7 @@ import { buildSnapshot } from '../src/adapter';
 import { createReportEnvironment, runReport } from '../src/runner';
 import * as metadata from '../src/metadata';
 import raw from './fixtures/unified.json';
+import { createUsageService } from '../src/service';
 
 const dirs: string[] = [];
 const temp = async () => { const d = await mkdtemp(join(tmpdir(), 'usage-providers-')); dirs.push(d); return d; };
@@ -65,3 +66,11 @@ test('pinned native CLI reads controlled Claude logs alongside Codex without dou
   expect(snapshot.sessions[0].sessionKey).toBe('22222222-2222-4222-8222-222222222222');
   expect(snapshot.sessions[0].tokens).toEqual({ input: 100, output: 10, cacheRead: 50, cacheWrite: 20, total: 180 });
 }, 15_000);
+
+test('an absent Claude installation leaves Codex readable and reports an empty Claude breakdown', async () => {
+  const root = await temp(); await mkdir(join(root, 'codex/sessions'), { recursive: true });
+  const binary = new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
+  const snapshot = await createUsageService({ binary, roots:[join(root, 'codex')], claudeRoots:[join(root,'not-installed')], cacheDir:join(root,'cache'), timeZone:'UTC' }).get();
+  expect(snapshot.status).toBe('empty');
+  expect(snapshot.providerBreakdowns?.find(p => p.provider === 'claude')?.today.cost.amountUSD).toBe(0);
+});

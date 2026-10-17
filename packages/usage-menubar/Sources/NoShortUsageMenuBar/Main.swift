@@ -5,6 +5,18 @@ import Darwin
 @main @MainActor struct Main {
     static func main() {
         let args = CommandLine.arguments
+        if args.contains("--install-usage-hooks") || args.contains("--remove-usage-hooks") {
+            let executable = URL(fileURLWithPath:CommandLine.arguments[0]).standardizedFileURL
+            let installer = HookInstaller(executable:executable)
+            do {
+                for (config,provider) in HookInstaller.configurationFiles() {
+                    if args.contains("--remove-usage-hooks") { try installer.remove(at:config) }
+                    else { try installer.install(at:config,provider:provider) }
+                }
+                print("No Short Usage: hooks configured. Codex requires review/trust in /hooks; reopen Claude Code to load changes.")
+            } catch { fputs("No Short Usage: hook configuration failed; existing settings were preserved.\n",stderr); exit(1) }
+            return
+        }
         if args.count == 3 && args[1] == "--no-short-usage-hook" {
             // Never write hook output: both hosts may inject stdout into model context.
             if let provider = UsageProvider(rawValue:args[2]) {

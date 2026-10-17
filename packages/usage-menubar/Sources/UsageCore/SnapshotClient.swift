@@ -63,6 +63,9 @@ private final class SnapshotRun: @unchecked Sendable {
             self.process.arguments = ["--snapshot-worker", self.client.helperURL.path]
             var environment = ProcessInfo.processInfo.environment
             environment["CODEX_HOME"] = self.source.rootsEnvironment
+            if let roots = self.source.claudeRootsEnvironment { environment["NO_SHORT_USAGE_CLAUDE_ROOTS"] = roots }
+            else { environment.removeValue(forKey:"NO_SHORT_USAGE_CLAUDE_ROOTS") }
+            environment["NO_SHORT_USAGE_FRESH_MS"] = "1000"
             self.process.environment = environment
             self.process.standardOutput = self.output; self.process.standardError = self.errors
             self.process.standardInput = FileHandle.nullDevice

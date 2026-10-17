@@ -16,6 +16,19 @@ struct DailyCostPoint: Identifiable {
     @Published private(set) var notice: String?
     @Published private(set) var loginState: LoginItemState = .notRegistered
     @Published private(set) var selectedSessionID: String?
+    @Published private(set) var providerFilter = "codex"
+    @Published private(set) var followedActivity: SessionActivity?
+    @Published var connectionNotice: String?
+    private let defaults: UserDefaults?
+    private var activities: [SessionActivity] = []
+    private var activityNow = Date()
+    private var lastSubmissionAt = Date.distantPast
+    init(defaults: UserDefaults? = nil) {
+        self.defaults = defaults
+        let filter = defaults?.string(forKey:"usageProviderFilter") ?? "codex"
+        providerFilter = ["all","codex","claude"].contains(filter) ? filter : "codex"
+        selectedSessionID = defaults?.string(forKey:"usagePinnedSession")
+    }
     @Published var showsSessions = false
     @Published var search = ""
     var onSelectionChange: (() -> Void)?
@@ -25,44 +38,94 @@ struct DailyCostPoint: Identifiable {
     var onToggleLogin: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onQuit: (() -> Void)?
+    var onChooseClaudeSource: (() -> Void)?
+    var onResetClaudeSource: (() -> Void)?
+    var onInstallHooks: (() -> Void)?
+    var onRemoveHooks: (() -> Void)?
 
     func update(snapshot: UsageSnapshot?, source: String, isLoading: Bool, isStale: Bool, notice: String?, loginState: LoginItemState) {
-        if self.source != source { selectedSessionID = nil; search = "" }
+        if !self.source.isEmpty && self.source != source { selectedSessionID = nil; followedActivity = nil; search = ""; defaults?.removeObject(forKey:"usagePinnedSession") }
         self.snapshot = snapshot; self.source = source
         self.isLoading = isLoading; self.isStale = isStale; self.notice = notice; self.loginState = loginState
     }
     func chooseSession(_ id: String?) {
-        selectedSessionID = id; showsSessions = false; search = ""; onSelectionChange?()
+        if let id, let session = snapshot?.sessions.first(where: { $0.id == id }) { providerFilter = session.usageProvider.rawValue }
+        selectedSessionID = id
+        if id == nil, let followedActivity { providerFilter = followedActivity.provider.rawValue }
+        persist(); showsSessions = false; search = ""; onSelectionChange?()
     }
+    func setProviderFilter(_ filter:String) {
+        guard ["all","codex","claude"].contains(filter) else { return }
+        providerFilter = filter; selectedSessionID = nil; persist(); onSelectionChange?()
+    }
+    private func persist() {
+        defaults?.set(providerFilter,forKey:"usageProviderFilter")
+        if let selectedSessionID { defaults?.set(selectedSessionID,forKey:"usagePinnedSession") }
+        else { defaults?.removeObject(forKey:"usagePinnedSession") }
+    }
+    func applyActivities(_ values:[SessionActivity],now:Date = Date()) {
+        activityNow = now
+        activities = values.filter { now.timeIntervalSince($0.recordedAt) >= -5 && now.timeIntervalSince($0.recordedAt) <= 86_400 }
+        let newest = activities.filter { $0.event == .submitted }.max { $0.recordedAt < $1.recordedAt }
+        if let newest, newest.recordedAt > lastSubmissionAt {
+            lastSubmissionAt = newest.recordedAt; followedActivity = newest
+            if selectedSessionID == nil { providerFilter = newest.provider.rawValue; persist() }
+        }
+        if let followedActivity, now.timeIntervalSince(followedActivity.recordedAt) > 86_400 { self.followedActivity = nil }
+    }
+    private var visibleSessions:[SessionUsage] { (snapshot?.sessions ?? []).filter { providerFilter == "all" || $0.usageProvider.rawValue == providerFilter } }
     var selectedSession: SessionUsage? {
         guard let snapshot else { return nil }
         if let selectedSessionID { return snapshot.sessions.first { $0.id == selectedSessionID } }
-        return snapshot.latestSession
+        if providerFilter == "all" { return nil }
+        if let followedActivity, followedActivity.provider.rawValue == providerFilter {
+            return visibleSessions.first { $0.kind != "subagent" && $0.matches(followedActivity) }
+        }
+        return visibleSessions.first { $0.kind == "main" } ?? visibleSessions.first { $0.kind != "subagent" }
     }
     var selectionMissing: Bool { snapshot != nil && selectedSessionID != nil && selectedSession == nil }
     var panelHeight: CGFloat {
-        632 + ((notice != nil || isStale || selectionMissing) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
+        680 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
     }
-    var mainCost: String { selectedSession.map { UsagePresentation.money($0.cost) } ?? "—" }
+    var isAll:Bool { providerFilter == "all" }
+    var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }
+    var mainCost: String { isAll ? todayCost : selectedSession.map { UsagePresentation.money($0.cost) } ?? "—" }
     var selectionLabel: String {
+        if isAll { return "Tổng Codex và Claude Code hôm nay" }
         if selectionMissing { return "Phiên đã chọn không còn dữ liệu" }
+        if waitingForUsage { return "Phiên mới · \(followedActivity?.sessionID.prefix(8) ?? "") · Chờ dữ liệu" }
         return selectedSession.map { UsagePresentation.cleanTitle($0.title) } ?? "Chưa có phiên chính"
     }
+    var activityLabel:String {
+        if selectedSessionID != nil { return "Đã ghim phiên · \(UsageProvider(rawValue:providerFilter)?.title ?? "")" }
+        if isAll { return "Tổng chi phí API quy đổi · Hôm nay" }
+        guard let current = followedActivity, current.provider.rawValue == providerFilter else { return "Tự động · Chờ sự kiện gửi tin nhắn" }
+        let ended = activities.contains { event in
+            event.provider == current.provider && event.sessionID == current.sessionID && event.recordedAt >= current.recordedAt &&
+            (event.event == .stopped || event.event == .ended) && (event.turnID == nil || current.turnID == nil || event.turnID == current.turnID)
+        }
+        let state = ended ? "Đã dừng xử lý" : activityNow.timeIntervalSince(current.recordedAt) > 900 ? "Chờ cập nhật" : "Đang xử lý"
+        return "Tự động · \(current.provider.title) · \(state)"
+    }
+    var providerBreakdown:ProviderBreakdown? { snapshot?.providerBreakdowns?.first { $0.provider.rawValue == providerFilter } }
+    var visibleToday:UsageAggregate? { isAll ? snapshot?.today : providerBreakdown?.today ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.today : nil) }
+    var visibleMonth:UsageAggregate? { isAll ? snapshot?.month : providerBreakdown?.month ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.month : nil) }
+    private var displayTokens:UsageTokens? { isAll ? visibleToday?.tokens : selectedSession?.tokens }
     var statusTitle: String {
         if snapshot == nil { return isLoading ? "NS …" : "NS —" }
         return "NS \(mainCost)" + (isStale ? " ⚠" : "")
     }
     var tokenTooltip: String {
-        guard let tokens = selectedSession?.tokens else { return "Chưa có dữ liệu token" }
+        guard let tokens = displayTokens else { return "Chưa có dữ liệu token" }
         return "Input: \(UsagePresentation.number(tokens.input))\nCache read: \(UsagePresentation.number(tokens.cacheRead))\nCache write: \(UsagePresentation.number(tokens.cacheWrite))\nOutput: \(UsagePresentation.number(tokens.output))\nTổng: \(UsagePresentation.number(tokens.total))"
     }
-    var inputText: String { selectedSession.map { Self.compact($0.tokens.input) } ?? "—" }
-    var outputText: String { selectedSession.map { Self.compact($0.tokens.output) } ?? "—" }
-    var cacheText: String { selectedSession.map { Self.compact($0.tokens.cacheRead + $0.tokens.cacheWrite) } ?? "—" }
-    var todayCost: String { snapshot.map { UsagePresentation.money($0.today.cost) } ?? "—" }
-    var monthCost: String { snapshot.map { UsagePresentation.money($0.month.cost) } ?? "—" }
+    var inputText: String { displayTokens.map { Self.compact($0.input) } ?? "—" }
+    var outputText: String { displayTokens.map { Self.compact($0.output) } ?? "—" }
+    var cacheText: String { displayTokens.map { Self.compact($0.cacheRead + $0.cacheWrite) } ?? "—" }
+    var todayCost: String { visibleToday.map { UsagePresentation.money($0.cost) } ?? "—" }
+    var monthCost: String { visibleMonth.map { UsagePresentation.money($0.cost) } ?? "—" }
     var chartPoints: [DailyCostPoint] {
-        (snapshot?.chart ?? []).map { point in
+        (isAll ? snapshot?.chart ?? [] : providerBreakdown?.chart ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.chart ?? [] : [])).map { point in
             let parts = point.date.split(separator: "-")
             let label = parts.count == 3 ? "\(parts[2])/\(parts[1])" : point.date
             let amount = point.cost.status == "unknown" ? nil : (point.cost.amountUSD ?? point.cost.knownCostUSD)
@@ -71,7 +134,7 @@ struct DailyCostPoint: Identifiable {
     }
     var hasUnpricedDays: Bool { chartPoints.contains { $0.cost.status != "estimated" } }
     var filteredSessions: [SessionUsage] {
-        let all = snapshot?.sessions ?? []
+        let all = visibleSessions
         let query = search.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else { return all }
         return all.filter { $0.title.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil || $0.id.localizedCaseInsensitiveContains(query) }

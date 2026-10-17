@@ -8,7 +8,14 @@ struct UsagePopoverView: View {
     private var accent: Color { colorScheme == .dark ? Color(red: 0.46, green: 0.83, blue: 0.79) : Color(red: 0, green: 0.43, blue: 0.45) }
     var body: some View {
         VStack(spacing: 0) {
-            header.padding(.bottom, 18)
+            header.padding(.bottom, 12)
+            Picker("Công cụ",selection:Binding(get:{ model.providerFilter },set:{ model.setProviderFilter($0) })) {
+                Text("Tất cả").tag("all")
+                Text("Codex").tag("codex")
+                Text("Claude Code").tag("claude")
+            }.pickerStyle(.segmented).labelsHidden().frame(maxWidth:.infinity).padding(.bottom,7)
+            Text(model.activityLabel).font(.system(size:10)).foregroundStyle(.secondary)
+                .frame(maxWidth:.infinity,alignment:.leading).lineLimit(1).padding(.bottom,12)
             if model.showsSessions { sessions } else { dashboard }
         }
         .padding(22)
@@ -30,7 +37,20 @@ struct UsagePopoverView: View {
     private var dashboard: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 7) {
-                Text("Phiên đang theo dõi").font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(model.isAll ? "Chi phí hôm nay theo công cụ" : "Phiên đang theo dõi").font(.system(size: 12)).foregroundStyle(.secondary)
+                if model.isAll {
+                    HStack {
+                        ForEach(UsageProvider.allCases,id:\.self) { provider in
+                            let cost = model.snapshot?.providerBreakdowns?.first { $0.provider == provider }?.today.cost
+                            HStack {
+                                Text(provider.title).font(.system(size:11)).foregroundStyle(.secondary)
+                                Spacer(minLength:4)
+                                Text(cost.map(UsagePresentation.money) ?? "—").font(.system(size:13,weight:.semibold)).monospacedDigit()
+                            }.padding(.horizontal,10).frame(height:35)
+                                .background(Color.primary.opacity(0.04),in:RoundedRectangle(cornerRadius:7))
+                        }
+                    }
+                } else {
                 Button { model.showsSessions = true } label: {
                     HStack {
                         Text(model.selectionLabel).lineLimit(1).truncationMode(.middle)
@@ -43,6 +63,7 @@ struct UsagePopoverView: View {
                 }
                 .buttonStyle(.plain).frame(maxWidth: .infinity)
                 .help(model.selectionLabel).accessibilityLabel("Chọn phiên đang theo dõi")
+                }
             }.padding(.bottom, 16)
             if let warning = warning {
                 Label(warning, systemImage: "exclamationmark.circle")
@@ -60,7 +81,7 @@ struct UsagePopoverView: View {
                     Text("Ước tính").font(.system(size: 11, weight: .medium)).foregroundStyle(accent)
                         .padding(.horizontal, 10).padding(.vertical, 5).background(accent.opacity(0.12), in: Capsule())
                 }
-                Text("Chi phí API quy đổi · Phiên này").font(.system(size: 13)).foregroundStyle(.secondary)
+                Text(model.isAll ? "Chi phí API quy đổi · Hôm nay" : "Chi phí API quy đổi · Phiên này").font(.system(size: 13)).foregroundStyle(.secondary)
             }.padding(.bottom, 20)
             HStack(spacing: 0) {
                 token("Input", model.inputText)
@@ -93,13 +114,14 @@ struct UsagePopoverView: View {
                     Spacer()
                     Text(model.updatedLabel).help("Múi giờ: \(model.snapshot?.timeZone ?? "hệ thống")")
                 }.font(.system(size: 9)).foregroundStyle(.secondary)
-                Text("Ước tính theo giá API · Không phải hóa đơn ChatGPT")
+                Text("Ước tính API · Không phải hóa đơn thuê bao")
                     .font(.system(size: 9)).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
             footer
         }
     }
     private var warning: String? {
+        if let connection = model.connectionNotice { return connection }
         if model.selectionMissing { return "Phiên đã chọn không còn dữ liệu. Chọn phiên khác để tiếp tục." }
         if let notice = model.notice { return notice }
         return model.isStale ? "Dữ liệu cũ · đang chờ cập nhật" : nil
@@ -158,8 +180,14 @@ struct UsagePopoverView: View {
                 .buttonStyle(FooterButtonStyle()).disabled(model.isLoading).help("Làm mới").accessibilityLabel("Làm mới")
             Menu {
                 Text("Nguồn: \(model.source)")
-                Button("Chọn thư mục log…") { model.onChooseSource?() }
-                Button("Dùng nguồn log mặc định") { model.onResetSource?() }
+                Button("Chọn thư mục log Codex…") { model.onChooseSource?() }
+                Button("Dùng log Codex mặc định") { model.onResetSource?() }
+                Button("Chọn thư mục log Claude Code…") { model.onChooseClaudeSource?() }
+                Button("Dùng log Claude Code mặc định") { model.onResetClaudeSource?() }
+                Divider()
+                Button("Kết nối tự theo dõi chat…") { model.onInstallHooks?() }
+                Button("Gỡ hooks theo dõi chat") { model.onRemoveHooks?() }
+                if model.connectionNotice != nil { Button("Ẩn thông báo kết nối") { model.connectionNotice=nil } }
                 Divider()
                 Toggle(isOn: Binding(get: { model.loginState == .enabled || model.loginState == .requiresApproval }, set: { _ in model.onToggleLogin?() })) { Text(model.loginState == .requiresApproval ? "Mở cùng macOS · Cần phê duyệt" : "Mở cùng macOS") }
                 if model.loginState == .requiresApproval || model.loginState == .notFound { Button("Mở cài đặt Login Items…") { model.onOpenSettings?() } }
@@ -181,7 +209,7 @@ struct UsagePopoverView: View {
             Button { model.showsSessions = false } label: { Label("Quay lại thống kê", systemImage: "chevron.left") }.buttonStyle(.plain).foregroundStyle(accent)
             TextField("Tìm tên hoặc ID phiên", text: $model.search).textFieldStyle(.roundedBorder).accessibilityLabel("Tìm phiên")
             Button { model.chooseSession(nil) } label: {
-                Label("Theo phiên chính gần nhất", systemImage: "arrow.triangle.2.circlepath").font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
+                Label("Tự theo dõi chat vừa gửi tin nhắn", systemImage: "arrow.triangle.2.circlepath").font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
             }.buttonStyle(.bordered)
             Text("\(model.filteredSessions.count) phiên · Chọn để xem chi phí và token")
                 .font(.system(size: 10)).foregroundStyle(.secondary)
@@ -192,7 +220,7 @@ struct UsagePopoverView: View {
                             HStack(alignment: .top, spacing: 12) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(UsagePresentation.cleanTitle(session.title)).font(.system(size: 12, weight: .medium)).lineLimit(2)
-                                    Text(session.kind == "subagent" ? "Tác vụ con" : session.kind == "main" ? "Phiên chính" : "Chưa xác định loại phiên").font(.system(size: 9)).foregroundStyle(.secondary)
+                                    Text(session.usageProvider.title + " · " + (session.kind == "subagent" ? "Tác vụ con" : session.kind == "main" ? "Phiên chính" : "Chưa xác định loại phiên")).font(.system(size: 9)).foregroundStyle(.secondary)
                                 }
                                 Spacer(minLength: 0)
                                 Text(UsagePresentation.money(session.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()

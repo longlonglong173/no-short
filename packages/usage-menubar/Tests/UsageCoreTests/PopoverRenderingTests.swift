@@ -12,10 +12,23 @@ import SwiftUI
             object["chart"] = (12...18).enumerated().map { index, day in
                 ["date":"2026-10-\(day)", "cost":["amountUSD":[0.8,1.3,0.6,1.1,2.7,1.2,1.2][index],"knownCostUSD":0,"status":"estimated"]]
             }
+            var codex = object["today"] as! [String:Any], claude = codex
+            codex["cost"] = ["amountUSD":1.10,"knownCostUSD":1.10,"status":"estimated"]
+            claude["cost"] = ["amountUSD":1.25,"knownCostUSD":1.25,"status":"estimated"]
+            object["providerBreakdowns"] = [
+                ["provider":"codex","today":codex,"month":codex,"chart":object["chart"]!],
+                ["provider":"claude","today":claude,"month":claude,"chart":object["chart"]!]
+            ]
         }
         model.update(snapshot:s,source:"~/.codex",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
-        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("warning", .light, false)] {
+        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("all", .dark, false), ("waiting", .light, false), ("warning", .light, false)] {
+            if name == "all" { model.setProviderFilter("all") }
+            if name == "waiting" {
+                let event = try XCTUnwrap(SessionActivity.parse(Data(#"{"session_id":"new-claude-session","hook_event_name":"UserPromptSubmit"}"#.utf8),provider:.claude))
+                model.applyActivities([event])
+            }
             if name == "warning" {
+                model.setProviderFilter("codex")
                 let partial = try fixture { o in
                     o["chart"] = [
                         ["date":"2026-10-17", "cost":["amountUSD":NSNull(),"knownCostUSD":0,"status":"unknown"]],

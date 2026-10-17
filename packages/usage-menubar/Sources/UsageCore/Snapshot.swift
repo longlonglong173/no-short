@@ -34,12 +34,29 @@ public struct UsageAggregate: Decodable, Sendable {
 }
 public struct SessionUsage: Decodable, Sendable {
     public let id, title, kind: String
+    public let provider: UsageProvider?
+    public let sessionKey: String?
+    public var usageProvider: UsageProvider { provider ?? .codex }
+    public func matches(_ activity: SessionActivity) -> Bool {
+        guard usageProvider == activity.provider else { return false }
+        if let sessionKey { return sessionKey == activity.sessionID }
+        if id == activity.sessionID { return true }
+        // Legacy Codex reports identify sessions by dated rollout filenames.
+        let pattern = "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+        guard let range = id.range(of:pattern,options:.regularExpression) else { return false }
+        return id[range].lowercased() == activity.sessionID.lowercased()
+    }
     public let lastActivity: String?
     public let tokens: UsageTokens
     public let cost: UsageCost
     public let models: [ModelUsage]
 }
 public struct ChartDay: Decodable, Sendable { public let date: String; public let cost: UsageCost }
+public struct ProviderBreakdown: Decodable, Sendable {
+    public let provider: UsageProvider
+    public let today, month: UsageAggregate
+    public let chart: [ChartDay]
+}
 public struct UsageSnapshot: Decodable, Sendable {
     public let schemaVersion: Int
     public let source, ccusageVersion: String
@@ -49,6 +66,7 @@ public struct UsageSnapshot: Decodable, Sendable {
     public let sessions: [SessionUsage]
     public let today, month: UsageAggregate
     public let chart: [ChartDay]
+    public let providerBreakdowns: [ProviderBreakdown]?
     public var latestSession: SessionUsage? {
         sessions.first { $0.kind == "main" } ?? sessions.first { $0.kind != "subagent" }
     }
@@ -74,6 +92,10 @@ public struct UsageSnapshot: Decodable, Sendable {
             for model in session.models { try model.tokens.validate(); try model.cost.validate() }
         }
         for point in s.chart { try point.cost.validate() }
+        for provider in s.providerBreakdowns ?? [] {
+            try provider.today.validate(); try provider.month.validate()
+            for point in provider.chart { try point.cost.validate() }
+        }
         return s
     }
     public func isStale(at now: Date) -> Bool {

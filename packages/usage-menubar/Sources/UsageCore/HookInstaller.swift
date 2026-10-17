@@ -8,6 +8,11 @@ public struct HookInstaller {
     public let executable: URL
     public init(executable:URL) { self.executable = executable }
     private let marker = " --no-short-usage-hook "
+    public static func configurationFiles(home:URL = FileManager.default.homeDirectoryForCurrentUser,environment:[String:String] = ProcessInfo.processInfo.environment) -> [(URL,UsageProvider)] {
+        let codex = environment["CODEX_HOME"]?.split(separator:",").map(String.init).filter { !$0.isEmpty } ?? [home.appendingPathComponent(".codex").path]
+        let claude = environment["CLAUDE_CONFIG_DIR"]?.split(separator:",").map(String.init).filter { !$0.isEmpty } ?? [home.appendingPathComponent(".claude").path]
+        return codex.map { (URL(fileURLWithPath:$0).appendingPathComponent("hooks.json"),.codex) } + claude.map { (URL(fileURLWithPath:$0).appendingPathComponent("settings.json"),.claude) }
+    }
     public func install(at path:URL,provider:UsageProvider) throws { try change(at:path,provider:provider) }
     public func remove(at path:URL) throws { try change(at:path,provider:nil) }
     private func change(at path:URL,provider:UsageProvider?) throws {

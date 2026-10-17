@@ -27,7 +27,9 @@ public struct SessionActivity: Codable, Sendable, Equatable {
 
 public struct ActivityStore: Sendable {
     public let directory: URL
-    public init(directory: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/no-short/usage/activity")) { self.directory = directory }
+    public init(directory: URL? = nil) {
+        self.directory = directory ?? ProcessInfo.processInfo.environment["NO_SHORT_USAGE_ACTIVITY_DIR"].map { URL(fileURLWithPath:$0) } ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support/no-short/usage/activity")
+    }
     public func prepare() throws {
         try FileManager.default.createDirectory(at:directory,withIntermediateDirectories:true,attributes:[.posixPermissions:0o700])
         try FileManager.default.setAttributes([.posixPermissions:0o700],ofItemAtPath:directory.path)
