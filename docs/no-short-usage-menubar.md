@@ -122,3 +122,15 @@ After connecting, review/trust the new Codex definitions through `/hooks`; resta
 
 Claude log detection combines valid `~/.config/claude/projects` and `~/.claude/projects` roots, or a configured custom root. A missing Claude installation remains an empty provider and does not prevent Codex reports. Settings allow independent Codex and Claude log directories. Unknown or partial pricing remains visible as unknown or a known lower bound.
 
+### Verified delivery
+
+- 43 Swift tests, 31 Usage tests and 2 bundle-layout tests passed; TypeScript typecheck and repository validation passed.
+- Synthetic native rendering checked light/dark, all-provider totals, sessions, waiting and warning states. A real nested log-write test exercised FSEvents and activity delivery.
+- Both arm64 and x86_64 bundles passed architecture/provenance/signature validation and were packaged locally. The arm64 worker passed with controlled empty roots and without Node/Bun on PATH. The bundled hook executable passed silent stdin delivery, metadata privacy, child filtering and isolated configuration install/idempotency/removal checks.
+- The bundled helper read real local Codex/Claude roots and returned `ready`, both provider breakdowns and no notice. This proves current report loading; it does not prove host hooks have fired.
+- Owned hooks were configured for both local hosts and verified once per event with mode 0600. Codex trust was not changed. Claude Code must reload settings in a new/reopened session. No live prompt was sent merely to test hooks.
+- A fresh code review found startup replay overriding the saved filter and a dangling settings-symlink replacement. Both were reproduced RED, fixed, then passed the full 43-test Swift suite. No deferred minor findings.
+- App was reopened locally; its process was verified. CUA could not inspect the accessory app's UI (timeout), so actual menu clicks, host trust/automatic prompt delivery, sleep/wake interaction and VoiceOver remain unverified. Packages are ad-hoc signed local development builds, not notarized or published.
+
+Implementation stayed in the existing feature checkout because required Usage foundations were untracked. Selective staging preserved unrelated changes; this provides no worktree isolation. Claude automatic main-session prompt events and Stop events without turn IDs retain the limitations described above.
+

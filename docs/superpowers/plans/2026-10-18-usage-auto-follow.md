@@ -23,26 +23,26 @@
 ### Task 1: Provider-aware reports
 **Files:** packages/usage/src/{types,adapter,runner,service,metadata}.ts; packages/usage/tests/providers.test.ts
 **Interfaces:** existing buildSnapshot gains providers; snapshots gain optional providerBreakdowns and per-session provider/sessionKey. ServiceOptions gains claudeRoots.
-- [ ] Write failing mixed-provider, identity, private metadata, source isolation and pinned-native-CLI tests; run them RED.
-- [ ] Enable explicit Claude roots and normalize mixed reports; preserve default Codex-only behavior and cache scoping.
-- [ ] Run npm test and npm run typecheck:usage; commit exact changed feature paths only.
+- [x] Write failing mixed-provider, identity, private metadata, source isolation and pinned-native-CLI tests; run them RED.
+- [x] Enable explicit Claude roots and normalize mixed reports; preserve default Codex-only behavior and cache scoping.
+- [x] Run npm test and npm run typecheck:usage; commit exact changed feature paths only.
 
 ### Task 2: Activity events and hook installation
 **Files:** new UsageCore/{SessionActivity,HookInstaller}.swift; native Main.swift; tests SessionActivityTests.swift and HookInstallerTests.swift.
 **Interfaces:** SessionActivity contains provider/session/event/turn/time; ActivityStore publishes and reads bounded private records. HookInstaller merges/removes owned command handlers. Main --usage-hook provider reads bounded stdin before starting AppKit.
-- [ ] Write failing privacy, child filtering, ordering, malformed input and merge/idempotency/removal tests; run RED.
-- [ ] Implement native event command, file store and conservative settings installer with backups and no trust bypass.
-- [ ] Run Swift tests and commit.
+- [x] Write failing privacy, child filtering, ordering, malformed input and merge/idempotency/removal tests; run RED.
+- [x] Implement native event command, file store and conservative settings installer with backups and no trust bypass.
+- [x] Run Swift tests and commit.
 
 ### Task 3: Automatic following and panel
 **Files:** UsageCore Snapshot.swift, LogSource.swift, SnapshotClient.swift; native UsagePanelModel.swift, UsagePopoverView.swift, AppDelegate.swift and new ActivityMonitor.swift; model/render tests.
 **Interfaces:** panel consumes latest activity, persists filter/pin; monitor delivers changes and coalesced log-write callbacks; LogSource includes independent Claude roots.
-- [ ] Write failing provider matching, waiting-cost, pin, late-stop, restore and source tests; run RED.
-- [ ] Wire provider picker, all totals, automatic status, watcher, connection controls and lifecycle cleanup.
-- [ ] Run native and Usage suites, render synthetic light/dark/waiting/all panels, inspect images; commit.
+- [x] Write failing provider matching, waiting-cost, pin, late-stop, restore and source tests; run RED.
+- [x] Wire provider picker, all totals, automatic status, watcher, connection controls and lifecycle cleanup.
+- [x] Run native and Usage suites, render synthetic light/dark/waiting/all panels, inspect images; commit.
 
 ### Task 4: Integration and delivery
 **Files:** docs/no-short-usage-menubar.md; scoped diagnostics/artifacts.
-- [ ] Build Usage and both native architectures; smoke-test controlled empty roots and hook event delivery without model calls.
-- [ ] Obtain one fresh reviewer for this feature range, resolve material findings with RED/GREEN tests.
-- [ ] Rebuild package, reopen companion, document actual hook configuration/trust and live verification boundaries. No publish/push.
+- [x] Build Usage and both native architectures; smoke-test controlled empty roots and hook event delivery without model calls.
+- [x] Obtain one fresh reviewer for this feature range, resolve material findings with RED/GREEN tests.
+- [x] Rebuild package, reopen companion, document actual hook configuration/trust and live verification boundaries. No publish/push.
