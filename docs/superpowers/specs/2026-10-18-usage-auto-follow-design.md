@@ -1,0 +1,12 @@
+# Usage: Claude Code and automatic session following
+
+User-approved scope: add Claude Code to the existing local Usage companion; follow the conversation that most recently received a submitted prompt, retain explicitly pinned sessions, and update costs from usage logs.
+
+- Reuse pinned ccusage 20.0.34. MCP remains Codex-only by default; the native companion explicitly enables both sources. Add provider identity and per-provider aggregates without breaking existing schema-v1 consumers.
+- Native panel offers All / Codex / Claude Code. All shows today's combined API estimate with per-provider totals. Provider views retain session tokens, seven-day chart, today and month. Remember the filter and pinned session.
+- A small native command hook accepts SessionStart, UserPromptSubmit, Stop and SessionEnd. It writes only provider, session ID, turn ID, event and time into private local files. Discard prompt, response and working-directory content. Ignore explicit child-agent events/identifiers and child transcript paths. SessionStart never steals selection; only prompt submissions do. Claude may emit UserPromptSubmit for automatic main-session activity with no origin field; do not promise perfect human-origin discrimination.
+- Consume local activity changes with a directory watcher plus a short reconciliation timer. Follow the newest submitted session, including sessions with no priced usage yet; show waiting rather than zero or another session's cost. Old completion events cannot steal selection or complete a newer known turn. Pinning suppresses automatic switching. The last activity is restored only within 24 hours.
+- Continue bounded, single-flight cost refreshes. Watch active transcript writes to request refreshes, coalesce bursts, preserve the 15-second reconciliation timer and last-good snapshots. A submitted event does not itself prove a cost increment.
+- Install/remove only owned hooks, preserve existing settings and create backups before changes. Codex hook trust remains the user's own action through /hooks. No bypass flags, purchases, network credentials, login-item changes or publication.
+- Preserve custom Codex and Claude roots, isolate cache identities, and keep synthetic tests separate from real logs. Retain unknown/partial-price semantics.
+- Verify adapter/real pinned CLI fixtures, event privacy and ordering, pinned/missing sessions, config merge/removal, native light/dark renders, existing suites and rebuilt signed bundles. Real hook trust and target-app interaction remain separate evidence.
