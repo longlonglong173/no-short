@@ -51,6 +51,7 @@ private final class SnapshotRun: @unchecked Sendable {
     var cleanupAt: ContinuousClock.Instant?
     var exitAt: ContinuousClock.Instant?
     var failure: (any Error)?
+    var completion: Result<UsageSnapshot, any Error>?
     let marker = Data("NO_SHORT_WORKER_READY\n".utf8)
     init(client: SnapshotClient, source: LogSource) { self.client = client; self.source = source }
     func cancel() { queue.async { self.cancelled = true; if self.continuation != nil { self.beginCleanup(CancellationError()) } } }
@@ -110,7 +111,8 @@ private final class SnapshotRun: @unchecked Sendable {
     }
     func beginCleanup(_ error: any Error) {
         guard !finished, failure == nil else { return }
-        failure = error; cleanupAt = .now; signalGroup(SIGTERM)
+        failure = error
+        if cleanupAt == nil { cleanupAt = .now; signalGroup(SIGTERM) }
     }
     func tick() {
         guard !finished else { return }
@@ -118,17 +120,21 @@ private final class SnapshotRun: @unchecked Sendable {
         if !errorsEOF { drain(errors, stdout: false) }
         if let cleanupAt {
             if ContinuousClock.now - cleanupAt >= .milliseconds(500) {
-                signalGroup(SIGKILL); finish(.failure(failure!))
+                signalGroup(SIGKILL)
+                finish(failure.map { .failure($0) } ?? completion ?? .failure(SnapshotClientError.reportFailed))
             }
             return
         }
         if ContinuousClock.now - started >= client.timeout { beginCleanup(SnapshotClientError.timeout); return }
         guard !process.isRunning else { return }
         if outputEOF && errorsEOF {
-            guard process.terminationStatus == 0 else { finish(.failure(SnapshotClientError.reportFailed)); return }
-            guard handshake else { finish(.failure(SnapshotClientError.launchFailed)); return }
-            do { finish(.success(try UsageSnapshot.decode(Data(data.dropFirst(marker.count))))) }
-            catch { finish(.failure(SnapshotClientError.invalidSnapshot)) }
+            guard process.terminationStatus == 0 else { beginCleanup(SnapshotClientError.reportFailed); return }
+            guard handshake else { beginCleanup(SnapshotClientError.launchFailed); return }
+            do { completion = .success(try UsageSnapshot.decode(Data(data.dropFirst(marker.count)))) }
+            catch { beginCleanup(SnapshotClientError.invalidSnapshot); return }
+            // EOF only describes the pipes. Descendants may have redirected both
+            // streams or closed them in a TERM handler and still be running.
+            cleanupAt = .now; signalGroup(SIGTERM)
         } else {
             // A helper that exits while descendants hold pipes must not leave them behind.
             if exitAt == nil { exitAt = .now; signalGroup(SIGTERM) }

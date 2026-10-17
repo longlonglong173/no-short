@@ -18,7 +18,7 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 - Click to see today's input/output/cache read/cache write/total tokens, this month's total, the latest main session, source, update timestamp and any error. Tooltips preserve full values and long session names.
 - The latest session follows the same selection rule as the panel: prefer a known main session, fall back to an unknown non-subagent session, and never select a subagent by default. It does not identify the focused Codex tab or merge child sessions into parents.
 - Refresh runs every 15 seconds while the app is awake, including when the menu and Codex panel are closed. **Làm mới** also requests a scan; all requests respect the shared 15-second cache TTL and inter-process scan lock.
-- Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds, and cancellation cleans up its report processes before a replacement read or normal app exit.
+- Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
 - Sleep suspends the schedule and cancels reading. Wake requests a fresh snapshot. **Thoát No Short Usage** stops the companion's scans; it does not change the plugin or the login-item preference.
 
 ## Log source
@@ -56,7 +56,7 @@ Setting `NO_SHORT_SIGN_IDENTITY` requests Developer ID signing. It must refer to
 
 | Check | Evidence |
 | --- | --- |
-| Snapshot/model/process/controller/login/menu tests | 22 Swift tests passed locally |
+| Snapshot/model/process/controller/login/menu tests | 24 Swift tests passed locally |
 | Bundle corruption/version/provenance/symlink tests | 2 Bun tests passed locally |
 | Existing Usage behavior | 25 Bun tests, TypeScript check and 7 Playwright tests passed locally |
 | arm64 and x86_64 build | Both app bundles built; nested and whole-bundle signatures verified |

@@ -111,3 +111,7 @@
 - Các tên `UsageSnapshot`, `UsagePresentation`, `SnapshotLoading`, `LogSource`, `RefreshController`, `LoginItemState` được giữ xuyên các task; Swift types độc lập với TypeScript, cùng JSON contract.
 - Review Focus được gắn test cụ thể ở Tasks 1–5. Không yêu cầu test mô phỏng từng dòng giao diện; native UI cần quan sát thật.
 - Implemented Tasks 1–6 inline. Native UI attachment timed out, so visible menu, login registration and physical sleep/wake remain manual acceptance items; see verification table in docs/no-short-usage-menubar.md. Background live cache refresh and duplicate process prevention were verified.
+
+## Final review and fix
+
+Independent reviewer found one Important issue: successful reads could leave descendants after both pipes closed. Two process regressions failed before the fix and passed after all completion paths received bounded process-group cleanup. Final Swift suite: 24 tests; layout suite: 2 tests. No critical or minor findings. Native visual/login/sleep and physical-device acceptance items remain unverified as recorded in the companion documentation.

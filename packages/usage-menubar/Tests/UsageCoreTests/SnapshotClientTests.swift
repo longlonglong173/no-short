@@ -69,6 +69,28 @@ final class SnapshotClientTests: XCTestCase, @unchecked Sendable {
         do { _ = try await SnapshotClient(workerURL: bad, helperURL: bad).load(source: LogSource(rootsEnvironment: "/tmp")); XCTFail() }
         catch { XCTAssertEqual(error as? SnapshotClientError, .launchFailed) }
     }
+    func testSuccessfulHelperCleansChildrenEvenWhenTheyClosePipes() async throws {
+        try await assertChildCleanup(body: "sleep 60 >/dev/null 2>&1 &\necho $! > \"$(dirname \"$0\")/child.pid\"\ncat \"$(dirname \"$0\")/snapshot.json\"")
+    }
+    func testTermHandlerClosingPipesCannotBypassFinalKill() async throws {
+        try await assertChildCleanup(body: """
+        /bin/sh -c 'trap "exec >/dev/null 2>&1" TERM; echo $$ > "$1"; while :; do sleep 60; done' child "$(dirname "$0")/child.pid" &
+        while [ ! -f "$(dirname "$0")/child.pid" ]; do sleep .01; done
+        cat "$(dirname "$0")/snapshot.json"
+        """)
+    }
+    private func assertChildCleanup(body: String) async throws {
+        let (dir, helper) = try setup(body)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        try fixtureData().write(to: dir.appendingPathComponent("snapshot.json"))
+        let snapshot = try await SnapshotClient(workerURL: worker(), helperURL: helper, timeout: .seconds(3)).load(source: LogSource(rootsEnvironment: "/tmp"))
+        XCTAssertEqual(snapshot.today.cost.amountUSD, 2.35)
+        let pid = Int32(try String(contentsOf: dir.appendingPathComponent("child.pid"), encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines))!
+        let group = getpgid(pid)
+        defer { if group > 1 && group != getpgrp() { _ = kill(-group, SIGKILL) } }
+        for _ in 0..<30 { if kill(pid, 0) != 0 { break }; try await Task.sleep(for: .milliseconds(10)) }
+        XCTAssertNotEqual(kill(pid, 0), 0, "Successful helper left a descendant alive")
+    }
     func testAlreadyCancelledAndMissingRuntimeDoNotLaunch() async throws {
         let task = Task { try await Task.sleep(for: .seconds(1)); return try await SnapshotClient(workerURL: worker(), helperURL: URL(fileURLWithPath: "/missing")).load(source: LogSource(rootsEnvironment: "/tmp")) }
         task.cancel()
