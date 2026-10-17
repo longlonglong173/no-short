@@ -14,6 +14,8 @@ for (const platform of ['darwin-arm64','darwin-x64']) {
   const helper = join(app,'Contents/Resources/runtime/no-short-usage');
   const version = await run([executable,'--version'],{capture:true,env});
   if (!version.includes(runtime.version)) throw new Error('App version failed');
+  const icons = await run([executable,'--verify-resources'],{capture:true,env});
+  if (icons !== 'Provider icons verified') throw new Error('Packaged provider icons failed');
   const temp = await mkdtemp(join(tmpdir(),'No Short isolated smoke '));
   try {
     const codex = join(temp,'codex'); await mkdir(codex); await mkdir(join(codex,'sessions'));

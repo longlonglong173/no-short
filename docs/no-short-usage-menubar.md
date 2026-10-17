@@ -140,6 +140,8 @@ The status item now displays the Codex or Claude symbol followed directly by `$â
 
 The 16-point vector template icons adapt to macOS menu bar appearance and are included in the app's Swift resource bundle. Build verification rejects a package missing either icon. See [icon sources and compilation](../packages/usage-menubar/Resources/PROVIDER_ICONS.md).
 
+CI selects Xcode 16.2 for Swift 6 on macOS 14. Packaging accepts both flat and structured SwiftPM resource bundles. The packaged app resolves icons from its own Resources directory; `--verify-resources` and the native smoke check confirm both icons load without a development build-path fallback. A relocated flat-layout app passed this check, and deleting a required icon produced a failed check.
+
 Verification: 45 Swift tests, 3 bundle-layout tests and 31 Usage tests passed locally. Tests exercise the actual status button through automatic provider changes, pinning and combined mode. Light/dark native button previews use synthetic fixture amounts; these are offscreen previews, not screenshots of the live system menu bar. Actual status-item compositing and live clicks remain unverified because the native UI connector timed out attaching to the accessory app.
 
 The user accepted the live menu bar title after removing the separator, leaving the provider icon followed directly by the amount. This acceptance covers the title appearance; host-hook delivery, sleep/wake and VoiceOver retain their separate verification boundaries above.

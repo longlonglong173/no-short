@@ -6,11 +6,12 @@ import { createHash } from 'node:crypto';
 import { verifyLayout } from './bundle.ts';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
-const fixture = async () => {
+const fixture = async (layout: 'structured' | 'flat' = 'structured') => {
   const app = await mkdtemp(join(tmpdir(), 'No Short app test '));
   await mkdir(join(app, 'Contents/MacOS'), { recursive: true });
   await mkdir(join(app, 'Contents/Resources/runtime'), { recursive: true });
-  const icons = join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources');
+  const bundle = join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle');
+  const icons = layout === 'structured' ? join(bundle,'Contents/Resources') : bundle;
   await mkdir(icons,{recursive:true});
   for (const name of ['codex','claude']) await writeFile(join(icons,`${name}.pdf`),'%PDF-1.4\nfixture');
   await writeFile(join(app, 'Contents/MacOS/NoShortUsageMenuBar'), 'executable');
@@ -22,7 +23,7 @@ const fixture = async () => {
   const binaries = Object.fromEntries(['no-short-usage','ccusage'].map(n=>[n,sha(n)]));
   const manifest = { version:'0.4.1', ccusageVersion:'20.0.34', platforms: { 'darwin-arm64': { binaries } } };
   await writeFile(join(app,'Contents/Resources/runtime-checksums.json'), JSON.stringify({version:'0.4.1', platform:'darwin-arm64', binaries, sourceBinaries:binaries}));
-  return { app, manifest };
+  return { app, manifest, icons };
 };
 
 test('bundle verifier accepts matching provenance and rejects tampering, missing helpers and symlinks', async () => {
@@ -49,11 +50,13 @@ test('bundle verifier refuses mixed versions and provenance from another runtime
   } finally { await rm(app,{recursive:true,force:true}); }
 });
 
-test('bundle verifier rejects an app missing its provider icons', async () => {
-  const {app,manifest} = await fixture();
-  try {
-    await verifyLayout(app,'darwin-arm64',manifest);
-    await rm(join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources/claude.pdf'));
-    await expect(verifyLayout(app,'darwin-arm64',manifest)).rejects.toThrow();
-  } finally { await rm(app,{recursive:true,force:true}); }
+test('bundle verifier supports both SwiftPM resource layouts and rejects missing provider icons', async () => {
+  for (const layout of ['structured','flat'] as const) {
+    const {app,manifest,icons} = await fixture(layout);
+    try {
+      await verifyLayout(app,'darwin-arm64',manifest);
+      await rm(join(icons,'claude.pdf'));
+      await expect(verifyLayout(app,'darwin-arm64',manifest)).rejects.toThrow();
+    } finally { await rm(app,{recursive:true,force:true}); }
+  }
 });

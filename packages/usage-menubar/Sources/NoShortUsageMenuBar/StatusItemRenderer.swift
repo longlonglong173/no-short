@@ -2,7 +2,17 @@ import AppKit
 import UsageCore
 
 @MainActor enum StatusItemRenderer {
+    private static let resources: Bundle? = {
+        // SwiftPM 6.0's accessor looks beside the app rather than in its resources.
+        // Packaged apps must use their own bundle, never the build-path fallback.
+        if Bundle.main.bundleURL.pathExtension == "app" {
+            guard let url = Bundle.main.resourceURL?.appendingPathComponent("NoShortUsageMenuBar_NoShortUsageMenuBar.bundle") else { return nil }
+            return Bundle(url:url)
+        }
+        return Bundle.module
+    }()
     private static let codex = load("codex"), claude = load("claude")
+    static var hasProviderIcons: Bool { codex != nil && claude != nil }
     private static let combined: NSImage? = {
         guard let codex, let claude else { return nil }
         let image = NSImage(size:NSSize(width:36,height:16),flipped:false) { _ in
@@ -15,7 +25,7 @@ import UsageCore
     }()
 
     private static func load(_ name:String) -> NSImage? {
-        guard let url = Bundle.module.url(forResource:name,withExtension:"pdf"), let image = NSImage(contentsOf:url) else { return nil }
+        guard let url = resources?.url(forResource:name,withExtension:"pdf"), let image = NSImage(contentsOf:url) else { return nil }
         image.size = NSSize(width:16,height:16)
         image.isTemplate = true
         return image

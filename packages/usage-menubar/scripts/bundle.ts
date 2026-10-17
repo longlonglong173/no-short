@@ -29,8 +29,11 @@ export async function verifyLayout(app: string, platform: string, runtime: Runti
   if (plist.CFBundleShortVersionString !== runtime.version) throw new Error('App version mismatch');
   const executable = await readFile(join(app, 'Contents/MacOS/NoShortUsageMenuBar'));
   if (!executable.length) throw new Error('Missing app executable');
+  const resourceBundle = join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle');
+  // SwiftPM 6.0 uses a flat bundle; newer toolchains use Contents/Resources.
+  const icons = (await readdir(resourceBundle)).includes('Contents') ? join(resourceBundle,'Contents/Resources') : resourceBundle;
   for (const name of ['codex','claude']) {
-    const icon = await readFile(join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources',`${name}.pdf`));
+    const icon = await readFile(join(icons,`${name}.pdf`));
     if (icon.subarray(0,5).toString() !== '%PDF-') throw new Error(`Invalid provider icon: ${name}`);
   }
   const provenance = JSON.parse(await readFile(join(app, 'Contents/Resources/runtime-checksums.json'), 'utf8'));
