@@ -12,7 +12,7 @@ import XCTest
         XCTAssertEqual(model.cacheText, "800")
         model.chooseSession("unknown")
         XCTAssertEqual(model.mainCost, "$0.10")
-        XCTAssertEqual(model.statusTitle, "NS $0.10")
+        XCTAssertEqual(model.statusTitle, "$0.10")
         model.chooseSession(nil)
         XCTAssertEqual(model.selectedSession?.id, "main")
     }
@@ -38,7 +38,7 @@ import XCTest
         model.search = "PHIEN CHINH" // Vietnamese search is accent/case insensitive.
         XCTAssertEqual(model.filteredSessions.map(\.id), ["main"])
         model.update(snapshot: nil, source: "a", isLoading: true, isStale: false, notice: nil, loginState: .notRegistered)
-        XCTAssertEqual(model.mainCost, "—"); XCTAssertEqual(model.statusTitle, "NS …")
+        XCTAssertEqual(model.mainCost, "—"); XCTAssertEqual(model.statusTitle, "…")
     }
     func testChartKeepsUnknownAsGapAndCompactsTokensWithoutLosingTooltipPrecision() throws {
         let model = UsagePanelModel()

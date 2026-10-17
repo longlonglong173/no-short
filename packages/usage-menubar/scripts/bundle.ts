@@ -29,6 +29,10 @@ export async function verifyLayout(app: string, platform: string, runtime: Runti
   if (plist.CFBundleShortVersionString !== runtime.version) throw new Error('App version mismatch');
   const executable = await readFile(join(app, 'Contents/MacOS/NoShortUsageMenuBar'));
   if (!executable.length) throw new Error('Missing app executable');
+  for (const name of ['codex','claude']) {
+    const icon = await readFile(join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources',`${name}.pdf`));
+    if (icon.subarray(0,5).toString() !== '%PDF-') throw new Error(`Invalid provider icon: ${name}`);
+  }
   const provenance = JSON.parse(await readFile(join(app, 'Contents/Resources/runtime-checksums.json'), 'utf8'));
   if (provenance.version !== runtime.version || provenance.platform !== platform || runtime.ccusageVersion !== '20.0.34') throw new Error('Runtime version mismatch');
   for (const name of ['no-short-usage', 'ccusage']) {

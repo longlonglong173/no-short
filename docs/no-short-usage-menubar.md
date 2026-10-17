@@ -1,12 +1,12 @@
 # No Short Usage menu bar app
 
-The optional **No Short Usage.app** shows local Codex usage on the macOS menu bar, even when the Codex conversation panel is closed. It shares the existing ccusage 20.0.34 snapshot/cache engine with the plugin. It can run without installing the plugin and requires macOS 14 or newer.
+The optional **No Short Usage.app** shows local Codex and Claude Code usage on the macOS menu bar, even when the Codex conversation panel is closed. It shares the existing ccusage 20.0.34 snapshot/cache engine with the plugin. It can run without installing the plugin and requires macOS 14 or newer.
 
 Amounts are **estimated API-equivalent USD costs**, not ChatGPT charges, credits, account balance or remaining quota. Closing Codex does not create new usage: the app can only report logs that Codex has written and retained.
 
 ## Install and open
 
-Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the `NS` amount to open the menu.
+Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
 Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
 
@@ -15,9 +15,9 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 ## Menu and refresh
 
 - The menu bar amount follows the session selected in the detail popover; automatic mode follows the latest main session. Today/month and the seven-day chart show totals across all sessions in the snapshot's local timezone. `$2.35` means estimated, `≥$2.35` means some prices are missing, and `—` means pricing/data is unavailable. `…` means the first read is running.
-- Click to open the detailed popover: choose/search a session, see its estimated cost and Input / Cache / Output tokens, inspect a seven-day daily-cost chart and today/month totals, and access refresh/settings. Cache combines read/write in the compact row; its tooltip preserves both exact values. Right-click retains the quick native menu. An explicit session selection stays fixed until you select another session or return to automatic mode; it resets on app restart or source change.
+- Click to open the detailed popover: choose/search a session, see its estimated cost and Input / Cache / Output tokens, inspect a seven-day daily-cost chart and today/month totals, and access refresh/settings. Cache combines read/write in the compact row; its tooltip preserves both exact values. Right-click retains the quick native menu. An explicit session selection stays fixed across app restarts until you select another session, return to automatic mode, change provider, or change the source.
 - The latest session follows the same selection rule as the panel: prefer a known main session, fall back to an unknown non-subagent session, and never select a subagent by default. It does not identify the focused Codex tab or merge child sessions into parents.
-- Refresh runs every 15 seconds while the app is awake, including when the menu and Codex panel are closed. **Làm mới** also requests a scan; all requests respect the shared 15-second cache TTL and inter-process scan lock.
+- Refresh runs every 15 seconds while the app is awake, including when the menu and Codex panel are closed, with additional refreshes after log/activity changes. **Làm mới** also requests a scan; native requests use a one-second cache TTL and the shared inter-process scan lock.
 - Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
 - Sleep suspends the schedule and cancels reading. Wake requests a fresh snapshot. **Thoát No Short Usage** stops the companion's scans; it does not change the plugin or the login-item preference.
 
@@ -134,3 +134,12 @@ Claude log detection combines valid `~/.config/claude/projects` and `~/.claude/p
 
 Implementation stayed in the existing feature checkout because required Usage foundations were untracked. Selective staging preserved unrelated changes; this provides no worktree isolation. Claude automatic main-session prompt events and Stop events without turn IDs retain the limitations described above.
 
+## Provider icons on the menu bar (2026-10-18)
+
+The status item now displays the Codex or Claude symbol followed directly by `$…`, replacing the `NS` prefix. The icon follows the selected tool, pinned session, or automatically followed submitted session; **Tất cả** displays both marks beside the combined daily estimate. Loading (`…`), unknown pricing (`—`), partial estimates (`≥$…`) and stale warnings remain distinct. Accessibility identifies the tool as well as the amount.
+
+The 16-point vector template icons adapt to macOS menu bar appearance and are included in the app's Swift resource bundle. Build verification rejects a package missing either icon. See [icon sources and compilation](../packages/usage-menubar/Resources/PROVIDER_ICONS.md).
+
+Verification: 45 Swift tests, 3 bundle-layout tests and 31 Usage tests passed locally. Tests exercise the actual status button through automatic provider changes, pinning and combined mode. Light/dark native button previews use synthetic fixture amounts; these are offscreen previews, not screenshots of the live system menu bar. Actual status-item compositing and live clicks remain unverified because the native UI connector timed out attaching to the accessory app.
+
+The user accepted the live menu bar title after removing the separator, leaving the provider icon followed directly by the amount. This acceptance covers the title appearance; host-hook delivery, sleep/wake and VoiceOver retain their separate verification boundaries above.

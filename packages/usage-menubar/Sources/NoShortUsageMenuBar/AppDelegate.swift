@@ -54,9 +54,8 @@ import UsageCore
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
         if panel.popover.isShown { panel.updateSize() }
-        statusItem?.button?.title = panelModel.statusTitle
+        if let button = statusItem?.button { StatusItemRenderer.apply(to:button,model:panelModel) }
         statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\n\(panelModel.activityLabel)\n\(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
-        statusItem?.button?.setAccessibilityValue(panelModel.statusTitle)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot)
     }
     @objc private func toggleUsagePanel(_ sender: Any?) {

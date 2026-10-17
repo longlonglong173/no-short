@@ -10,6 +10,9 @@ const fixture = async () => {
   const app = await mkdtemp(join(tmpdir(), 'No Short app test '));
   await mkdir(join(app, 'Contents/MacOS'), { recursive: true });
   await mkdir(join(app, 'Contents/Resources/runtime'), { recursive: true });
+  const icons = join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources');
+  await mkdir(icons,{recursive:true});
+  for (const name of ['codex','claude']) await writeFile(join(icons,`${name}.pdf`),'%PDF-1.4\nfixture');
   await writeFile(join(app, 'Contents/MacOS/NoShortUsageMenuBar'), 'executable');
   const info = { CFBundleIdentifier:'dev.noshort.usage.menubar', CFBundleExecutable:'NoShortUsageMenuBar', LSUIElement:true, LSMinimumSystemVersion:'14.0', CFBundleShortVersionString:'0.4.1' };
   await writeFile(join(app, 'Contents/Info.plist'), JSON.stringify(info));
@@ -43,5 +46,14 @@ test('bundle verifier refuses mixed versions and provenance from another runtime
     await expect(verifyLayout(app, 'darwin-arm64', {...manifest,version:'0.0.0'})).rejects.toThrow('version');
     manifest.platforms['darwin-arm64'].binaries.ccusage = sha('other version');
     await expect(verifyLayout(app, 'darwin-arm64', manifest)).rejects.toThrow('provenance');
+  } finally { await rm(app,{recursive:true,force:true}); }
+});
+
+test('bundle verifier rejects an app missing its provider icons', async () => {
+  const {app,manifest} = await fixture();
+  try {
+    await verifyLayout(app,'darwin-arm64',manifest);
+    await rm(join(app,'Contents/Resources/NoShortUsageMenuBar_NoShortUsageMenuBar.bundle/Contents/Resources/claude.pdf'));
+    await expect(verifyLayout(app,'darwin-arm64',manifest)).rejects.toThrow();
   } finally { await rm(app,{recursive:true,force:true}); }
 });

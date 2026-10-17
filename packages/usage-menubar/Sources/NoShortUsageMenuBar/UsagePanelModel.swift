@@ -119,8 +119,8 @@ struct DailyCostPoint: Identifiable {
     var visibleMonth:UsageAggregate? { isAll ? snapshot?.month : providerBreakdown?.month ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.month : nil) }
     private var displayTokens:UsageTokens? { isAll ? visibleToday?.tokens : selectedSession?.tokens }
     var statusTitle: String {
-        if snapshot == nil { return isLoading ? "NS …" : "NS —" }
-        return "NS \(mainCost)" + (isStale ? " ⚠" : "")
+        if snapshot == nil { return isLoading ? "…" : "—" }
+        return mainCost + (isStale ? " ⚠" : "")
     }
     var tokenTooltip: String {
         guard let tokens = displayTokens else { return "Chưa có dữ liệu token" }

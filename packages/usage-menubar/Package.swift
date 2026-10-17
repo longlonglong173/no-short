@@ -5,7 +5,7 @@ let package = Package(
     products: [.executable(name: "NoShortUsageMenuBar", targets: ["NoShortUsageMenuBar"])],
     targets: [
         .target(name: "UsageCore"),
-        .executableTarget(name: "NoShortUsageMenuBar", dependencies: ["UsageCore"]),
+        .executableTarget(name: "NoShortUsageMenuBar", dependencies: ["UsageCore"], resources: [.process("Resources")]),
         .testTarget(name: "UsageCoreTests", dependencies: ["UsageCore", "NoShortUsageMenuBar"], resources: [.copy("Fixtures")])
     ]
 )
