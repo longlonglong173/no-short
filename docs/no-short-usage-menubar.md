@@ -63,7 +63,7 @@ Setting `NO_SHORT_SIGN_IDENTITY` requests Developer ID signing. It must refer to
 | Bundled arm64 worker | Isolated empty-root snapshot passed with no Node/Bun on PATH |
 | GUI launch / duplicate launch | arm64 process stayed running; a second launch exited without a second process |
 | Background reading with Codex panel closed | Live cache advanced and a child report process was observed during an 18-second check |
-| Detail popover light/dark, session list and warning/partial-data layouts | Native hosting-view renders inspected at 400×640 using synthetic fixtures; no clipped controls |
+| Detail popover light/dark, session list and warning/partial-data layouts | Native hosting-view renders inspected at 400-point width using synthetic fixtures; no clipped controls |
 | Live popover clicks, outside-click/Escape, keyboard and VoiceOver | Not directly verified: native UI connector timed out attaching to the accessory app |
 | Login registration / actual login, real sleep/wake | Not exercised on this user's system; unit-tested control/state transitions only |
 | Physical Intel Mac, clean macOS 14 machine, Gatekeeper/notarization | Not verified |
@@ -91,7 +91,7 @@ A native regression sends a synthetic snapshot larger than 600 KB through a real
 
 The left-click menu now presents a SwiftUI/AppKit popover matching the approved reference layout. The status item and large cost follow the selected session; the daily chart and today/month totals remain global and are labeled accordingly. Choosing the session field or **Xem các phiên** opens the searchable session list. **Theo phiên chính gần nhất** returns to automatic selection. Unknown daily prices remain chart gaps, and partial prices use known lower bounds with a note. The gear menu retains source, login-item and quit controls; refresh is available beside it.
 
-The popover uses system light/dark backgrounds, teal cost accents and native transient dismissal behavior. Its logical size is 400×640. Rendering checks cover the normal light/dark layouts, sessions list and a two-line failure notice with partial/unknown chart prices. Under the error state, typography can compress to keep the footer visible. An independent read-only review found no confirmed defects; actual click/focus/VoiceOver and system login behavior remain separate manual acceptance checks.
+The popover uses system light/dark backgrounds, teal cost accents and native transient dismissal behavior. Its normal logical size is 400×632; it grows vertically when a warning or unpriced-day note needs room. Rendering checks cover the normal light/dark layouts, sessions list and a two-line failure notice with partial/unknown chart prices. The popover expands for warnings and unpriced-day notes so their text and footer controls remain visible. An independent read-only review found no confirmed defects; actual click/focus/VoiceOver and system login behavior remain separate manual acceptance checks.
 
 To reproduce the fixture-only PNGs locally:
 
@@ -100,3 +100,7 @@ NO_SHORT_RENDER_DIR="$PWD/.artifacts/usage-menubar/popover-checks" swift test --
 ```
 
 After linking SwiftUI/Charts, cold launching the test worker can exceed 300 ms. The timeout process test now allows 2 seconds for launch/read and a 5-second outer assertion; the app's production read timeout remains 90 seconds. The existing large-POSIX-pipe snapshot regression remains in the Usage suite.
+
+## Footer alignment refinement on 2026-10-18
+
+The sessions, refresh and settings controls now share a 34-point height and an explicit high-contrast enabled style. Disabled refresh remains visually distinct while loading. The settings glyph is centered independently of the native borderless menu's reserved indicator space; its overlay does not intercept clicks. Normal panel height is slightly reduced to tighten the gap above source information. The panel resizes while open if a warning or unpriced-day note appears, preserving complete warning text and the footer. Existing native render checks cover light/dark, sessions and the combined warning/partial-price case.

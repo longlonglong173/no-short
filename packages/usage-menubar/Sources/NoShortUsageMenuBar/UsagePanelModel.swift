@@ -40,6 +40,9 @@ struct DailyCostPoint: Identifiable {
         return snapshot.latestSession
     }
     var selectionMissing: Bool { snapshot != nil && selectedSessionID != nil && selectedSession == nil }
+    var panelHeight: CGFloat {
+        632 + ((notice != nil || isStale || selectionMissing) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
+    }
     var mainCost: String { selectedSession.map { UsagePresentation.money($0.cost) } ?? "—" }
     var selectionLabel: String {
         if selectionMissing { return "Phiên đã chọn không còn dữ liệu" }

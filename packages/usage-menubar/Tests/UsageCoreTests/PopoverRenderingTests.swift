@@ -26,13 +26,13 @@ import SwiftUI
             }
             model.showsSessions = showList
             let host = NSHostingView(rootView: UsagePopoverView(model:model).environment(\.colorScheme,scheme))
-            host.frame = NSRect(x:0,y:0,width:400,height:640)
+            host.frame = NSRect(x:0,y:0,width:400,height:model.panelHeight)
             host.layoutSubtreeIfNeeded()
             // Capture the native SwiftUI view, using synthetic fixture data only.
             let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in:host.bounds))
             host.cacheDisplay(in:host.bounds,to:bitmap)
             XCTAssertGreaterThanOrEqual(bitmap.pixelsWide,400)
-            XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh,640)
+            XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh,Int(model.panelHeight))
             if let dir = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
                 let url = URL(fileURLWithPath:dir)
                 try FileManager.default.createDirectory(at:url,withIntermediateDirectories:true)

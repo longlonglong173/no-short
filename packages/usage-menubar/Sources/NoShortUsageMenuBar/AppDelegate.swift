@@ -44,6 +44,7 @@ import UsageCore
     private func render() {
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date())
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
+        if panel.popover.isShown { panel.updateSize() }
         statusItem?.button?.title = panelModel.statusTitle
         statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\nChi phí phiên: \(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
         statusItem?.button?.setAccessibilityValue(panelModel.statusTitle)

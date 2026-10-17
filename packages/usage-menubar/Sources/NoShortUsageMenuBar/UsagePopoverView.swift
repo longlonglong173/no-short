@@ -12,7 +12,7 @@ struct UsagePopoverView: View {
             if model.showsSessions { sessions } else { dashboard }
         }
         .padding(22)
-        .frame(width: 400, height: 640, alignment: .top)
+        .frame(width: 400, height: model.panelHeight, alignment: .top)
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
     }
@@ -48,6 +48,7 @@ struct UsagePopoverView: View {
                 Label(warning, systemImage: "exclamationmark.circle")
                     .font(.system(size: 11)).foregroundStyle(.orange)
                     .frame(maxWidth: .infinity, alignment: .leading).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true).help(warning)
                     .padding(.bottom, 10)
             }
             VStack(alignment: .leading, spacing: 2) {
@@ -151,10 +152,10 @@ struct UsagePopoverView: View {
         HStack(spacing: 8) {
             Button { model.showsSessions = true } label: {
                 Label("Xem các phiên", systemImage: "list.bullet").font(.system(size: 12))
-                    .frame(maxWidth: .infinity, alignment: .leading).frame(height: 26)
-            }.buttonStyle(.bordered).controlSize(.regular)
-            Button { model.onRefresh?() } label: { Image(systemName: "arrow.clockwise").frame(width: 20, height: 26) }
-                .buttonStyle(.bordered).disabled(model.isLoading).help("Làm mới").accessibilityLabel("Làm mới")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }.buttonStyle(FooterButtonStyle())
+            Button { model.onRefresh?() } label: { Image(systemName: "arrow.clockwise").frame(width: 14, height: 14) }
+                .buttonStyle(FooterButtonStyle()).disabled(model.isLoading).help("Làm mới").accessibilityLabel("Làm mới")
             Menu {
                 Text("Nguồn: \(model.source)")
                 Button("Chọn thư mục log…") { model.onChooseSource?() }
@@ -164,9 +165,14 @@ struct UsagePopoverView: View {
                 if model.loginState == .requiresApproval || model.loginState == .notFound { Button("Mở cài đặt Login Items…") { model.onOpenSettings?() } }
                 Divider()
                 Button("Thoát No Short Usage") { model.onQuit?() }.keyboardShortcut("q")
-            } label: { Image(systemName: "gearshape").frame(width: 20, height: 26) }
-            .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 34, height: 34).contentShape(Rectangle())
-            .background(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.14)))
+            } label: { Color.clear.frame(width: 34, height: 34) }
+            .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 34, height: 34)
+            .background(Color.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.14)))
+            // The native borderless menu reserves indicator space even when hidden.
+            // Draw its icon over the full control to keep the visible glyph centered.
+            .overlay(Image(systemName: "gearshape").font(.system(size: 14)).foregroundStyle(.primary).allowsHitTesting(false))
+            .contentShape(Rectangle())
             .help("Cài đặt").accessibilityLabel("Cài đặt")
         }
     }
@@ -200,5 +206,20 @@ struct UsagePopoverView: View {
             }
             Spacer(minLength: 0)
         }.font(.system(size: 12))
+    }
+}
+
+
+private struct FooterButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(isEnabled ? Color.primary : Color.secondary)
+            .padding(.horizontal, 10)
+            .frame(height: 34)
+            .background(Color.primary.opacity(configuration.isPressed ? 0.11 : 0.055), in: RoundedRectangle(cornerRadius: 6))
+            .overlay(RoundedRectangle(cornerRadius: 6).strokeBorder(Color.primary.opacity(0.14)))
+            .contentShape(RoundedRectangle(cornerRadius: 6))
+            .opacity(isEnabled ? 1 : 0.45)
     }
 }
