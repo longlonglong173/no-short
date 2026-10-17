@@ -27,7 +27,13 @@ public struct UsagePresentation: Sendable {
         let session = s.latestSession.map { ["Phiên: \(cleanTitle($0.title))", "\(money($0.cost)) · \(number($0.tokens.total)) token"] } ?? ["Chưa có phiên chính"]
         let updated = DateFormatter(); updated.locale = Locale(identifier: "vi_VN"); updated.timeZone = TimeZone(identifier: s.timeZone)
         updated.dateFormat = "HH:mm:ss dd/MM/yyyy"
-        let tip = (["No Short Usage · Ước tính tương đương API · USD"] + today + month + session + ["Cập nhật: \(updated.string(from: s.generatedAt)) (\(s.timeZone))"] + (old ? ["⚠ Dữ liệu cũ hoặc không khả dụng"] : [])).joined(separator: "\n")
+        var tooltipLines = ["No Short Usage · Ước tính tương đương API · USD"]
+        tooltipLines.append(contentsOf: today)
+        tooltipLines.append(contentsOf: month)
+        tooltipLines.append(contentsOf: session)
+        tooltipLines.append("Cập nhật: \(updated.string(from: s.generatedAt)) (\(s.timeZone))")
+        if old { tooltipLines.append("⚠ Dữ liệu cũ hoặc không khả dụng") }
+        let tip = tooltipLines.joined(separator: "\n")
         return Self(statusTitle: "NS \(money(s.today.cost))" + (old ? " ⚠" : ""), tooltip: tip, todayLines: today, monthLines: month, sessionLines: session)
     }
     public static func cleanTitle(_ value: String) -> String {
