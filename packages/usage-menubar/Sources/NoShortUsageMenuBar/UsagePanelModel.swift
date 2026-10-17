@@ -28,6 +28,9 @@ struct DailyCostPoint: Identifiable {
         let filter = defaults?.string(forKey:"usageProviderFilter") ?? "codex"
         providerFilter = ["all","codex","claude"].contains(filter) ? filter : "codex"
         selectedSessionID = defaults?.string(forKey:"usagePinnedSession")
+        if let time = defaults?.object(forKey:"usageLastSubmissionAt") as? Double, time.isFinite {
+            lastSubmissionAt = Date(timeIntervalSince1970:time)
+        }
     }
     @Published var showsSessions = false
     @Published var search = ""
@@ -67,8 +70,12 @@ struct DailyCostPoint: Identifiable {
         activityNow = now
         activities = values.filter { now.timeIntervalSince($0.recordedAt) >= -5 && now.timeIntervalSince($0.recordedAt) <= 86_400 }
         let newest = activities.filter { $0.event == .submitted }.max { $0.recordedAt < $1.recordedAt }
+        // Restore the followed conversation, but do not replay a handled prompt
+        // as a new action that overrides a subsequently selected provider filter.
+        if followedActivity == nil { followedActivity = newest }
         if let newest, newest.recordedAt > lastSubmissionAt {
             lastSubmissionAt = newest.recordedAt; followedActivity = newest
+            defaults?.set(newest.recordedAt.timeIntervalSince1970,forKey:"usageLastSubmissionAt")
             if selectedSessionID == nil { providerFilter = newest.provider.rawValue; persist() }
         }
         if let followedActivity, now.timeIntervalSince(followedActivity.recordedAt) > 86_400 { self.followedActivity = nil }

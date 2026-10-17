@@ -35,4 +35,14 @@ final class HookInstallerTests: XCTestCase {
             XCTAssertEqual(try String(contentsOf:config,encoding:.utf8),contents)
         }
     }
+    func testDanglingSettingsSymlinkIsNotReplacedByAnInstallation() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at:dir) }
+        try FileManager.default.createDirectory(at:dir,withIntermediateDirectories:true)
+        let link = dir.appendingPathComponent("settings.json"), target = dir.appendingPathComponent("missing.json")
+        try FileManager.default.createSymbolicLink(at:link,withDestinationURL:target)
+        XCTAssertThrowsError(try HookInstaller(executable:URL(fileURLWithPath:"/app")).install(at:link,provider:.claude))
+        XCTAssertEqual(try? FileManager.default.destinationOfSymbolicLink(atPath:link.path),target.path)
+        XCTAssertFalse(FileManager.default.fileExists(atPath:target.path))
+    }
 }

@@ -19,6 +19,12 @@ public struct HookInstaller {
         let fm = FileManager.default
         var object: [String:Any] = [:]
         var original: Data?
+        // attributesOfItem inspects the directory entry, including dangling
+        // symlinks that fileExists (which follows the link) reports as missing.
+        if let attributes = try? fm.attributesOfItem(atPath:path.path),
+           attributes[.type] as? FileAttributeType != .typeRegular {
+            throw HookInstallationError.invalidConfiguration
+        }
         if fm.fileExists(atPath:path.path) {
             guard (try fm.attributesOfItem(atPath:path.path))[.type] as? FileAttributeType == .typeRegular else { throw HookInstallationError.invalidConfiguration }
             original = try Data(contentsOf:path)

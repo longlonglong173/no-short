@@ -60,4 +60,17 @@ import XCTest
         XCTAssertEqual(model.mainCost,model.todayCost)
         XCTAssertNil(model.selectedSession)
     }
+    func testRestartPreservesManualFilterUntilAnotherPromptIsSubmitted() throws {
+        let suite = "no-short-filter-test-" + UUID().uuidString, defaults = UserDefaults(suiteName:suite)!
+        defer { defaults.removePersistentDomain(forName:suite) }
+        let past = try event(.claude,"same")
+        let first = UsagePanelModel(defaults:defaults)
+        first.applyActivities([past],now:now)
+        first.setProviderFilter("all")
+        let reopened = UsagePanelModel(defaults:defaults)
+        reopened.applyActivities([past],now:now.addingTimeInterval(1))
+        XCTAssertEqual(reopened.providerFilter,"all")
+        reopened.applyActivities([past,try event(.codex,"next",offset:2)],now:now.addingTimeInterval(2))
+        XCTAssertEqual(reopened.providerFilter,"codex")
+    }
 }
