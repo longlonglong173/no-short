@@ -1,6 +1,6 @@
 # No Short Usage — ứng dụng menu bar macOS
 
-Ngày: 2026-10-18. Trạng thái: chờ người dùng duyệt đặc tả trước khi lập kế hoạch triển khai.
+Ngày: 2026-10-18. Trạng thái: người dùng đã duyệt đặc tả; chuyển sang lập kế hoạch triển khai.
 
 ## Mục tiêu và phạm vi đã thống nhất
 
