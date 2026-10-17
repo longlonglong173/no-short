@@ -5,7 +5,11 @@
   "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
   "type": "module",
   "scripts": {
-    "validate": "node scripts/validate.mjs"
+    "validate": "node scripts/validate.mjs",
+    "test:usage-menubar": "bun packages/usage-menubar/scripts/test.ts",
+    "build:usage-menubar": "bun packages/usage-menubar/scripts/build.ts",
+    "smoke:usage-menubar": "bun packages/usage-menubar/scripts/smoke.ts",
+    "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts"
   },
   "repository": {
     "type": "git",

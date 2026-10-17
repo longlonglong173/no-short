@@ -2,3 +2,5 @@
 node_modules/
 *.log
 
+packages/usage-menubar/.build/
+packages/usage-menubar/.swiftpm/
