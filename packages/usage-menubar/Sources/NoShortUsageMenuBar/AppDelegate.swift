@@ -20,7 +20,7 @@ import UsageCore
         statusItem?.button?.action = #selector(toggleUsagePanel)
         statusItem?.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem?.button?.setAccessibilityLabel("No Short Usage")
-        controller.onChange = { [weak self] in self?.render() }
+        controller.onChange = { @MainActor @Sendable [weak self] in self?.render() }
         menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh() }
         menu.onRefresh = { [weak self] in self?.controller.refresh() }
         menu.onChooseSource = { [weak self] in self?.chooseSource() }
