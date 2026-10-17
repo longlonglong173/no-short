@@ -43,9 +43,9 @@ final class SnapshotClientTests: XCTestCase, @unchecked Sendable {
         let (dir, helper) = try setup("sleep 60 &\necho $! > \"$(dirname \"$0\")/child.pid\"\nwait")
         defer { try? FileManager.default.removeItem(at: dir) }
         let start = Date()
-        do { _ = try await SnapshotClient(workerURL: worker(), helperURL: helper, timeout: .milliseconds(300)).load(source: LogSource(rootsEnvironment: "/tmp")); XCTFail("Expected timeout") }
+        do { _ = try await SnapshotClient(workerURL: worker(), helperURL: helper, timeout: .seconds(2)).load(source: LogSource(rootsEnvironment: "/tmp")); XCTFail("Expected timeout") }
         catch { XCTAssertEqual(error as? SnapshotClientError, .timeout) }
-        XCTAssertLessThan(Date().timeIntervalSince(start), 3)
+        XCTAssertLessThan(Date().timeIntervalSince(start), 5)
         let pid = Int32(try String(contentsOf: dir.appendingPathComponent("child.pid"), encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines))!
         for _ in 0..<50 { if kill(pid, 0) != 0 { break }; try await Task.sleep(for: .milliseconds(20)) }
         XCTAssertNotEqual(kill(pid, 0), 0, "Child process still alive")

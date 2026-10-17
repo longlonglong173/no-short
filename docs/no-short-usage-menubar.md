@@ -14,8 +14,8 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 
 ## Menu and refresh
 
-- The menu bar amount is today's estimate in the snapshot's local timezone. `$2.35` means estimated, `≥$2.35` means some prices are missing, and `—` means pricing/data is unavailable. `…` means the first read is running.
-- Click to see today's input/output/cache read/cache write/total tokens, this month's total, the latest main session, source, update timestamp and any error. Tooltips preserve full values and long session names.
+- The menu bar amount follows the session selected in the detail popover; automatic mode follows the latest main session. Today/month and the seven-day chart show totals across all sessions in the snapshot's local timezone. `$2.35` means estimated, `≥$2.35` means some prices are missing, and `—` means pricing/data is unavailable. `…` means the first read is running.
+- Click to open the detailed popover: choose/search a session, see its estimated cost and Input / Cache / Output tokens, inspect a seven-day daily-cost chart and today/month totals, and access refresh/settings. Cache combines read/write in the compact row; its tooltip preserves both exact values. Right-click retains the quick native menu. An explicit session selection stays fixed until you select another session or return to automatic mode; it resets on app restart or source change.
 - The latest session follows the same selection rule as the panel: prefer a known main session, fall back to an unknown non-subagent session, and never select a subagent by default. It does not identify the focused Codex tab or merge child sessions into parents.
 - Refresh runs every 15 seconds while the app is awake, including when the menu and Codex panel are closed. **Làm mới** also requests a scan; all requests respect the shared 15-second cache TTL and inter-process scan lock.
 - Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
@@ -56,14 +56,15 @@ Setting `NO_SHORT_SIGN_IDENTITY` requests Developer ID signing. It must refer to
 
 | Check | Evidence |
 | --- | --- |
-| Snapshot/model/process/controller/login/menu tests | 24 Swift tests passed locally |
+| Snapshot/model/process/controller/login/menu tests | 30 Swift tests passed locally |
 | Bundle corruption/version/provenance/symlink tests | 2 Bun tests passed locally |
 | Existing Usage behavior | 26 Bun tests, TypeScript check and 7 Playwright tests passed locally |
 | arm64 and x86_64 build | Both app bundles built; nested and whole-bundle signatures verified |
 | Bundled arm64 worker | Isolated empty-root snapshot passed with no Node/Bun on PATH |
 | GUI launch / duplicate launch | arm64 process stayed running; a second launch exited without a second process |
 | Background reading with Codex panel closed | Live cache advanced and a child report process was observed during an 18-second check |
-| Visible status item, live menu, light/dark, keyboard | Not visually verified: native UI connector timed out attaching to the accessory app |
+| Detail popover light/dark, session list and warning/partial-data layouts | Native hosting-view renders inspected at 400×640 using synthetic fixtures; no clipped controls |
+| Live popover clicks, outside-click/Escape, keyboard and VoiceOver | Not directly verified: native UI connector timed out attaching to the accessory app |
 | Login registration / actual login, real sleep/wake | Not exercised on this user's system; unit-tested control/state transitions only |
 | Physical Intel Mac, clean macOS 14 machine, Gatekeeper/notarization | Not verified |
 | GitHub CI / published release | Workflow added; no remote run, push or release performed |
@@ -85,3 +86,17 @@ The tests use synthetic usage fixtures. Local logs/session names are not committ
 A live snapshot exceeded 111 KB, while the native helper could exit after sending only 64 KB to a macOS POSIX stdout pipe. The client received incomplete JSON and displayed `NS —`. The snapshot CLI now writes the complete byte buffer through the stdout file descriptor, handling partial writes and retryable backpressure before returning.
 
 A native regression sends a synthetic snapshot larger than 600 KB through a real POSIX pipe with delayed reading; it failed before the fix and passes with complete byte-for-byte output. It uses the developer machine's `/usr/bin/python3` to create that pipe; Python is not a runtime dependency of the app. The rebuilt app's actual SnapshotClient and cost formatter were also checked against the live snapshot and returned ready data with a numeric USD estimate. Both architecture bundles and ZIPs were rebuilt, and the arm64 app was relaunched. Visible UI confirmation remains separate from these data-path checks.
+
+## Detail popover update on 2026-10-18
+
+The left-click menu now presents a SwiftUI/AppKit popover matching the approved reference layout. The status item and large cost follow the selected session; the daily chart and today/month totals remain global and are labeled accordingly. Choosing the session field or **Xem các phiên** opens the searchable session list. **Theo phiên chính gần nhất** returns to automatic selection. Unknown daily prices remain chart gaps, and partial prices use known lower bounds with a note. The gear menu retains source, login-item and quit controls; refresh is available beside it.
+
+The popover uses system light/dark backgrounds, teal cost accents and native transient dismissal behavior. Its logical size is 400×640. Rendering checks cover the normal light/dark layouts, sessions list and a two-line failure notice with partial/unknown chart prices. Under the error state, typography can compress to keep the footer visible. An independent read-only review found no confirmed defects; actual click/focus/VoiceOver and system login behavior remain separate manual acceptance checks.
+
+To reproduce the fixture-only PNGs locally:
+
+```sh
+NO_SHORT_RENDER_DIR="$PWD/.artifacts/usage-menubar/popover-checks" swift test --package-path packages/usage-menubar --filter PopoverRenderingTests
+```
+
+After linking SwiftUI/Charts, cold launching the test worker can exceed 300 ms. The timeout process test now allows 2 seconds for launch/read and a 5-second outer assertion; the app's production read timeout remains 90 seconds. The existing large-POSIX-pipe snapshot regression remains in the Usage suite.
