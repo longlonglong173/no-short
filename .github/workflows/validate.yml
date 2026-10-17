@@ -69,8 +69,14 @@ jobs:
 
   usage-menubar-macos:
     runs-on: macos-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
+      - name: Verify Swift 6 toolchain
+        run: |
+          xcodebuild -version
+          swift --version
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
