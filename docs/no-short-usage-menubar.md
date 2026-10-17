@@ -58,7 +58,7 @@ Setting `NO_SHORT_SIGN_IDENTITY` requests Developer ID signing. It must refer to
 | --- | --- |
 | Snapshot/model/process/controller/login/menu tests | 24 Swift tests passed locally |
 | Bundle corruption/version/provenance/symlink tests | 2 Bun tests passed locally |
-| Existing Usage behavior | 25 Bun tests, TypeScript check and 7 Playwright tests passed locally |
+| Existing Usage behavior | 26 Bun tests, TypeScript check and 7 Playwright tests passed locally |
 | arm64 and x86_64 build | Both app bundles built; nested and whole-bundle signatures verified |
 | Bundled arm64 worker | Isolated empty-root snapshot passed with no Node/Bun on PATH |
 | GUI launch / duplicate launch | arm64 process stayed running; a second launch exited without a second process |
@@ -79,3 +79,9 @@ The tests use synthetic usage fixtures. Local logs/session names are not committ
 - A separate macOS CI job avoids folding pre-existing uncommitted workflow edits into the feature commit. In the current full workflow, this duplicates the existing runtime build.
 - Integration stays local; no merge, push, public release, automatic installation or automatic login registration was performed.
 - Visual menu acceptance, live login registration/sleep and the other environments listed above remain explicitly unverified. These limits do not replace the recorded unit/process/build checks.
+
+## Cost display regression fixed on 2026-10-18
+
+A live snapshot exceeded 111 KB, while the native helper could exit after sending only 64 KB to a macOS POSIX stdout pipe. The client received incomplete JSON and displayed `NS —`. The snapshot CLI now writes the complete byte buffer through the stdout file descriptor, handling partial writes and retryable backpressure before returning.
+
+A native regression sends a synthetic snapshot larger than 600 KB through a real POSIX pipe with delayed reading; it failed before the fix and passes with complete byte-for-byte output. It uses the developer machine's `/usr/bin/python3` to create that pipe; Python is not a runtime dependency of the app. The rebuilt app's actual SnapshotClient and cost formatter were also checked against the live snapshot and returned ready data with a numeric USD estimate. Both architecture bundles and ZIPs were rebuilt, and the arm64 app was relaunched. Visible UI confirmation remains separate from these data-path checks.
