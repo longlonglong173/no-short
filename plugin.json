@@ -1,8 +1,8 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "no-short",
-  "version": "0.3.4",
-  "description": "Human-first skills for writing cleanup and evidence-based work reports. Built by Long.",
+  "version": "0.4.1",
+  "description": "Human-first writing and reporting skills, with local Codex usage estimates. Built by Long.",
   "author": {
     "name": "Long",
     "url": "https://github.com/longlonglong173"
@@ -18,8 +18,8 @@
     "com.openai": {
       "interface": {
         "displayName": "No Short",
-        "shortDescription": "Human-first agent skills",
-        "longDescription": "Reusable skills for writing cleanup and evidence-based personal work reports. Skills provide guidance and do not replace review of source material or output.",
+        "shortDescription": "Writing skills and local Codex usage",
+        "longDescription": "Writing cleanup and evidence-based work reports, plus a local Codex usage panel on macOS Desktop. Usage costs are API-equivalent estimates, not ChatGPT bills or credits.",
         "developerName": "Long",
         "category": "Productivity",
         "websiteURL": "https://github.com/longlonglong173/no-short",
@@ -27,7 +27,8 @@
         "privacyPolicyURL": "https://github.com/longlonglong173/no-short/blob/main/PRIVACY.md",
         "composerIcon": "./assets/long-mini.png",
         "logo": "./assets/long-mini.png"
-      }
+      },
+      "requires_local_executor": true
     }
   }
 }

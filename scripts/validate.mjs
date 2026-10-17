@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createHash } from "node:crypto";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const errors = [];
@@ -58,6 +59,8 @@ const claudePlugin = readJson(".claude-plugin/plugin.json");
 const claudeMarketplace = readJson(".claude-plugin/marketplace.json");
 const codexMarketplace = readJson(".agents/plugins/marketplace.json");
 const packageJson = readJson("package.json");
+const mcp = readJson("mcp.json");
+const usagePackage = readJson("packages/usage/runtime-manifest.json");
 
 const manifests = [
   ["plugin.json", portable],
@@ -93,6 +96,24 @@ expect(
   portable?.$schema === "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "plugin.json: unsupported or missing Agent Plugins schema"
 );
+
+expect(mcp?.$schema === "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json", "mcp.json: MCP schema is required");
+const usageServer = mcp?.mcpServers?.["no-short-usage"];
+expect(usageServer?.type === "stdio" && usageServer?.command === "sh", "mcp.json: usage must use a portable bare shell command for the local launcher");
+expect(usageServer?.args?.[0] === "${PLUGIN_ROOT}/scripts/launch-usage-mcp.sh", "mcp.json: launcher must be relative to PLUGIN_ROOT");
+expect(portable?.extensions?.["com.openai"]?.requires_local_executor === true, "usage: Desktop local execution must be declared");
+expect(usagePackage?.version === portable?.version && usagePackage?.ccusageVersion === "20.0.34", "usage: plugin/runtime versions and pinned ccusage must match");
+for (const target of ["darwin-arm64", "darwin-x64"]) {
+  const item = usagePackage?.platforms?.[target];
+  expect(/^[0-9a-f]{64}$/.test(item?.sha256 ?? ""), `usage: ${target} archive checksum is required`);
+  expect(item?.url === `https://github.com/longlonglong173/no-short/releases/download/v${portable?.version}/no-short-usage-${target}.tar.gz`, `usage: ${target} must use an exact release URL`);
+  for (const name of ["no-short-usage", "ccusage"]) {
+    const expected = item?.binaries?.[name];
+    expect(/^[0-9a-f]{64}$/.test(expected ?? ""), `usage: ${target}/${name} checksum is required`);
+    const binary = resolve(root, "packages/usage/runtime", target, name);
+    if (existsSync(binary)) expect(createHash("sha256").update(readFileSync(binary)).digest("hex") === expected, `usage: ${target}/${name} differs from its pinned checksum`);
+  }
+}
 
 const claudeEntry = claudeMarketplace?.plugins?.find(
   (plugin) => plugin.name === "no-short"

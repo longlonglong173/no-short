@@ -1,6 +1,11 @@
 .DS_Store
 node_modules/
 *.log
+.artifacts/
+.superpowers/
+packages/usage/dist/
+packages/usage/runtime/
+packages/usage/coverage/
 
 packages/usage-menubar/.build/
 packages/usage-menubar/.swiftpm/

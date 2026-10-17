@@ -2,6 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { existsSync } from 'node:fs';
 import { buildSnapshot } from '../src/adapter';
 import { createReportEnvironment, runReport } from '../src/runner';
 import * as metadata from '../src/metadata';
@@ -12,6 +13,7 @@ const dirs: string[] = [];
 const temp = async () => { const d = await mkdtemp(join(tmpdir(), 'usage-providers-')); dirs.push(d); return d; };
 afterEach(async () => { await Promise.all(dirs.splice(0).map(d => rm(d, { recursive: true, force: true }))); });
 const options = { now: new Date('2026-10-17T05:00:00Z'), timeZone: 'UTC', metadata: new Map(), providers: ['codex', 'claude'] as const };
+const nativeCli = process.env.NO_SHORT_USAGE_CCUSAGE ?? new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
 
 test('mixed providers retain independent session identities, cached tokens and daily totals', () => {
   const report = structuredClone(raw);
@@ -50,7 +52,7 @@ test('Claude metadata reads safe titles and child identities without exporting m
   expect(JSON.stringify([...meta])).not.toContain('PRIVATE_');
 });
 
-test('pinned native CLI reads controlled Claude logs alongside Codex without double-counting cache', async () => {
+test.skipIf(!existsSync(nativeCli))('pinned native CLI reads controlled Claude logs alongside Codex without double-counting cache', async () => {
   const root = await temp(), claude = join(root, 'claude');
   await mkdir(join(root, 'codex/sessions'), { recursive: true });
   await mkdir(join(claude, 'projects/project'), { recursive: true });
@@ -58,8 +60,7 @@ test('pinned native CLI reads controlled Claude logs alongside Codex without dou
     type: 'assistant', timestamp: '2026-10-17T03:00:00Z', sessionId: '22222222-2222-4222-8222-222222222222', requestId: 'request-fixture',
     message: { id: 'message-fixture', role: 'assistant', model: 'claude-sonnet-4-5-20250929', usage: { input_tokens: 100, output_tokens: 10, cache_creation_input_tokens: 20, cache_read_input_tokens: 50 } },
   }) + '\n');
-  const binary = new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
-  const report = await runReport({ binary, roots: [join(root, 'codex')], claudeRoots: [claude], cacheDir: join(root, 'cache'), timeZone: 'UTC', offline: true });
+  const report = await runReport({ binary: nativeCli, roots: [join(root, 'codex')], claudeRoots: [claude], cacheDir: join(root, 'cache'), timeZone: 'UTC', offline: true });
   const snapshot = buildSnapshot(report, options);
   expect(snapshot.sessions).toHaveLength(1);
   expect(snapshot.sessions[0].provider).toBe('claude');
@@ -67,10 +68,9 @@ test('pinned native CLI reads controlled Claude logs alongside Codex without dou
   expect(snapshot.sessions[0].tokens).toEqual({ input: 100, output: 10, cacheRead: 50, cacheWrite: 20, total: 180 });
 }, 15_000);
 
-test('an absent Claude installation leaves Codex readable and reports an empty Claude breakdown', async () => {
+test.skipIf(!existsSync(nativeCli))('an absent Claude installation leaves Codex readable and reports an empty Claude breakdown', async () => {
   const root = await temp(); await mkdir(join(root, 'codex/sessions'), { recursive: true });
-  const binary = new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
-  const snapshot = await createUsageService({ binary, roots:[join(root, 'codex')], claudeRoots:[join(root,'not-installed')], cacheDir:join(root,'cache'), timeZone:'UTC' }).get();
+  const snapshot = await createUsageService({ binary: nativeCli, roots:[join(root, 'codex')], claudeRoots:[join(root,'not-installed')], cacheDir:join(root,'cache'), timeZone:'UTC' }).get();
   expect(snapshot.status).toBe('empty');
   expect(snapshot.providerBreakdowns?.find(p => p.provider === 'claude')?.today.cost.amountUSD).toBe(0);
 });
