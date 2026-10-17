@@ -13,6 +13,10 @@ A collection of reusable skills for Codex, Claude Code, and other AI agents. Bui
 - `no-ai-slop` skill with edit and detection modes
 - `personal-work-report` skill for evidence-based reports from Jira, GitHub, and Slack
 
+## macOS menu bar app
+
+An optional native **No Short Usage.app** keeps local Codex usage visible on the menu bar when the conversation panel is closed. It bundles its runtime, shows API-equivalent USD estimates, and offers an opt-in login item. See [installation, build commands and verification limits](docs/no-short-usage-menubar.md). The companion is a separate local artifact; installing the plugin does not install the app.
+
 ## Available skills
 
 | Skill | Purpose |

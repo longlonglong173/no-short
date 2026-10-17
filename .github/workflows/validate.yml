@@ -24,3 +24,21 @@ jobs:
       - name: Validate repository
         run: npm run validate
 
+
+  usage-menubar-macos:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+      - run: bun install --cwd packages/usage --frozen-lockfile
+      - run: bun run --cwd packages/usage build
+      - run: npm run test:usage-menubar
+      - run: npm run build:usage-menubar
+      - run: npm run smoke:usage-menubar
+      - run: npm run package:usage-menubar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: no-short-usage-menubar-local-builds
+          path: .artifacts/usage-menubar/releases/
