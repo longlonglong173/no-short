@@ -10,12 +10,13 @@ From the repository root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 ```
 
-Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a development-only Usage introduction, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
+Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a Usage release-candidate introduction with native previews, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
 
 ## Content boundaries
 
 - Skill descriptions and commands come from the repository’s published `main` README and skill files.
-- Usage is presented as in development: no public release/download is claimed. Its documentation links to the current `codex/no-short-usage` branch.
+- Usage 0.4.2 is a local release candidate; public app downloads are held until Developer ID, notarization and installation checks pass. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
+- `images/` contains native AppKit renders with synthetic data only, in both themes; these are not live account screenshots. Their provider marks retain their respective owners’ rights (see the repository `NOTICE.md`).
 - The writing edit, prompts and usage visual are illustrative examples, not user data or actual account usage.
 - API-equivalent estimates are distinguished from bills, credits and quota.
 - No analytics or third-party integrations are installed. Stored preferences are the selected language and light/dark theme.
@@ -34,15 +35,19 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=3`, scripts at `?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=4`, `app.js?v=3`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
 ```sh
-node --test website/tests/theme.test.mjs
+node --test website/tests/*.test.mjs
 node --check website/app.js
 node --check website/theme.js
 npm run validate
 ```
 
 `tests/` is excluded from deployment. Verify EN/VI, both themes, installation tab/copy behavior and mobile layouts in the browser before deploying.
+
+## First app release
+
+Keep the pending badge and release wording until verified artifacts actually exist. The owner has held public app distribution pending Developer ID setup. Do not invent download URLs or use development ZIPs. After approved publication, update both languages and exact architecture/checksum links on the home and setup pages; verify them in the browser. See `docs/releases/0.4.2.md`. Website preview deployment from a PR is separate from native-app publication.

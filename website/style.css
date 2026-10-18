@@ -128,7 +128,23 @@ h2 { margin-bottom: 0; font-size: 34px; font-weight: 600; line-height: 1.25; let
 .draft-after p { font-size: 21px; font-weight: 500; line-height: 1.6; margin: 12px 0 0; letter-spacing: -.3px; }
 .edit-notes { display: flex; gap: 8px; padding: 13px 20px; border-top: 1px solid var(--line); font-size: 12px; color: var(--muted); }
 .edit-notes > span:first-child { color: var(--accent); }
-.usage-section { display: grid; grid-template-columns: 1fr 246px; align-items: center; gap: 44px; padding: 30px; background: var(--subtle); border: 1px solid var(--line); border-radius: 12px; }
+.usage-section { display: grid; grid-template-columns: 1fr 280px; align-items: center; gap: 36px 44px; padding: 30px; background: var(--subtle); border: 1px solid var(--line); border-radius: 12px; }
+.usage-features { padding-left: 20px; margin: 18px 0 24px; color: var(--muted); font-size: 14px; }
+.usage-features li { margin-bottom: 10px; }
+.usage-app-preview, .usage-ring-preview { margin: 0; min-width: 0; }
+.usage-app-preview img { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--line); }
+.usage-app-preview figcaption { margin-top: 10px; text-align: center; }
+.usage-ring-preview { grid-column: 1 / -1; }
+.ring-image-strip { overflow-x: auto; }
+.usage-ring-preview img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 9px; }
+.usage-ring-preview figcaption { margin-top: 10px; }
+.preview-light { display: block; }
+.preview-dark { display: none; }
+[data-theme='dark'] .preview-light { display: none; }
+[data-theme='dark'] .preview-dark { display: block; }
+.release-notice { padding: 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--subtle); margin-block: 28px; }
+.privacy-page .release-notice h2 { margin-top: 0; }
+.usage-guide li { color: var(--muted); margin-bottom: 12px; }
 .usage-heading { display: flex; align-items: center; flex-wrap: wrap; gap: 13px; margin-bottom: 16px; }
 .usage-heading h2 { font-size: 28px; letter-spacing: -.6px; }
 .development-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--sage); padding: 4px 8px; background: var(--sage-soft); border-radius: 5px; }
@@ -223,6 +239,8 @@ details a { color: var(--accent); text-decoration: underline; text-underline-off
   .usage-amount { font-size: 40px; }
   .usage-preview-top, .illustration-label { font-size: 12px; }
   .usage-copy .usage-disclaimer { font-size: 12px; }
+  .usage-ring-preview img { min-width: 640px; }
+  .usage-app-preview { width: min(100%, 320px); justify-self: center; }
   .faq-section h2 { font-size: 30px; }
   .site-footer { flex-wrap: wrap; gap: 18px; padding-block: 24px; }
   .footer-credit { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; max-width: 160px; font-size: 12px; }

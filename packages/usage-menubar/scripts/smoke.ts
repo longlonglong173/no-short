@@ -1,5 +1,5 @@
 import { join } from 'node:path';
-import { mkdtemp, rm, mkdir } from 'node:fs/promises';
+import { mkdtemp, rm, mkdir, readFile, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { output, run, manifest, verifyBundle } from './bundle.ts';
 
@@ -24,5 +24,16 @@ for (const platform of ['darwin-arm64','darwin-x64']) {
     const snapshot = JSON.parse(data.slice(marker.length));
     if (snapshot.schemaVersion !== 1 || snapshot.status !== 'empty' || snapshot.sessions.length !== 0 || snapshot.today.cost.amountUSD !== 0) throw new Error('Bundled worker snapshot failed');
     console.log(`${version}; controlled empty-root worker passed without Node/Bun on PATH`);
+    const contextDir=join(temp,'context');
+    const statusLine=Bun.spawn([executable,'--claude-context-statusline'],{
+      cwd:temp,env:{...env,NO_SHORT_USAGE_CONTEXT_DIR:contextDir},stdin:'pipe',stdout:'pipe',stderr:'pipe',
+    });
+    statusLine.stdin.write(JSON.stringify({ session_id:'smoke-main',context_window:{context_window_size:200000,used_percentage:37},prompt:'PRIVATE_PROMPT',transcript_path:'/PRIVATE_PATH' }));
+    statusLine.stdin.end();
+    const [line,stderr,code]=await Promise.all([new Response(statusLine.stdout).text(),new Response(statusLine.stderr).text(),statusLine.exited]);
+    if (code !== 0 || line.trim() !== 'Context 37%' || stderr) throw new Error('Bundled Claude status line failed');
+    const context=await readFile(join(contextDir,'smoke-main.json'),'utf8');
+    if (context.includes('PRIVATE') || JSON.parse(context).usedTokens !== 74000 || (await readdir(contextDir)).length !== 1) throw new Error('Claude context privacy or percentage failed');
+    console.log('Bundled status line collected numeric context only, with system tools on PATH');
   } finally { await rm(temp,{recursive:true,force:true}); }
 }

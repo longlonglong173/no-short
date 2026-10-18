@@ -34,13 +34,17 @@ const vietnamese = {
   'report.description': 'Tổng hợp hoạt động Jira, GitHub hoặc Slack đã kiểm chứng thành báo cáo cá nhân. Giữ liên kết nguồn, đúng trạng thái và ghi rõ điều cần xác nhận.',
   'report.prompt': '“Dùng personal-work-report để tổng hợp hoạt động GitHub của tôi tuần này. Đính kèm nguồn và ghi các việc chưa merge là đang thực hiện.”',
   'report.tag1': 'Kèm liên kết nguồn', 'report.tag2': 'Giữ đúng trạng thái',
-  'usage.eyebrow': 'ĐANG ĐƯỢC PHÁT TRIỂN / 02', 'usage.status': 'Đang phát triển · macOS',
-  'usage.description': 'Xem token cục bộ và chi phí quy đổi theo giá API. Gồm bảng plugin cho Codex và ứng dụng thanh menu macOS tùy chọn cho Codex, Claude Code.',
-  'usage.cta': 'Theo dõi quá trình phát triển',
-  'usage.disclaimer': 'Ước tính không phải hóa đơn thuê bao, số credit hay hạn mức còn lại. Chưa có bản tải công khai.',
+  'usage.eyebrow': 'NO SHORT USAGE', 'usage.status': '0.4.2 · Chuẩn bị phát hành đầu tiên',
+  'usage.description': 'Xem chi phí Codex và Claude Code cục bộ trên thanh menu macOS. Chọn phiên, ghim phiên hoặc theo dõi lần gửi tin mới sau khi kết nối tự động.',
+  'usage.cta': 'Cài đặt & trạng thái phát hành',
+  'usage.disclaimer': 'Context là mức chiếm dụng ước tính, không phải hạn mức thuê bao còn lại. Chi phí không phải hóa đơn hay credit. Chưa mở tải app công khai cho đến khi hoàn tất ký, notarization và kiểm tra phát hành.',
+  'usage.feature1': 'Vòng context 0–100% quanh từng logo. Chưa có dữ liệu thì hiển thị nét đứt.',
+  'usage.feature2': 'Chi phí quy đổi API theo phiên, ngày, tháng và biểu đồ bảy ngày.',
+  'usage.feature3': 'macOS 14+ · Có bản build Apple Silicon và Intel · Không cần DMG, cài runtime hay API key.',
+  'usage.ringsCaption': 'Hai logo. Vòng vẽ động. Mỗi công cụ một tỷ lệ riêng, kể cả trạng thái chưa xác định.',
   'usage.mockSubtitle': 'Thêm góc nhìn về công việc cùng AI.', 'usage.local': 'CỤC BỘ',
   'usage.estimate': 'Chi phí quy đổi API hôm nay', 'usage.logs': 'Từ log trên máy',
-  'usage.sample': 'Dữ liệu minh họa', 'usage.visualCaption': 'Minh họa giao diện · bản đang phát triển',
+  'usage.sample': 'Giao diện app native · Dữ liệu minh họa', 'usage.visualCaption': 'Minh họa giao diện · bản đang phát triển',
   'install.eyebrow': 'BẮT ĐẦU', 'install.title': 'Thêm vào agent của bạn.',
   'install.intro': 'Chọn agent. Cài skill. Bắt đầu với một bản nháp hoặc một tuần công việc cần tổng hợp.',
   'install.step1Title': 'Chọn cách cài', 'install.step1': 'Dùng plugin trong Codex hoặc Claude Code, hay cài các skill bằng Skills CLI.',
@@ -52,7 +56,7 @@ const vietnamese = {
   'faq.q1': 'Agent skill là gì?', 'faq.a1': 'Skill là bộ hướng dẫn để AI agent thực hiện một việc cụ thể. no-short đóng gói hướng dẫn viết và báo cáo cá nhân, kèm manifest plugin tương thích và cấu trúc dùng được với Skills CLI.',
   'faq.q2': 'Có cần kết nối tất cả các dịch vụ không?', 'faq.a2': 'Không. Báo cáo chỉ dùng những nguồn bạn chọn. Có thể chỉ dùng GitHub, không cần Jira hay Slack. Ít nhất một nguồn được chọn phải kết nối thành công và trả về hoạt động có thể kiểm chứng.',
   'faq.q3': 'no-ai-slop có xác định văn bản do AI viết không?', 'faq.a3': 'Không. Chế độ rà soát chỉ ra các kiểu diễn đạt quan sát được và cách cải thiện. Skill không xác định tác giả hay đưa ra tỷ lệ xác suất văn bản do AI viết.',
-  'faq.q4': 'Đã tải được No Short Usage chưa?', 'faq.a4': 'Usage đang được phát triển. Repo có mã nguồn và hướng dẫn build cục bộ, nhưng chưa có bản release tải công khai. Ứng dụng thanh menu là một app macOS riêng; cài các skill viết không đồng thời cài ứng dụng này.',
+  'faq.q4': 'Đã tải được No Short Usage chưa?', 'faq.a4': 'Bản app macOS đầu tiên đang được chuẩn bị. Chưa mở tải công khai cho đến khi hoàn tất ký Developer ID, notarization và kiểm tra phát hành. Bạn có thể build mã nguồn để thử cục bộ. Cài skill hay plugin không đồng thời cài app thanh menu.',
   'faq.q5': 'Góp ý hoặc báo lỗi ở đâu?', 'faq.a5': 'Mở issue trên GitHub, mô tả việc bạn muốn làm và điều đã xảy ra.', 'faq.issue': 'Đến trang issues ↗',
   'closing.title': 'Dành chỗ cho công việc<br>mang dấu ấn của bạn.', 'closing.cta': 'Bắt đầu với no-short',
   'footer.description': 'Công cụ nhỏ. Công việc chỉn chu.', 'footer.built': 'Dự án độc lập của',
@@ -62,7 +66,31 @@ const vietnamese = {
   'privacy.siteTitle': 'Dữ liệu trên website', 'privacy.site': 'Trang không tích hợp công cụ phân tích, quảng cáo hay biểu mẫu thu thập thông tin. Lựa chọn ngôn ngữ và giao diện sáng/tối được lưu trong localStorage của trình duyệt. Font chữ được phục vụ cùng website.',
   'privacy.hostTitle': 'Dịch vụ lưu trữ', 'privacy.host': 'Website được lưu trữ trên Vercel. Khi bạn truy cập, Vercel có thể xử lý dữ liệu kết nối và nhật ký yêu cầu theo chính sách của họ.',
   'privacy.linksTitle': 'Liên kết ra ngoài', 'privacy.links': 'Các liên kết GitHub đưa bạn tới một dịch vụ khác, có chính sách riêng. Việc cài và sử dụng no-short có cách xử lý dữ liệu khác với việc chỉ xem website này.',
-  'privacy.projectLink': 'Đọc chính sách quyền riêng tư của dự án ↗', 'privacy.vercelLink': 'Chính sách Vercel ↗', 'privacy.back': '← Về trang chủ'
+  'privacy.projectLink': 'Đọc chính sách quyền riêng tư của dự án ↗', 'privacy.vercelLink': 'Chính sách Vercel ↗', 'privacy.back': '← Về trang chủ',
+  'guide.eyebrow': 'NO SHORT USAGE · MACOS 14+',
+  'guide.title': 'Usage ngay trên thanh menu.',
+  'guide.intro': 'App native riêng để đọc log Codex và Claude Code trên máy. Không cần plugin no-short, DMG, cài runtime riêng hay API key.',
+  'guide.statusTitle': '0.4.2 · Chưa mở tải công khai',
+  'guide.status': 'Bản local đã được thử trên Apple Silicon. Phát hành công khai đang chờ ký Developer ID, notarization và các kiểm tra cài đặt còn lại. Đã có bản build Intel; chưa kiểm chứng chạy trên máy Intel.',
+  'guide.releases': 'Xem các bản phát hành trên GitHub ↗',
+  'guide.installTitle': 'Khi bản phát hành có sẵn',
+  'guide.install1': 'Trong menu Apple → Giới thiệu về máy Mac này, xem chip. Chọn arm64 cho Apple Silicon (dòng M), hoặc x64 cho Intel.',
+  'guide.install2': 'Tải ZIP đúng kiến trúc và SHA256SUMS từ cùng bản phát hành GitHub. Kiểm tra checksum trước khi mở.',
+  'guide.install3': 'Giải nén ZIP, chuyển No Short Usage.app vào Applications rồi mở. Có thể bật mở cùng macOS trong menu bánh răng.',
+  'guide.contextTitle': 'Hiểu đúng vòng context',
+  'guide.context': 'Vòng ước tính context đang chiếm dụng ở phản hồi được ghi gần nhất. Đây không phải tổng token tích lũy hay hạn mức thuê bao. Nét đứt là chưa xác định, không phải 0%. Chế độ Tất cả có vòng riêng cho từng công cụ.',
+  'guide.claude': 'Để đọc context Claude, chọn “Kết nối context Claude Code…” trong menu bánh răng, rồi tiếp tục dùng Claude Code. Status line tùy chỉnh đang có được giữ nguyên; hướng dẫn tích hợp thủ công nằm trong tài liệu kỹ thuật. Khi chưa nhận dữ liệu, context vẫn chưa xác định.',
+  'guide.trackTitle': 'Chọn hoặc theo dõi phiên',
+  'guide.track': 'Chọn công cụ và phiên, hoặc ghim để giữ nguyên phiên. Tự động theo dõi cần kết nối riêng trong menu bánh răng. Nếu chưa kết nối, app dùng usage mới nhất hiện có; app không nhận biết tab chat bạn đang nhìn.',
+  'guide.privacyTitle': 'Dữ liệu cục bộ và kết nối mạng',
+  'guide.privacy': 'Usage đọc log còn lưu trên máy và lưu thống kê cục bộ. App có thể tải bảng giá model công khai; log và tên phiên không được gửi cho dịch vụ giá hay nhà phát triển. App độc lập không có telemetry gửi về nhà phát triển. Nếu dùng bảng plugin, thống kê có thể được cung cấp cho host cuộc trò chuyện.',
+  'guide.helpTitle': 'Khi thiếu dữ liệu',
+  'guide.help': 'Kiểm tra thư mục log đã chọn và host đã ghi usage chưa. Thiếu giá sẽ hiện chưa xác định; lỗi đọc giữ kết quả cũ kèm cảnh báo. Có thể cập nhật thủ công trong popover. Dùng offline cần có bảng giá được cache từ trước.',
+  'guide.removeTitle': 'Gỡ hoặc cập nhật app',
+  'guide.remove': 'Trước khi gỡ hoặc chuyển app, ngắt tự động theo dõi và context Claude, tắt mở cùng macOS rồi thoát. Để cập nhật, thay app trong Applications. Log, cache, dữ liệu context và bản sao lưu cấu hình vẫn ở trên máy đến khi bạn tự xóa.',
+  'guide.technical': 'Build, status line tùy chỉnh & chi tiết kỹ thuật ↗',
+  'guide.support': 'Báo lỗi trên GitHub ↗',
+  'guide.independent': 'Dự án độc lập của Long. Không liên kết hay được OpenAI hoặc Anthropic bảo trợ. Logo công cụ thuộc chủ sở hữu tương ứng.'
 };
 
 const elements = [...document.querySelectorAll('[data-i18n]')];
@@ -125,11 +153,24 @@ function setLanguage(language, persist = false) {
     element.innerHTML = currentLanguage === 'vi' ? (vietnamese[key] ?? english.get(key)) : english.get(key);
   }
   for (const button of document.querySelectorAll('[data-lang]')) button.setAttribute('aria-pressed', String(button.dataset.lang === currentLanguage));
+  // Keep explicit URL language choices when navigating between local pages.
+  for (const link of document.querySelectorAll('a[href^="/"]')) {
+    const url = new URL(link.getAttribute('href'), location.origin);
+    if (url.origin !== location.origin) continue;
+    url.searchParams.set('lang', currentLanguage);
+    link.setAttribute('href', url.pathname + url.search + url.hash);
+  }
   const privacy = location.pathname.includes('privacy');
-  document.title = privacy
+  const usageGuide = location.pathname.endsWith('/usage.html');
+  document.title = usageGuide
+    ? (currentLanguage === 'vi' ? 'No Short Usage — Cài đặt & trạng thái phát hành' : 'No Short Usage — Setup & release status')
+    : privacy
     ? (currentLanguage === 'vi' ? 'Quyền riêng tư — no-short' : 'Privacy — no-short')
     : (currentLanguage === 'vi' ? 'no-short — Skill thiết thực cho AI agent.' : 'no-short — Practical skills for your AI agent.');
-  if (!privacy) document.querySelector('meta[name="description"]').content = currentLanguage === 'vi'
+  if (usageGuide) document.querySelector('meta[name="description"]').content = currentLanguage === 'vi'
+    ? 'Usage và context cục bộ trên macOS: trạng thái phát hành, cài đặt, kết nối Claude và cách gỡ.'
+    : 'Local usage and context on macOS: release status, installation, Claude setup and removal.';
+  else if (!privacy) document.querySelector('meta[name="description"]').content = currentLanguage === 'vi'
     ? 'Skill viết và báo cáo cho Codex, Claude Code cùng các AI agent. Giữ giọng văn, dựa trên bằng chứng và tìm hiểu công cụ theo dõi usage cục bộ. Dự án của Long.'
     : 'Reusable writing and reporting skills for Codex, Claude Code, and other AI agents. Keep your voice, write from evidence, and explore local usage tools. Built by Long.';
   const mainNav = document.querySelector('.desktop-nav');

@@ -55,7 +55,7 @@ export function useUsage() {
       if (window.parent === window) {
         setError('Mở No Short Usage từ plugin no-short trong Codex Desktop để đọc thống kê.'); setBusy(false); return;
       }
-      app = new App({ name: 'No Short Usage', version: '0.4.1' }, {});
+      app = new App({ name: 'No Short Usage', version: '0.4.2' }, {});
       app.ontoolresult = accept;
       const theme = (context: any) => {
         if (context?.theme) { applyDocumentTheme(context.theme); document.documentElement.dataset.theme = context.theme; }

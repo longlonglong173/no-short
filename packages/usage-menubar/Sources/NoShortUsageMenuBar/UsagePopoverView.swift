@@ -90,6 +90,8 @@ struct UsagePopoverView: View {
                 Divider().frame(height: 34)
                 token("Output", model.outputText)
             }.help(model.tokenTooltip).accessibilityLabel(model.tokenTooltip).padding(.bottom, 18)
+            Text(model.contextLabel).font(.system(size:11)).foregroundStyle(.secondary)
+                .frame(maxWidth:.infinity,alignment:.leading).help(model.contextTooltip).padding(.bottom,14)
             Divider().padding(.bottom, 14)
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
@@ -184,6 +186,9 @@ struct UsagePopoverView: View {
                 Button("Dùng log Codex mặc định") { model.onResetSource?() }
                 Button("Chọn thư mục log Claude Code…") { model.onChooseClaudeSource?() }
                 Button("Dùng log Claude Code mặc định") { model.onResetClaudeSource?() }
+                Divider()
+                Button("Kết nối context Claude Code…") { model.onConnectClaudeContext?() }
+                Button("Ngắt context Claude Code") { model.onRemoveClaudeContext?() }
                 Divider()
                 Button("Kết nối tự theo dõi chat…") { model.onInstallHooks?() }
                 Button("Gỡ hooks theo dõi chat") { model.onRemoveHooks?() }

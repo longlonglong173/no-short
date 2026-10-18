@@ -6,6 +6,11 @@ Amounts are **estimated API-equivalent USD costs**, not ChatGPT charges, credits
 
 ## Install and open
 
+**0.4.2 is currently a local release candidate. Public downloads are held**
+pending Developer ID signing, notarization and the device/installation checks
+in the [first-release record](releases/0.4.2.md). Do not distribute the ad-hoc
+development ZIPs as a verified release.
+
 Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
 Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
@@ -33,7 +38,7 @@ The folder picker rejects names containing commas because the engine uses commas
 
 **Mở cùng macOS** is off until you enable it in the menu. This uses Apple's main-app login-item service, not a separate daemon or LaunchAgent. The checkbox reflects the system's actual state. A mixed checkbox means macOS requires approval; use **Mở cài đặt Login Items…** to inspect the system setting. A failure produces an error instead of a false enabled checkbox. Put the app in Applications before registering it, and avoid moving it afterward.
 
-To uninstall, turn off **Mở cùng macOS**, quit the app, and remove it from Applications. If the app is no longer available, remove/disable its entry in System Settings → General → Login Items. Removing the companion does not remove the plugin or Codex logs. Optional source preferences use the `dev.noshort.usage.menubar` UserDefaults domain; usage snapshots remain in the shared `~/Library/Caches/no-short/usage` cache.
+Before uninstalling or moving the app, disconnect automatic tracking and Claude context in the gear menu, turn off **Mở cùng macOS**, quit, and then remove it from Applications. If the app is no longer available, remove/disable its entry in System Settings → General → Login Items. Removing the companion does not remove the plugin or Codex logs. Optional source preferences use the `dev.noshort.usage.menubar` UserDefaults domain; usage snapshots remain in the shared `~/Library/Caches/no-short/usage` cache.
 
 ## Development
 
@@ -145,3 +150,74 @@ CI selects Xcode 16.2 for Swift 6 on macOS 14. Packaging accepts both flat and s
 Verification: 45 Swift tests, 3 bundle-layout tests and 31 Usage tests passed locally. Tests exercise the actual status button through automatic provider changes, pinning and combined mode. Light/dark native button previews use synthetic fixture amounts; these are offscreen previews, not screenshots of the live system menu bar. Actual status-item compositing and live clicks remain unverified because the native UI connector timed out attaching to the accessory app.
 
 The user accepted the live menu bar title after removing the separator, leaving the provider icon followed directly by the amount. This acceptance covers the title appearance; host-hook delivery, sleep/wake and VoiceOver retain their separate verification boundaries above.
+
+
+## Dynamic context rings — local 0.4.2
+
+The menu bar draws one 22-point vector ring around each provider logo. It uses
+the same two bundled vector marks; there are no 202 generated production images.
+A clockwise fill shows estimated **context used**, rounded to 0–100%. An empty
+solid track means a measured 0%; a dashed track means unknown/unavailable context.
+Stale cost snapshots also suppress the ring value. Costs beside the icon remain
+API-equivalent estimates. In **Tất cả**, Codex and Claude have separate rings;
+percentages are not added together.
+
+Codex reads at most the final 512 KiB of the selected session's uncompressed log,
+on a background actor, and uses `last_token_usage.total_tokens` with the reported
+`model_context_window`. Cumulative billing tokens are not used. Compaction clears
+the prior value until another token record arrives. A missing, compressed or
+unreadable log stays unknown. Selection/source changes discard late reads from
+the prior session. The selected session's context appears in the popover and
+accessibility/hover text. It is a latest-response estimate, not a subscription
+quota, exact host indicator or promise that compaction will wait until 100%.
+
+For Claude Code, open the gear menu and choose **Kết nối context Claude Code…**.
+The app installs its own `statusLine` command only when that setting is empty or
+already owned by Usage. Existing custom status lines are preserved and reported
+rather than overwritten. The collector receives the documented
+`context_window.context_window_size` and `used_percentage`; it does not infer a
+limit from the model name, which can be wrong for extended/custom models.
+The command displays `Context N%` in Claude's terminal and writes only session ID,
+used/limit values and timestamp under
+`~/Library/Application Support/no-short/usage/context`, with directory/file
+permissions 0700/0600. Cleanup keeps the current session and up to 511 other
+recent context records. Evicted sessions remain unknown until they report again.
+No prompt, response, model payload, transcript path or
+working directory is stored. Until telemetry arrives the Claude ring stays dashed.
+**Ngắt context Claude Code** removes only the owned status-line entry; it leaves
+other settings, backups and collected context files intact.
+
+If you already have a custom status-line script that retains Claude's stdin JSON
+in a variable named `input`, append a numeric-telemetry call to that script while
+keeping its existing output. Substitute the actual installed app path:
+
+```sh
+printf '%s' "$input" | '/path/to/No Short Usage.app/Contents/MacOS/NoShortUsageMenuBar' --claude-context-statusline >/dev/null
+```
+
+The setup operation saves an existing settings file as
+`settings.json.no-short-context-backup` before its first change. Nothing connects,
+changes Claude settings, or registers a login item just by launching the app.
+Status-line timing and fields: [Claude Code documentation](https://code.claude.com/docs/en/statusline).
+
+Development ring previews use synthetic 0/25/50/75/100/unknown values:
+
+```sh
+NO_SHORT_RENDER_DIR="$PWD/.artifacts/usage-menubar/context-preview" swift test --package-path packages/usage-menubar --filter StatusItemRenderingTests
+```
+
+Local verification for 0.4.2 (2026-10-18): 57 Swift tests, 4 packaging/signature
+tests, 31 Usage tests, 7 browser tests, repository validation and strict Claude
+plugin validation passed. Review identified an ownership check that could claim
+a composed custom Claude status-line command; a failing regression test preceded
+the fix, and only the exact app-generated command is now considered owned.
+Both macOS architectures build and pass structure/signature verification; the
+Apple Silicon bundled worker and numeric-only status-line collector pass with
+Node/Bun absent from PATH. Native UI inspection of the running Apple Silicon app
+confirmed the selected real Codex session shows context against its reported
+475K-token window and updates alongside costs. Offscreen light/dark ring previews
+cover 0/25/50/75/100/unknown; those previews use synthetic data.
+
+Live Claude status-line delivery, physical Intel execution, VoiceOver and
+sleep/wake integration remain separate unverified checks. Local ZIPs use ad-hoc
+development signatures, are not notarized, and have not been publicly published.

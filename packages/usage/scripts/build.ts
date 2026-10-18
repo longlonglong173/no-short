@@ -5,7 +5,7 @@ import lock from '../ccusage-lock.json';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
-const version = '0.4.1';
+const version = '0.4.2';
 const output = join(root, '.artifacts/usage/releases');
 const runtimeRoot = join(usage, 'runtime');
 await mkdir(output, { recursive: true });
@@ -25,7 +25,7 @@ for (const name of ['@modelcontextprotocol/server', '@modelcontextprotocol/core'
 }
 for (const [label, url] of [
   ['Bun 1.3.13', 'https://raw.githubusercontent.com/oven-sh/bun/bun-v1.3.13/LICENSE.md'],
-  ['ccusage 20.0.34', 'https://raw.githubusercontent.com/ccusage/ccusage/main/LICENSE'],
+  ['ccusage 20.0.34', 'https://raw.githubusercontent.com/ccusage/ccusage/d7555844929ad76ec97a113d1d51c31de92bee35/LICENSE'],
 ]) {
   const r = await fetch(url); if (!r.ok) throw new Error(`License download failed: ${label}`);
   notices += `\n\n${label}\n${await r.text()}\n`;
