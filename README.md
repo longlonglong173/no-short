@@ -8,7 +8,7 @@ Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charg
 
 ## Download the macOS app
 
-[Download for Apple Silicon — multilingual experimental v0.4.2](https://github.com/longlonglong173/no-short/releases/download/v0.4.2/no-short-usage-menubar-0.4.2-darwin-arm64-multilingual-experimental.zip)
+[Download for Apple Silicon — multi-source experimental v0.4.2](https://github.com/longlonglong173/no-short/releases/download/v0.4.2/NoShortUsage-0.4.2-arm64.zip)
 
 Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 
@@ -16,7 +16,7 @@ Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not avail
 2. Quit any older running copy and move **No Short Usage.app** to **Applications**.
 3. Open the app and click its menu bar icon.
 
-This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The owner tested the released ZIP locally; installation on other downloaded/quarantined Macs remains unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.4.2.md).
+This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The package passed local build, signature and runtime checks; installation on other downloaded/quarantined Macs and live source-editor interactions remain unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.4.2.md).
 
 ## Features
 

@@ -1,4 +1,7 @@
 const vietnamese = {
+  'download.update': 'Bản mới: hỗ trợ nhiều thư mục log cho Codex và Claude Code.',
+  'guide.sourcesTitle': 'Dùng nhiều thư mục log',
+  'guide.sources': 'Trong ⚙, chọn thư mục log Codex hoặc Claude Code. Thêm một hay nhiều thư mục home chứa sessions (Codex) hoặc projects (Claude), hoặc bỏ nguồn khỏi danh sách. Kiểm tra lỗi ở từng đường dẫn rồi bấm Lưu. Mọi nguồn phải hợp lệ; Hủy giữ cấu hình cũ. Đường dẫn và bí danh trùng được gộp lại. Bỏ nguồn không xóa nhật ký. Dùng nguồn mặc định để bỏ cấu hình riêng của công cụ đó.',
   "usage.contextTitle": "Biết khi nào context chạm ngưỡng",
   "usage.trackGuide": "Cách chọn và theo dõi phiên ↗",
   "usage.overview": "Xem chi phí ước tính theo phiên, ngày và tháng. App đọc nhật ký sử dụng trên Mac, không cần khóa API.",
@@ -148,6 +151,9 @@ const vietnamese = {
 };
 
 const chinese = {
+  'download.update': '最新构建：支持为 Codex 和 Claude Code 配置多个日志文件夹。',
+  'guide.sourcesTitle': '使用多个日志文件夹',
+  'guide.sources': '在 ⚙ 中选择 Codex 或 Claude Code 日志文件夹。添加一个或多个包含 sessions（Codex）或 projects（Claude）的主目录，或从列表中移除来源。检查每个路径旁的错误后保存。所有来源必须有效；取消将保留原有设置。重复路径和别名会合并。移除来源不会删除日志。使用默认来源可清除该工具的自定义配置。',
   "usage.contextTitle": "了解上下文何时达到阈值",
   "usage.trackGuide": "如何选择和跟踪会话 ↗",
   "usage.overview": "按会话、天和月查看预估费用。应用读取 Mac 上的使用日志，无需 API 密钥。",
