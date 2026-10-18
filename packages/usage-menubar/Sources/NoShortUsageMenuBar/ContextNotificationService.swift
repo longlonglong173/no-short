@@ -8,11 +8,18 @@ import UserNotifications
         center.delegate = self
     }
     func authorize() async throws -> Bool {
-        let settings = await center.notificationSettings()
-        if settings.authorizationStatus == .notDetermined {
+        // Xcode 16.2's SDK does not mark UNNotificationSettings Sendable.
+        // Read it inside the callback and move only its scalar status to MainActor.
+        let rawStatus: Int = await withCheckedContinuation { continuation in
+            center.getNotificationSettings { settings in
+                continuation.resume(returning:settings.authorizationStatus.rawValue)
+            }
+        }
+        let status = UNAuthorizationStatus(rawValue:rawStatus)
+        if status == .notDetermined {
             return try await center.requestAuthorization(options:[.alert,.sound])
         }
-        return settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional
+        return status == .authorized || status == .provisional
     }
     func send(_ alert: UsagePanelModel.ContextAlert) async throws {
         let content = UNMutableNotificationContent()
