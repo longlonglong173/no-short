@@ -1,54 +1,26 @@
-# Contributing to no-short
+# Contributing to No Short Usage
 
-Thanks for helping improve `no-short`.
-
-## Skill requirements
-
-- Put each skill in `skills/<skill-name>/`.
-- Use lowercase letters, digits, and hyphens for the folder and frontmatter `name`.
-- Keep the name under 64 characters and make the folder name match the skill name.
-- Write a specific `description` that says what the skill does and when it should be used.
-- Keep shared workflow guidance in `SKILL.md`; move conditional detail to focused files under `references/`.
-- Use `scripts/` only for repeatable logic that benefits from deterministic execution.
-- Use `assets/` only for files intended to be copied or adapted into outputs.
-- Keep instructions provider-neutral unless a product-specific behavior is essential.
-- Do not include secrets, personal paths, generated caches, or unfinished scaffold text.
+This repository contains the usage engine, Codex MCP panel, native macOS app and product website. Reusable skill work belongs in [no-short-skills](https://github.com/longlonglong173/no-short-skills).
 
 ## Before opening a pull request
 
-Run:
-
-```bash
+```sh
+bun install --cwd packages/usage --frozen-lockfile
 npm run validate
-claude plugin validate .
+npm test
+npm run typecheck:usage
 ```
 
-Also test the changed skill with at least one realistic request. Record what was tested and distinguish local validation from successful behavior inside an actual agent session.
+For native app changes run `npm run test:usage-menubar`, then the build and smoke checks documented in [the native guide](docs/no-short-usage-menubar.md). Website changes require `node --check website/app.js`, `node --test website/tests/*.test.mjs` and a browser check of EN/VI, light/dark and mobile layouts.
 
-## Versioning
+For packaging changes run `npm run package:usage` after building the required runtimes. Test Codex discovery from a clean temporary profile. Distinguish protocol/browser checks from rendering inside the actual host, and local builds from installation on another Mac.
 
-The three plugin manifests must keep the same `name`, `version`, and `description`:
+## Compatibility and versioning
 
-- `plugin.json`
-- `.claude-plugin/plugin.json`
-- `.claude-plugin/marketplace.json`
+Keep `plugin.json`, `package.json`, `packages/usage/package.json` and `packages/usage/runtime-manifest.json` versions synchronized. Keep exact runtime URLs/checksums and the existing `no-short` plugin/marketplace identity unless a migration is explicitly planned. Website/content changes alone do not replace already published binary assets.
 
-Use semantic versioning for releases. A release that only adds or improves skills can usually be backward-compatible; breaking changes to skill behavior or installation paths require a major version decision.
+The Usage plugin provides a local MCP server and does not require a `skills/` directory or a Claude skills wrapper. Do not bundle unrelated skills back into its package.
 
-## Public release checklist
+## Release boundaries
 
-- At least one complete, tested skill exists.
-- Installation works from a clean clone or GitHub marketplace source.
-- The README lists the real skill names and examples.
-- A license has been selected and added.
-- Plugin descriptions and publisher metadata are complete.
-- No credential, private URL, or machine-specific path is present.
-
-Original code uses the root MIT license. Preserve third-party notices and the
-provider-mark exclusions in `NOTICE.md`. For the native app, follow the
-[first-release record](docs/releases/0.4.2.md): a passing local build is not a
-signed/notarized public release. The manual preparation workflow produces
-verified candidate artifacts and never publishes them. Do not distribute
-ad-hoc ZIPs or submit local MCP to the OpenAI directory as part of an ordinary
-skills/website PR.
-
+Use the root MIT license and preserve [third-party notices](NOTICE.md). Follow the [release record](docs/releases/0.4.2.md) before native distribution. Passing tests or cross-compilation is not proof of Apple signing, notarization, clean-Mac acceptance or public-directory eligibility. Release preparation scripts do not publish artifacts. Do not modify old release assets or submit a marketplace update as part of a routine source PR.

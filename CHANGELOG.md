@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Make No Short Usage the primary product; move both unchanged skills and their related Git history to [no-short-skills](https://github.com/longlonglong173/no-short-skills).
+- Give skills independent manifests, installation and validation; remove skills and the Claude skills wrapper from future Usage packages. Keep Usage plugin IDs, runtime version and historical release assets unchanged.
+- Update the bilingual product website, README and [migration instructions](docs/migration-to-no-short-skills.md).
+
 - Fix bundled ccusage attribution by fetching the full MIT license from the
   pinned source file instead of the repository-root symlink. Reject incomplete
   ccusage license downloads during the build.

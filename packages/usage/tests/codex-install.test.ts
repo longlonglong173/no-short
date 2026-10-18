@@ -13,9 +13,10 @@ test.skipIf(!cli)('installed Codex discovers the usage MCP from the packaged plu
   const directory = await mkdtemp(join(tmpdir(), 'no-short-codex-install-')); temporary.push(directory);
   const source = join(directory, 'plugin'); const home = join(directory, 'profile');
   await mkdir(source); await mkdir(home);
-  for (const name of ['plugin.json', 'mcp.json', '.agents', '.claude-plugin', 'skills']) {
+  for (const name of ['plugin.json', 'mcp.json', '.agents']) {
     if (existsSync(join(root, name))) await cp(join(root, name), join(source, name), { recursive: true });
   }
+  expect(existsSync(join(source, 'skills'))).toBe(false);
   async function run(args: string[]) {
     const p = Bun.spawn([cli!, ...args], { cwd: source, env: { ...process.env, CODEX_HOME: home }, stdout: 'pipe', stderr: 'pipe' });
     const [stdout, stderr, code] = await Promise.all([new Response(p.stdout).text(), new Response(p.stderr).text(), p.exited]);
