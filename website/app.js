@@ -1,4 +1,10 @@
 const vietnamese = {
+  "usage.contextTitle": "Biết khi nào context chạm ngưỡng",
+  "usage.trackGuide": "Cách chọn và theo dõi phiên ↗",
+  "usage.overview": "Xem chi phí ước tính theo phiên, ngày và tháng. App đọc nhật ký sử dụng trên Mac, không cần khóa API.",
+  "usage.title": "Theo dõi từng phiên",
+  "hero.installGuide": "Hướng dẫn cài đặt ↗",
+  "hero.costNote": "Chi phí được ước tính theo giá API, không phải hóa đơn hay hạn mức thuê bao còn lại.",
   'download.languages': 'English · Tiếng Việt · 简体中文. Đổi ngôn ngữ app tại ⚙ → Ngôn ngữ.',
   'guide.languageTitle': 'Đổi ngôn ngữ app',
   'guide.language': 'Mở ⚙ → Language / Ngôn ngữ / 语言 rồi chọn English, Tiếng Việt hoặc 简体中文. App lưu lựa chọn này. Nếu không thấy mục đó, hãy thoát bản cũ và mở bản app mới từ Applications.',
@@ -23,7 +29,7 @@ const vietnamese = {
   "privacy.usage": "App thanh menu xử lý nhật ký sử dụng trên máy bạn. Nếu cài thêm plugin MCP, tên, ID và số liệu sử dụng của phiên được chọn sẽ được trả về ChatGPT/Codex và có thể trở thành thông tin đầu vào cho mô hình AI. Danh sách phiên đầy đủ được gửi kèm cho bảng thống kê dưới dạng metadata. Dữ liệu lưu tạm trên máy tồn tại đến khi được thay thế hoặc xóa. Chính sách dự án giải thích ai nhận dữ liệu, thời gian lưu và cách xóa.",
   'privacy.projectLink': 'Đọc chính sách quyền riêng tư của dự án ↗', 'privacy.vercelLink': 'Chính sách Vercel ↗', 'privacy.back': '← Về trang chủ',
   "usage.status": "v0.4.2 · Thử nghiệm",
-  "usage.description": "Context là phần thông tin mô hình AI dùng để trả lời trong phiên. Vòng quanh logo cho biết tỷ lệ ước tính đã dùng so với giới hạn context của mô hình.",
+  "usage.description": "Vòng quanh logo cho biết phiên đang dùng khoảng bao nhiêu phần trăm dung lượng context của mô hình.",
   "usage.cta": "Hướng dẫn sử dụng",
   "usage.disclaimer": "Chi phí là ước tính theo giá API, không phải số tiền bạn thực trả.",
   "usage.feature1": "Xem chi phí theo phiên, ngày và tháng.",
@@ -71,9 +77,9 @@ const vietnamese = {
   "nav.features": "Tính năng",
   "nav.install": "Tải app",
   "hero.eyebrow": "NO SHORT USAGE",
-  "hero.line1": "Chi phí AI ước tính,",
+  "hero.line1": "Codex và Claude Code,",
   "hero.line2": "ngay trên thanh menu.",
-  "hero.description": "Xem chi phí ước tính và mức sử dụng context của Codex, Claude Code trên Mac. Chọn phiên cần theo dõi và đặt ngưỡng cảnh báo.",
+  "hero.description": "Ứng dụng macOS giúp bạn xem chi phí ước tính theo phiên, ngày và tháng. Theo dõi context — phần thông tin AI dùng để trả lời trong phiên — và nhận cảnh báo khi mức sử dụng chạm ngưỡng bạn đặt.",
   "hero.explore": "Tải cho macOS",
   "hero.more": "macOS 14+",
   "faq.q1": "Đây có phải tiền thuê bao thực trả không?",
@@ -142,6 +148,13 @@ const vietnamese = {
 };
 
 const chinese = {
+  "usage.contextTitle": "了解上下文何时达到阈值",
+  "usage.trackGuide": "如何选择和跟踪会话 ↗",
+  "usage.overview": "按会话、天和月查看预估费用。应用读取 Mac 上的使用日志，无需 API 密钥。",
+  "usage.title": "跟踪每个会话",
+  "hero.installGuide": "安装指南 ↗",
+  "hero.costNote": "费用按 API 价格估算，并非实际账单或剩余订阅额度。",
+  "hero.line2": "在菜单栏查看。",
   'download.languages': 'English · Tiếng Việt · 简体中文。在 ⚙ → 语言 中更改应用语言。',
   'guide.languageTitle': '更改应用语言',
   'guide.language': '打开 ⚙ → Language / Ngôn ngữ / 语言，选择 English、Tiếng Việt 或 简体中文。应用会保存选择。如果没有此菜单，请退出旧版本，并从 Applications 打开新版本。',
@@ -165,7 +178,7 @@ const chinese = {
   "privacy.usage": "菜单栏应用在你的电脑上处理日志。如果另行安装 MCP 插件，所选会话的名称、ID 和用量数据会返回给 ChatGPT/Codex，并可能成为 AI 模型的输入。完整会话列表作为元数据随附发送给用量面板。本地缓存会保留，直到被替换或删除。项目隐私政策说明了数据接收方、保留时间和删除方法。",
   'privacy.projectLink': '阅读项目隐私政策 ↗', 'privacy.vercelLink': 'Vercel 隐私政策 ↗', 'privacy.back': '← 返回首页',
   'usage.status': 'v0.4.2 · 实验版',
-  "usage.description": "上下文是 AI 模型在会话中用于回答的信息。标志周围的圆环表示预估已用上下文占模型上下文容量的比例。",
+  "usage.description": "标志周围的圆环显示当前会话大约使用了模型上下文容量的百分之多少。",
   'usage.cta': '使用指南',
   'usage.disclaimer': '费用按 API 价格估算，并非你的实际账单。',
   'usage.feature1': '按会话、天和月查看费用。',
@@ -204,8 +217,8 @@ const chinese = {
   "guide.technicalNote": "应用采用 ad-hoc 签名，尚未通过 Apple 公证。构建版本已在开发者的 Mac 上通过基本检查；通知横幅和在其他 Mac 上的安装尚未验证。源代码构建、状态栏集成和数据处理方式请参阅技术文档。",
   'guide.technical': '技术文档 ↗', 'guide.support': '在 GitHub 上报告问题 ↗',
   'nav.features': '功能', 'nav.install': '下载应用', 'hero.eyebrow': 'NO SHORT USAGE',
-  "hero.line1": "预估 AI 费用，", "hero.line2": "在菜单栏查看。",
-  "hero.description": "在 Mac 上查看 Codex 和 Claude Code 的预估费用及上下文用量。选择要跟踪的会话，设置提醒阈值。",
+  "hero.line1": "Codex 和 Claude Code，",
+  "hero.description": "这款 macOS 应用可按会话、天和月查看预估费用。同时跟踪上下文（AI 在会话中用于回答的信息），并在用量达到你设定的阈值时提醒。",
   'hero.explore': '下载 macOS 版', 'hero.more': 'macOS 14+',
   'faq.q1': '这是实际支付的订阅费用吗？',
   'faq.a1': '不是。费用基于本地日志和公开模型价格表，按 API 价格估算。它并非账单、已扣除的积分或剩余订阅额度。',
@@ -376,3 +389,11 @@ if (siteHeader && typeof ResizeObserver === 'function') {
   updateHeaderOffset();
   new ResizeObserver(updateHeaderOffset).observe(siteHeader);
 }
+
+// Deep links to guide details reveal their content as well as their heading.
+function revealLinkedDetails() {
+  const target = document.getElementById(location.hash.slice(1));
+  if (target?.matches('details')) target.open = true;
+}
+revealLinkedDetails();
+window.addEventListener('hashchange', revealLinkedDetails);

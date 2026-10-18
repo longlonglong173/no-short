@@ -4,12 +4,19 @@ import test from 'node:test';
 
 const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.4.2/no-short-usage-menubar-0.4.2-darwin-arm64-multilingual-experimental.zip';
 for (const page of ['index.html', 'usage.html']) {
-  test(`${page} downloads the multilingual app and explains how to change language`, () => {
+  test(`${page} links directly to the multilingual app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     const downloads = [...html.matchAll(/href="([^"]+\.zip)"/g)].map(match => match[1]);
-    assert.deepEqual(downloads, [expected]);
-    assert.match(html, /data-i18n="download.languages"/);
-    if (page === 'usage.html') assert.match(html, /data-i18n="guide.language"/);
+    assert.deepEqual(downloads, page === 'index.html' ? [expected, expected] : [expected]);
+    if (page === 'index.html') {
+      assert.doesNotMatch(html, /href="#install"/);
+      assert.match(html, /data-i18n="hero.installGuide"/);
+      assert.match(html, /class="download-platform-icon"/);
+      assert.match(html, /aria-describedby="hero-download-support hero-download-status"/);
+    } else {
+      assert.match(html, /data-i18n="download.languages"/);
+      assert.match(html, /data-i18n="guide.language"/);
+    }
   });
 }
 
