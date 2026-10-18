@@ -5,6 +5,18 @@ import Darwin
 @main @MainActor struct Main {
     static func main() {
         let args = CommandLine.arguments
+        if args.contains("--claude-context-statusline") {
+            var input=Data(), buffer=[UInt8](repeating:0,count:16_384)
+            while input.count <= 8_388_608 {
+                let count=Darwin.read(STDIN_FILENO,&buffer,buffer.count)
+                if count <= 0 { break }; input.append(contentsOf:buffer.prefix(count))
+            }
+            if let reading=ContextReading.claudeStatusLine(input) {
+                try? ClaudeContextStore().write(reading)
+                print("Context \(reading.percent)%")
+            } else { print("Context —") }
+            return
+        }
         if args.contains("--install-usage-hooks") || args.contains("--remove-usage-hooks") {
             let executable = URL(fileURLWithPath:CommandLine.arguments[0]).standardizedFileURL
             let installer = HookInstaller(executable:executable)

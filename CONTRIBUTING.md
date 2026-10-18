@@ -44,3 +44,11 @@ Use semantic versioning for releases. A release that only adds or improves skill
 - Plugin descriptions and publisher metadata are complete.
 - No credential, private URL, or machine-specific path is present.
 
+Original code uses the root MIT license. Preserve third-party notices and the
+provider-mark exclusions in `NOTICE.md`. For the native app, follow the
+[first-release record](docs/releases/0.4.2.md): a passing local build is not a
+signed/notarized public release. The manual preparation workflow produces
+verified candidate artifacts and never publishes them. Do not distribute
+ad-hoc ZIPs or submit local MCP to the OpenAI directory as part of an ordinary
+skills/website PR.
+

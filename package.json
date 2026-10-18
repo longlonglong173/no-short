@@ -1,6 +1,6 @@
 {
   "name": "no-short",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "private": true,
   "description": "Human-first writing and reporting skills, with local Codex usage estimates. Built by Long.",
   "type": "module",
@@ -15,7 +15,8 @@
     "test:usage-menubar": "bun packages/usage-menubar/scripts/test.ts",
     "build:usage-menubar": "bun packages/usage-menubar/scripts/build.ts",
     "smoke:usage-menubar": "bun packages/usage-menubar/scripts/smoke.ts",
-    "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts"
+    "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts",
+    "release:usage-menubar": "bun packages/usage-menubar/scripts/release.ts"
   },
   "repository": {
     "type": "git",

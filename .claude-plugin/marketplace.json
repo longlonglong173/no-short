@@ -9,7 +9,7 @@
       "name": "no-short",
       "source": "./",
       "description": "Human-first writing and reporting skills, with local Codex usage estimates. Built by Long.",
-      "version": "0.4.1"
+      "version": "0.4.2"
     }
   ]
 }

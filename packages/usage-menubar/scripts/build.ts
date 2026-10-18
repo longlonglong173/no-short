@@ -28,6 +28,8 @@ for (const platform of ['darwin-arm64', 'darwin-x64']) {
   const executable = join(contents, 'MacOS/NoShortUsageMenuBar'); await cp(join(bin, 'NoShortUsageMenuBar'), executable); await chmod(executable, 0o755);
   await writeFile(join(contents, 'Info.plist'), (await readFile(join(usage,'Resources/Info.plist'), 'utf8')).replaceAll('__VERSION__', version));
   await cp(icon, join(resources,'AppIcon.icns'));
+  for (const name of ['LICENSE', 'NOTICE.md']) await cp(join(root, name), join(resources, name));
+  await cp(join(usage, 'Resources/PROVIDER_ICONS.md'), join(resources, 'PROVIDER_ICONS.md'));
   await cp(join(bin,'NoShortUsageMenuBar_NoShortUsageMenuBar.bundle'),join(resources,'NoShortUsageMenuBar_NoShortUsageMenuBar.bundle'),{recursive:true});
   const binaries: Record<string,string> = {};
   for (const name of ['no-short-usage','ccusage']) {
