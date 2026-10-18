@@ -129,11 +129,12 @@ struct UsagePopoverView: View {
             footer
         }
     }
-    private var warning: String? {
-        if let connection = model.connectionNotice { return model.l(connection) }
-        if model.selectionMissing { return model.l("Phiên đã chọn không còn dữ liệu. Chọn phiên khác để tiếp tục.") }
+    var warning: String? {
+        // Data problems take precedence over retained setup/connection feedback.
         if let notice = model.notice { return model.l(notice) }
-        return model.isStale ? model.l("Dữ liệu cũ · đang chờ cập nhật") : nil
+        if model.selectionMissing { return model.l("Phiên đã chọn không còn dữ liệu. Chọn phiên khác để tiếp tục.") }
+        if model.isStale { return model.l("Dữ liệu cũ · đang chờ cập nhật") }
+        return model.connectionNotice.map { model.l($0) }
     }
     private func token(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 5) {
