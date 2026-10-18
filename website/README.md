@@ -10,12 +10,12 @@ From the repository root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 ```
 
-Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a Usage release-candidate introduction with native previews, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
+Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a Usage source-release introduction with native previews, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
 
 ## Content boundaries
 
 - Skill descriptions and commands come from the repository’s published `main` README and skill files.
-- Usage 0.4.2 is a published source-only pre-release, linked directly on the home and setup pages. GitHub source archives require a developer build; ready-to-run app downloads are held until Developer ID, notarization and installation checks pass. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
+- Usage 0.4.2 is a published source-only release, linked directly on the home and setup pages. GitHub source archives require a developer build; ready-to-run app downloads are held until Developer ID, notarization and installation checks pass. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
 - `images/` contains native AppKit renders with synthetic data only, in both themes; these are not live account screenshots. Their provider marks retain their respective owners’ rights (see the repository `NOTICE.md`).
 - The writing edit, prompts and usage visual are illustrative examples, not user data or actual account usage.
 - API-equivalent estimates are distinguished from bills, credits and quota.
@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=4`, `app.js?v=4`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=4`, `app.js?v=5`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -50,4 +50,4 @@ npm run validate
 
 ## First app release
 
-Keep source-only pre-release wording until verified app artifacts actually exist. The owner has held public app distribution pending Developer ID setup. Do not invent download URLs or use development ZIPs. After approved app-binary publication, update both languages and exact architecture/checksum links on the home and setup pages; verify them in the browser. See `docs/releases/0.4.2.md`. Website preview deployment from a PR is separate from native-app publication.
+Keep source-only release wording until verified app artifacts actually exist. The owner has held public app distribution pending Developer ID setup. Do not invent download URLs or use development ZIPs. After approved app-binary publication, update both languages and exact architecture/checksum links on the home and setup pages; verify them in the browser. See `docs/releases/0.4.2.md`. Website preview deployment from a PR is separate from native-app publication.
