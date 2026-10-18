@@ -2,7 +2,7 @@
 
 Effective date: October 18, 2026
 
-`no-short` includes reusable instruction-based skills and an optional local Codex usage panel. It does not operate a developer-hosted data collection backend, use tracking cookies, or send user data to the developer.
+`no-short` provides No Short Usage: a native macOS menu bar app and an optional local Codex usage panel. It does not operate a developer-hosted data collection backend, use tracking cookies, or send user data to the developer.
 
 When enabled, the local MCP helper reads retained Codex logs and the session-name index. ccusage computes token usage and estimated API-equivalent cost. A local cache stores session names/IDs, tokens, models, dates and estimates, not prompts or messages. Session titles can still be private. Neither the helper nor the panel modifies Codex logs.
 
@@ -22,7 +22,7 @@ The context-ring feature reads a bounded tail of the selected Codex log locally 
 
 Before deleting the companion, use its settings to remove tracking hooks, disconnect Claude context and disable opening at login. Hook removal leaves other handlers and backups intact. Deleting the app does not delete logs, cache, activity records, host backups or UserDefaults preferences; these local files/preferences can be removed separately after stopping the app and plugin.
 
-The skills may guide a user or agent to work with files, connected services, or websites that the user has chosen to use. Those services process data under their own terms and privacy policies. Review a skill and any connected-service permissions before use.
+Reusable writing and reporting skills are maintained separately in `no-short-skills`, with their own privacy policy: https://github.com/longlonglong173/no-short-skills/blob/main/PRIVACY.md.
 
 If you contact the project through a GitHub issue, the information you choose to include is processed by GitHub and may be visible according to that repository's settings. Do not include secrets or sensitive personal information in an issue.
 

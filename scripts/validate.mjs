@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -27,36 +27,7 @@ function expect(condition, message) {
   if (!condition) errors.push(message);
 }
 
-function parseFrontmatter(relativePath) {
-  const content = readFileSync(resolve(root, relativePath), "utf8");
-  const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
-
-  if (!match) {
-    errors.push(`${relativePath}: missing YAML frontmatter`);
-    return null;
-  }
-
-  const fields = {};
-  for (const line of match[1].split(/\r?\n/)) {
-    const field = line.match(/^([A-Za-z][A-Za-z0-9_-]*):\s*(.+?)\s*$/);
-    if (!field) continue;
-
-    let value = field[2];
-    if (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
-    ) {
-      value = value.slice(1, -1);
-    }
-    fields[field[1]] = value;
-  }
-
-  return { content, fields };
-}
-
 const portable = readJson("plugin.json");
-const claudePlugin = readJson(".claude-plugin/plugin.json");
-const claudeMarketplace = readJson(".claude-plugin/marketplace.json");
 const codexMarketplace = readJson(".agents/plugins/marketplace.json");
 const packageJson = readJson("package.json");
 const mcp = readJson("mcp.json");
@@ -64,7 +35,6 @@ const usagePackage = readJson("packages/usage/runtime-manifest.json");
 
 const manifests = [
   ["plugin.json", portable],
-  [".claude-plugin/plugin.json", claudePlugin],
   ["package.json", packageJson]
 ];
 
@@ -81,11 +51,10 @@ for (const [path, manifest] of manifests) {
   );
 }
 
-if (portable && claudePlugin && packageJson) {
+if (portable && packageJson) {
   for (const field of ["name", "version", "description"]) {
     const values = new Set([
       portable[field],
-      claudePlugin[field],
       packageJson[field]
     ]);
     expect(values.size === 1, `manifests: ${field} must stay in sync`);
@@ -115,20 +84,6 @@ for (const target of ["darwin-arm64", "darwin-x64"]) {
   }
 }
 
-const claudeEntry = claudeMarketplace?.plugins?.find(
-  (plugin) => plugin.name === "no-short"
-);
-expect(Boolean(claudeEntry), ".claude-plugin/marketplace.json: no-short entry is missing");
-expect(claudeEntry?.source === "./", ".claude-plugin/marketplace.json: source must be \"./\"");
-expect(
-  claudeMarketplace?.name === "no-short",
-  ".claude-plugin/marketplace.json: marketplace name must be \"no-short\""
-);
-expect(
-  claudeEntry?.version === portable?.version,
-  ".claude-plugin/marketplace.json: version must match plugin.json"
-);
-
 const codexEntry = codexMarketplace?.plugins?.find(
   (plugin) => plugin.name === "no-short"
 );
@@ -146,46 +101,10 @@ expect(
   ".agents/plugins/marketplace.json: category is required"
 );
 
-const skillsDirectory = resolve(root, "skills");
-expect(existsSync(skillsDirectory), "skills/: directory is missing");
-
-let skillCount = 0;
-if (existsSync(skillsDirectory)) {
-  const entries = readdirSync(skillsDirectory, { withFileTypes: true });
-
-  for (const entry of entries) {
-    if (!entry.isDirectory() || entry.name.startsWith(".")) continue;
-
-    const relativePath = `skills/${entry.name}/SKILL.md`;
-    if (!existsSync(resolve(root, relativePath))) {
-      errors.push(`${relativePath}: file is missing`);
-      continue;
-    }
-
-    skillCount += 1;
-    const parsed = parseFrontmatter(relativePath);
-    if (!parsed) continue;
-
-    const { content, fields } = parsed;
-    expect(
-      /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(entry.name) && entry.name.length < 64,
-      `${relativePath}: folder name must be kebab-case and shorter than 64 characters`
-    );
-    expect(fields.name === entry.name, `${relativePath}: frontmatter name must match its folder`);
-    expect(
-      typeof fields.description === "string" && fields.description.trim().length >= 20,
-      `${relativePath}: description must be at least 20 characters`
-    );
-    expect(
-      !/\b(TODO|TBD|your skill|replace me)\b/i.test(content),
-      `${relativePath}: unfinished scaffold text found`
-    );
-  }
-}
-
-if (skillCount === 0) {
-  warnings.push("skills/: no skills found; choose and add the first skill before public release");
-}
+expect(!existsSync(resolve(root, "skills")), "skills/: reusable skills belong in no-short-skills, not the Usage package");
+expect(!existsSync(resolve(root, ".claude-plugin")), ".claude-plugin/: the skills wrapper belongs in no-short-skills");
+expect(portable?.extensions?.["com.openai"]?.interface?.displayName === "No Short Usage", "plugin.json: product display name must be No Short Usage");
+expect((portable?.extensions?.["com.openai"]?.interface?.shortDescription?.length ?? 0) <= 30, "plugin.json: shortDescription must be at most 30 characters");
 
 for (const warning of warnings) console.warn(`WARN  ${warning}`);
 
@@ -196,4 +115,4 @@ if (errors.length > 0) {
 }
 
 console.log(`OK    manifests and marketplaces are consistent`);
-console.log(`OK    ${skillCount} skill(s) validated`);
+console.log("OK    Usage MCP/runtime configuration validated; skills are distributed separately");

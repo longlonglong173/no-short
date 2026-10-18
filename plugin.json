@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "no-short",
   "version": "0.4.2",
-  "description": "Human-first writing and reporting skills, with local Codex usage estimates. Built by Long.",
+  "description": "Local Codex and Claude Code usage estimates, with a macOS menu bar app and Codex panel. Built by Long.",
   "author": {
     "name": "Long",
     "url": "https://github.com/longlonglong173"
@@ -10,16 +10,18 @@
   "homepage": "https://github.com/longlonglong173/no-short",
   "repository": "https://github.com/longlonglong173/no-short",
   "keywords": [
-    "agent-skills",
+    "usage",
+    "macos",
     "codex",
-    "claude-code"
+    "claude-code",
+    "mcp"
   ],
   "extensions": {
     "com.openai": {
       "interface": {
-        "displayName": "No Short",
-        "shortDescription": "Writing skills and local usage",
-        "longDescription": "Writing cleanup and evidence-based work reports, plus a local Codex usage panel on macOS Desktop. Usage costs are API-equivalent estimates, not ChatGPT bills or credits.",
+        "displayName": "No Short Usage",
+        "shortDescription": "Local AI usage and context",
+        "longDescription": "Track local Codex and Claude Code usage in the macOS menu bar, with an optional Codex usage panel. Costs are API-equivalent estimates, not subscription bills or credits. Reusable writing and reporting skills are distributed separately as No Short Skills.",
         "developerName": "Long",
         "category": "Productivity",
         "websiteURL": "https://github.com/longlonglong173/no-short",

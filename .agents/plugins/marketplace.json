@@ -1,7 +1,7 @@
 {
   "name": "no-short",
   "interface": {
-    "displayName": "No Short"
+    "displayName": "No Short Usage"
   },
   "plugins": [
     {
@@ -18,4 +18,3 @@
     }
   ]
 }
-

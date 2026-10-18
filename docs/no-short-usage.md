@@ -1,12 +1,12 @@
 # No Short Usage
 
-No Short Usage adds a local Codex usage panel to the existing **no-short** plugin. It estimates API-equivalent USD costs from retained Codex logs using **ccusage 20.0.34**. These amounts are **not** ChatGPT subscription charges, invoices, remaining quota, or credits deducted.
+No Short Usage provides the optional local Codex usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs using **ccusage 20.0.34**. These amounts are **not** ChatGPT subscription charges, invoices, remaining quota, or credits deducted.
 
 ## Requirements and installation
 
 - macOS 14 or newer, Apple Silicon or Intel, with a compatible ChatGPT/Codex Desktop host supporting local MCP Apps.
 - No DMG, separate application, Node/Bun installation, OpenAI API key, cookies, or account tokens are required for runtime users.
-- Install the **complete no-short plugin package**, not just the skills. Extract its ZIP, add that folder as a local marketplace, then install **no-short** from that source. Start a new local chat afterwards.
+- Install the **complete no-short plugin package**, rather than a skills-only package. Extract its ZIP, add that folder as a local marketplace, then install **no-short** from that source. Start a new local chat afterwards.
 
 For a new marketplace installation, the CLI equivalents are:
 
@@ -19,7 +19,7 @@ If `no-short` is already registered from GitHub, point the marketplace at the ex
 
 Open **No Short Usage** from the conversation's plugin panel entrypoint, or ask: “Dùng no-short mở bảng chi phí Codex.” Its tools are `get_usage_dashboard` and `get_session_usage`.
 
-Installing via `npx skills add` installs instruction-based skills only; it does not install the MCP server or its native runtime. The two existing skills remain unchanged. The Claude Code compatibility manifest does not enable the new MCP server.
+Reusable skills are distributed separately in [no-short-skills](https://github.com/longlonglong173/no-short-skills). Installing them via `npx skills add` does not install this MCP server or its runtime. Usage no longer bundles a Claude Code skills wrapper. See the [migration guide](migration-to-no-short-skills.md).
 
 ## Panel behavior
 

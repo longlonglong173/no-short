@@ -1,132 +1,83 @@
-# no-short
+# No Short Usage
 
-A collection of reusable skills for Codex, Claude Code, and other AI agents. Built by Long.
+Track estimated **Codex and Claude Code** costs and context from your macOS menu bar. Built by Long.
 
-`no-short` is a multi-skill repository and installable plugin. It includes writing cleanup, evidence-based personal work reports, and **No Short Usage**, a local Codex usage panel for macOS Desktop.
+`no-short` is the home of No Short Usage: the native app, shared usage engine and optional Codex MCP panel. Writing and work-report skills now live in [no-short-skills](https://github.com/longlonglong173/no-short-skills).
 
-No Short Usage estimates API-equivalent costs using ccusage 20.0.34. These are not ChatGPT bills or credit deductions. Install the complete plugin to use the panel; no separate app, DMG, Node/Bun installation or API key is required. See [installation, development and verification](docs/no-short-usage.md). Source-only runtime downloads require a matching published release; local packages can be tested without publishing.
+Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charges, invoices, remaining quota or deducted credits. Context rings show estimated occupancy, not subscription limits.
 
-## Project status
+## Download the macOS app
 
-- Portable Agent Plugin manifest for Codex and other compatible hosts
-- Claude Code plugin and marketplace metadata
-- Skills CLI-compatible `skills/` layout
-- Dependency-free local validation and GitHub Actions validation
-- `no-ai-slop` skill with edit and detection modes
-- `personal-work-report` skill for evidence-based reports from Jira, GitHub, and Slack
-- Local MCP server and conversation panel for Codex usage on macOS 14+ (Apple Silicon and Intel build targets)
-- Pinned native runtime, checksum-verified launcher and browser/protocol tests
+[Download for Apple Silicon — experimental v0.4.2](https://github.com/longlonglong173/no-short/releases/download/v0.4.2/no-short-usage-menubar-0.4.2-darwin-arm64-context-alerts-experimental.zip)
 
-## macOS menu bar app
+Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 
-An optional native **No Short Usage.app** keeps local **Codex and Claude Code** usage visible on the menu bar when the conversation panel is closed. It bundles its runtime, shows API-equivalent USD estimates and dynamic context rings, and offers an opt-in login item. The companion is independent: installing the plugin or skills does not install the app.
+1. Download and extract the ZIP.
+2. Quit any older running copy and move **No Short Usage.app** to **Applications**.
+3. Open the app and click its menu bar icon.
 
-**An experimental Apple Silicon app ZIP is available in [v0.4.2](https://github.com/longlonglong173/no-short/releases/tag/v0.4.2).** It is ad-hoc signed and **not notarized**; macOS may block its first launch. The owner tested this exact ZIP locally; installation on other downloaded/quarantined Macs remains unverified. Intel app downloads are not provided yet. Developer ID signing/notarization and the [remaining checks](docs/releases/0.4.2.md) still apply to a future notarized distribution. See the [installation/build guide](docs/no-short-usage-menubar.md).
+This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The owner tested the released ZIP locally; installation on other downloaded/quarantined Macs remains unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.4.2.md).
 
-When a verified release is available: choose its `darwin-arm64` ZIP for Apple Silicon or `darwin-x64` ZIP for Intel, verify `SHA256SUMS`, extract, move **No Short Usage.app** to **Applications**, and open it. macOS 14+ is required. No DMG, runtime installation or API key is needed. Claude context and automatic session following are separate opt-in connections in the gear menu; existing custom status lines are preserved. Context is estimated occupancy, not a subscription quota.
+## Features
 
-## Available skills
+- Estimated costs by session, day and month, calculated with pinned ccusage 20.0.34.
+- Separate Codex and Claude Code context rings and configurable context alerts.
+- Session selection and pinning; optional automatic chat tracking and opening at login.
+- Local log processing with no developer-hosted collection backend. Public model pricing may be fetched online.
 
-| Skill | Purpose |
-| --- | --- |
-| [`no-ai-slop`](skills/no-ai-slop/SKILL.md) | Edit writing into clearer, more human prose while preserving personal voice, or flag specific AI-slop patterns without guessing authorship. |
-| [`personal-work-report`](skills/personal-work-report/SKILL.md) | Build personal standup, weekly, sprint, monthly, or custom-period reports from verified Jira, GitHub, and Slack activity. |
+Claude context and automatic session following are separate opt-in connections in the gear menu. Existing custom status lines are preserved. See [PRIVACY.md](PRIVACY.md) for local cache retention, host-visible MCP results and disconnection/removal.
+
+## Optional Codex panel
+
+The `no-short` plugin exposes `get_usage_dashboard` and `get_session_usage` in compatible local Codex Desktop chats. It is installed separately from the app; neither installation installs the other.
+
+For a complete extracted plugin package:
+
+```sh
+codex plugin marketplace add /path/to/extracted/no-short
+codex plugin add no-short@no-short
+```
+
+Start a new chat after installation. If the marketplace is already registered, use the supported marketplace management flow to change its source; do not edit installed caches. Source-only GitHub installs require the exact published runtime archives in the manifest. See [installation, development and verification](docs/no-short-usage.md).
+
+The MCP panel reports selected session metadata and usage to its host, where results may enter model context. The standalone menu bar app does not send snapshots through MCP. The Claude Code skills wrapper moved to the separate skills repository; the Codex Usage plugin retains its existing `no-short` identity.
+
+## Looking for the skills?
+
+Both **no-ai-slop** and **personal-work-report** moved unchanged to [no-short-skills](https://github.com/longlonglong173/no-short-skills), with their references, templates and related Git history.
+
+```sh
+npx skills add longlonglong173/no-short-skills --all
+```
+
+For Codex/Claude plugin installation and migration from earlier bundled versions, see the [migration guide](docs/migration-to-no-short-skills.md). Existing app downloads and old release archives are unchanged.
 
 ## Repository layout
 
 ```text
-.
-├── plugin.json                         Portable Agent Plugin manifest
-├── .agents/plugins/marketplace.json   Codex marketplace catalog
-├── .claude-plugin/
-│   ├── plugin.json                    Claude Code plugin manifest
-│   └── marketplace.json               Claude Code marketplace catalog
-├── assets/long-mini.png               Plugin logo and composer icon
-├── skills/                            One folder per reusable skill
-├── mcp.json                           macOS local usage server
-├── packages/usage/                    Usage engine, MCP server, React panel and release scripts
-├── packages/usage-menubar/            Native macOS companion, context rings and release verification
-├── website/                          Bilingual site and Usage setup guide
-└── scripts/validate.mjs               Repository validation
+packages/usage/            Usage engine, local MCP server, React panel and packaging
+packages/usage-menubar/    Native Swift/AppKit menu bar app and tests
+website/                  Bilingual product website and setup guide
+scripts/                  Usage launcher and repository validation
+.agents/plugins/          Codex marketplace catalog
+plugin.json               Portable Usage plugin manifest
+mcp.json                  Local Usage MCP server
 ```
 
-Each skill will live at `skills/<skill-name>/SKILL.md`. Supporting files may be added under that skill's `scripts/`, `references/`, or `assets/` directory only when the workflow needs them.
+## Development
 
-## Install
-
-### Skills CLI
-
-List the skills available in the repository:
-
-```bash
-npx skills add longlonglong173/no-short --list
-```
-
-Install all published skills for every supported agent:
-
-```bash
-npx skills add longlonglong173/no-short --all
-```
-
-Install one skill for selected agents:
-
-```bash
-npx skills add longlonglong173/no-short --skill no-ai-slop --agent codex claude-code
-npx skills add longlonglong173/no-short --skill personal-work-report --agent codex claude-code
-```
-
-### Claude Code plugin
-
-```text
-/plugin marketplace add longlonglong173/no-short
-/plugin install no-short@no-short
-```
-
-Start a new Claude Code session after installation.
-
-### Codex plugin
-
-Add the GitHub-hosted marketplace:
-
-```bash
-codex plugin marketplace add longlonglong173/no-short
-```
-
-Then open the plugin browser in Codex, select the **No Short** marketplace, and install **no-short**. Start a new chat after installation.
-
-For No Short Usage, use the complete local/release plugin package and open its conversation panel in a local Desktop chat. Installing only skills does not install its runtime. See [No Short Usage](docs/no-short-usage.md) for the no-DMG installation flow and release prerequisites.
-
-## Add a skill
-
-1. Choose a focused, action-oriented kebab-case name.
-2. Create `skills/<skill-name>/SKILL.md` with `name` and `description` YAML frontmatter.
-3. Write provider-neutral instructions unless behavior genuinely applies to only one agent.
-4. Add scripts, references, and assets only when they materially improve the workflow.
-5. Run `npm run validate`.
-6. Test the skill from a clean installation before release.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the repository rules and release checklist.
-
-## Validate
-
-```bash
+```sh
+bun install --cwd packages/usage --frozen-lockfile
 npm run validate
-claude plugin validate .
+npm test
+npm run typecheck:usage
+npm run test:usage-menubar
 ```
 
-The local validator checks manifest consistency, marketplace wiring, and every discovered `SKILL.md`. Claude Code's validator provides an additional product-specific check.
+See [CONTRIBUTING.md](CONTRIBUTING.md), [MCP build/package instructions](docs/no-short-usage.md) and [native app build instructions](docs/no-short-usage-menubar.md). Website checks: `node --test website/tests/*.test.mjs`.
 
 ## Releases and license
 
-Original no-short code is licensed under [MIT](LICENSE). Third-party dependencies,
-fonts and provider marks retain their own rights; see [NOTICE.md](NOTICE.md).
-Changes and release status are recorded in [CHANGELOG.md](CHANGELOG.md).
+Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks retain their own rights. See [NOTICE.md](NOTICE.md), [CHANGELOG.md](CHANGELOG.md) and the [release checklist](docs/releases/0.4.2.md).
 
-The first native app release uses the [0.4.2 release checklist](docs/releases/0.4.2.md).
-GitHub distribution of that independent app is separate from OpenAI Plugin Directory
-submission. Local MCP directory submissions require approved-partner eligibility;
-no public-directory submission or approval is claimed here.
-
-## Security
-
-Review a skill and its bundled scripts before installing it. Skills can guide an agent to read files, run commands, or use connected tools with the same permissions granted to that agent.
+This repository split does not publish a new app binary or change existing release assets. GitHub distribution, Apple signing/notarization and OpenAI Plugin Directory approval are separate processes.
