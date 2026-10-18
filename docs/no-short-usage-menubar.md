@@ -6,10 +6,7 @@ Amounts are **estimated API-equivalent USD costs**, not ChatGPT charges, credits
 
 ## Install and open
 
-**0.4.2 is currently a local release candidate. Public downloads are held**
-pending Developer ID signing, notarization and the device/installation checks
-in the [first-release record](releases/0.4.2.md). Do not distribute the ad-hoc
-development ZIPs as a verified release.
+**An experimental Apple Silicon app is now available in [v0.4.2](https://github.com/longlonglong173/no-short/releases/tag/v0.4.2).** The owner tested and approved the exact ZIP for public distribution. It is ad-hoc signed and **not notarized**, so macOS may block first launch. Download the `darwin-arm64-experimental.zip`, `SHA256SUMS-experimental.txt` and `INSTALL-experimental.txt`; verify the checksum before extracting. No Intel app download is provided. Developer ID/notarization and the [remaining checks](releases/0.4.2.md) are still pending for a future notarized release. See [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -220,4 +217,37 @@ cover 0/25/50/75/100/unknown; those previews use synthetic data.
 
 Live Claude status-line delivery, physical Intel execution, VoiceOver and
 sleep/wake integration remain separate unverified checks. Local ZIPs use ad-hoc
-development signatures, are not notarized, and have not been publicly published.
+development signatures and are not notarized. The owner-approved experimental
+Apple Silicon ZIP was subsequently published separately; see the installation
+notice above. Intel execution remains unverified.
+
+
+## Context threshold alerts — local development
+
+The default threshold is **70%**. Open the panel's gear menu → **Ngưỡng cảnh báo
+context: 70%…**, or use the same item in the right-click menu, and enter an integer
+from 1 to 100. The setting persists across app launches. At or above the threshold,
+the provider logo and its context ring turn red and the panel shows a warning.
+In **Tất cả**, each provider is evaluated separately. Unknown, stale and mismatched
+session readings do not trigger alerts. Threshold comparisons use the underlying
+fraction; the displayed percentage remains rounded.
+
+**Thông báo macOS khi vượt ngưỡng** is enabled by default and can be turned off in
+the gear menu independently of the red icon and panel warning. The app requests
+macOS notification permission when it first needs to send an alert. If permission
+is denied or delivery fails, the panel shows a notice; enable the app under System
+Settings → Notifications. Focus and notification preferences can suppress banners.
+
+A notification is emitted once when a valid reading first reaches the threshold.
+Refreshes, temporary unknown readings, switching away and back, and app restarts
+do not repeat that alert. A measured drop below the threshold rearms it for the
+next crossing, including a drop after compaction. State is stored locally per
+log source, provider and session in UserDefaults, retaining at most 512 entries;
+an evicted entry can notify again. Crossings observed while notifications are
+disabled are consumed, so enabling notifications does not replay them. Only the
+sessions whose context is currently displayed are evaluated.
+
+Native rendering checks cover light/dark warnings and mixed-provider icons. Unit
+tests cover the exact threshold, rearming, unknown data, independent sources and
+providers, persisted state, settings and stale suppression. These checks do not
+prove a macOS notification banner was delivered on a user's machine.
