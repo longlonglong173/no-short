@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=10`, `app.js?v=16`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=10`, `app.js?v=17`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -69,7 +69,7 @@ basic installation instructions. Only link to actual published app assets.
 
 ## Context alerts build (2026-10-18)
 
-The latest Apple Silicon download uses a separate `context-alerts-experimental`
+The previous Apple Silicon download used a separate `context-alerts-experimental`
 asset on the v0.4.2 release. Original assets remain unchanged. Both home and setup
 pages describe the default 70% threshold, red menu bar logo/ring, configurable
 threshold, panel warnings, macOS notification permission and crossing deduplication
@@ -109,3 +109,24 @@ heights without JavaScript. The keyboard skip link stays above the header.
 ## No Short Skills introduction
 
 `/skills.html` introduces the independent `no-short-skills` repository. It reuses the website's typography, EN/VI/简体中文 preferences and theme controls, with two skill cards, an illustrative edit, FAQ and keyboard-accessible Skills CLI/Codex/Claude installation tabs. `skills.js` owns installer interactions; shared `app.js` owns localization and page metadata. Skill instructions remain in the separate skills repository.
+
+## Multilingual download update (2026-10-18)
+
+The home and guide download buttons now point to the distinct published asset
+`no-short-usage-menubar-0.4.2-darwin-arm64-multilingual-experimental.zip` on v0.4.2.
+The older experimental and context-alerts ZIPs remain available for existing links.
+This app adds English/Vietnamese/Simplified Chinese to its gear and right-click
+language menus. The website's language selector and the app's selection are independent.
+The guide explains how to replace an older copy and locate the language menu.
+
+The release includes `INSTALL-multilingual-experimental.txt`,
+`SHA256SUMS-multilingual-experimental.txt` and `SOURCE-multilingual-experimental.patch`.
+The patch reconstructs the native package at merged commit `cc71edd` from v0.4.2;
+the ZIP's executable matches the locally installed, UI-inspected multilingual app.
+It remains ad-hoc signed and unnotarized. Intel execution, clean-machine installation
+and macOS notification banner delivery remain unverified.
+
+`tests/download.test.mjs` prevents either download button from reverting to the
+Vietnamese-only ZIP and requires language instructions alongside the download.
+CI runs all website tests. Before any future download update, publish the exact
+asset, verify its hash and download response, then change both page links together.

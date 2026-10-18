@@ -29,7 +29,7 @@ jobs:
           node --check website/app.js
           node --check website/skills.js
           node --check website/theme.js
-          node --test website/tests/theme.test.mjs
+          node --test website/tests/*.test.mjs
 
   usage:
     runs-on: ubuntu-latest

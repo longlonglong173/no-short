@@ -1,4 +1,7 @@
 const vietnamese = {
+  'download.languages': 'English · Tiếng Việt · 简体中文. Đổi ngôn ngữ app tại ⚙ → Ngôn ngữ.',
+  'guide.languageTitle': 'Đổi ngôn ngữ app',
+  'guide.language': 'Mở ⚙ → Language / Ngôn ngữ / 语言 rồi chọn English, Tiếng Việt hoặc 简体中文. App lưu lựa chọn này. Nếu không thấy mục đó, hãy thoát bản cũ và mở bản app mới từ Applications.',
   'a11y.home': 'Trang chủ no-short', 'a11y.footer': 'Điều hướng cuối trang',
   'a11y.install': 'Cách cài đặt',
   'a11y.previewLight': 'Giao diện No Short Usage sáng với dữ liệu minh họa',
@@ -139,6 +142,9 @@ const vietnamese = {
 };
 
 const chinese = {
+  'download.languages': 'English · Tiếng Việt · 简体中文。在 ⚙ → 语言 中更改应用语言。',
+  'guide.languageTitle': '更改应用语言',
+  'guide.language': '打开 ⚙ → Language / Ngôn ngữ / 语言，选择 English、Tiếng Việt 或 简体中文。应用会保存选择。如果没有此菜单，请退出旧版本，并从 Applications 打开新版本。',
   'a11y.home': 'no-short 首页', 'a11y.footer': '页脚导航',
   'a11y.install': '安装方式',
   'a11y.previewLight': 'No Short Usage 浅色界面预览，使用示例数据',
@@ -180,15 +186,15 @@ const chinese = {
   'guide.context': '各标志周围的圆环表示当前跟踪会话的预估上下文用量。虚线环表示暂无数据。在全部模式下，每个工具都有独立圆环。上下文用量并非订阅额度。',
   'guide.alertTitle': '调整提醒阈值',
   'guide.alerts': '默认情况下，上下文用量达到 70% 时，图标和圆环会变红，面板也会显示提醒。',
-  'guide.alertSettings': '点击图标 → ⚙ → “Ngưỡng cảnh báo context: 70%…”。输入 1 到 100 之间的数字，然后点击 Lưu（保存）。重新启动后仍会保留设置。',
-  'guide.notificationSettings': '在 ⚙ → “Thông báo macOS khi vượt ngưỡng” 中开关通知。应用请求通知权限时请选择允许；专注模式可能会隐藏横幅。',
+  'guide.alertSettings': '点击图标 → ⚙ → “上下文提醒阈值：70%…”。输入 1 到 100 之间的数字，然后点击保存。重新启动后仍会保留设置。',
+  'guide.notificationSettings': '在 ⚙ → “达到阈值时发送 macOS 通知” 中开关通知。应用请求通知权限时请选择允许；专注模式可能会隐藏横幅。',
   'guide.claudeTitle': '连接 Claude Code 上下文',
-  'guide.claude': '在 ⚙ 中选择 “Kết nối context Claude Code…”，然后继续使用 Claude Code 以接收数据。如果你已有自定义状态栏，请查看下方技术文档中的集成说明。',
+  'guide.claude': '在 ⚙ 中选择 “连接 Claude Code 上下文…”，然后继续使用 Claude Code 以接收数据。如果你已有自定义状态栏，请查看下方技术文档中的集成说明。',
   'guide.privacyTitle': 'Mac 上的数据',
   'guide.privacy': '应用读取本地日志，不会将日志或会话名称发送给开发者。应用可能会获取公开的模型价格表以估算费用。',
   'guide.mcpPrivacy': '如果同时使用 MCP 插件，所选会话的名称/ID 和用量总计会返回给 ChatGPT/Codex，并可能进入模型上下文。完整会话列表位于组件元数据中。相关数据适用宿主平台的隐私政策。',
   'guide.moreTitle': '更多详细信息', 'guide.trackTitle': '选择和跟踪会话',
-  'guide.track': '在应用中选择工具和会话；固定会话可保持当前选择。若需自动跟踪新消息，请在 ⚙ 中选择 “Kết nối tự theo dõi chat…”。应用跟踪的是消息提交事件，无法识别你正在查看的聊天标签页。',
+  'guide.track': '在应用中选择工具和会话；固定会话可保持当前选择。若需自动跟踪新消息，请在 ⚙ 中选择 “连接自动聊天跟踪…”。应用跟踪的是消息提交事件，无法识别你正在查看的聊天标签页。',
   'guide.helpTitle': '缺少数据或收不到通知',
   'guide.help': '尝试刷新并检查所选日志文件夹。Claude 上下文需要单独连接。如果看不到通知横幅，请检查 macOS 的通知权限和专注模式。',
   'guide.alertRepeat': '每次达到阈值时通知一次；用量降至阈值以下后再次达到阈值，可再次触发通知。未知或过期的数据不会触发提醒。',
