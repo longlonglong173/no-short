@@ -50,7 +50,20 @@ npm run validate
 
 ## App distribution status
 
-The owner approved public distribution of the exact Apple Silicon ZIP they tested locally. Release assets use an explicit `experimental` suffix. The website must disclose ad-hoc signing, missing Apple notarization and possible first-launch blocking. Do not imply clean-machine/Gatekeeper or Intel verification. The signed-release workflow/checklist remains a separate future milestone.
+The current download is `no-short-usage-menubar-0.4.2-darwin-arm64-multi-source-experimental.zip`
+on the v0.4.2 release. It adds validated source lists per provider and retains
+EN/VI/Simplified Chinese. The source commit and archive checksum are recorded in
+`docs/releases/0.4.2.md`; earlier experimental assets remain available unchanged.
+
+The download update was deployed to production on 2026-10-19 as
+`dpl_3hsnjpHDqrrnSwFp8APe1J6ftLGg`, aliased to `no-short.io.vn`.
+The live Vietnamese home page and guide showed the new ZIP link and multi-source
+instructions in the browser. Local checks covered 13 website tests and 24 browser
+combinations (three languages, two themes, mobile/desktop, home/guide).
+Keep these source changes when merging future `main` deployments so they do not
+restore an older download URL.
+
+The owner requested publication of the current Apple Silicon update after local build, signature and runtime checks. Release assets use an explicit `experimental` suffix. The website must disclose ad-hoc signing, missing Apple notarization and possible first-launch blocking. Do not imply owner UI acceptance, clean-machine/Gatekeeper or Intel verification. The signed-release workflow/checklist remains a separate future milestone.
 
 ## User-facing Usage content
 
