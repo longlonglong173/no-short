@@ -17,7 +17,12 @@ import UserNotifications
         }
         let status = UNAuthorizationStatus(rawValue:rawStatus)
         if status == .notDetermined {
-            return try await center.requestAuthorization(options:[.alert,.sound])
+            return try await withCheckedThrowingContinuation { continuation in
+                center.requestAuthorization(options:[.alert,.sound]) { granted, error in
+                    if let error { continuation.resume(throwing:error) }
+                    else { continuation.resume(returning:granted) }
+                }
+            }
         }
         return status == .authorized || status == .provisional
     }
@@ -27,7 +32,13 @@ import UserNotifications
         content.body = alert.message
         content.sound = .default
         // No prompt, session title or transcript content enters notifications.
-        try await center.add(UNNotificationRequest(identifier:UUID().uuidString,content:content,trigger:nil))
+        let request = UNNotificationRequest(identifier:UUID().uuidString,content:content,trigger:nil)
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
+            center.add(request) { error in
+                if let error { continuation.resume(throwing:error) }
+                else { continuation.resume(returning:()) }
+            }
+        }
     }
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
         completionHandler([.banner,.sound])
