@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Fix bundled ccusage attribution by fetching the full MIT license from the
+  pinned source file instead of the repository-root symlink. Reject incomplete
+  ccusage license downloads during the build.
+- Clarify which session metadata and usage the MCP plugin makes available to
+  the host/model, distinguish the standalone app, and document cache retention
+  and deletion limits in the privacy policy and bilingual website.
+
 ## 0.4.2 — source release and experimental Apple Silicon app
 
 ### Native No Short Usage
