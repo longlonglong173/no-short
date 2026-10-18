@@ -289,3 +289,19 @@ details a { color: var(--accent); text-decoration: underline; text-underline-off
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition: none !important; animation: none !important; }
 }
+
+/* Compact context examples and progressive user-guide details. */
+.context-states { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.context-state { display: flex; gap: 12px; align-items: center; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.context-state svg { flex: 0 0 32px; width: 32px; height: 32px; }
+.context-state strong, .context-state span { display: block; }
+.context-state strong { font-size: 18px; }
+.context-state span { font-size: 12px; color: var(--muted); }
+.context-state.is-warning { color: #b42318; }
+[data-theme='dark'] .context-state.is-warning { color: #ff8a80; }
+.usage-downloads > a.download-ready { display: block; text-decoration: none; }
+.usage-downloads > a.text-link { display: inline-block; margin-top: 14px; }
+.usage-guide details { margin-block: 8px; }
+.usage-guide details p { font-size: 14px; }
+.usage-guide #install { scroll-margin-top: 24px; }
+@media (max-width: 480px) { .context-state { gap: 8px; padding: 12px; } .context-state span { font-size: 11px; } }

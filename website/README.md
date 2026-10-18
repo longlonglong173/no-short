@@ -10,7 +10,7 @@ From the repository root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 ```
 
-Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a Usage source-release introduction with native previews, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
+Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi` or `?lang=en` selects a language; the switch saves the preference locally. The page includes a compact installation card in the hero, two skill cards, a before/after example, a concise Usage introduction with native previews, native FAQ disclosures, and a separate website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
 
 ## Content boundaries
 
@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=9`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=7`, `app.js?v=10`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -52,10 +52,20 @@ npm run validate
 
 The owner approved public distribution of the exact Apple Silicon ZIP they tested locally. Release assets use an explicit `experimental` suffix. The website must disclose ad-hoc signing, missing Apple notarization and possible first-launch blocking. Do not imply clean-machine/Gatekeeper or Intel verification. The signed-release workflow/checklist remains a separate future milestone.
 
-## Download section
+## User-facing Usage content
 
-The home and setup download sections show only the experimental Apple Silicon app and the disabled Intel control, with platform and experimental-build notes. Source ZIP, source patch, release, checksum and installation-note links are omitted from these sections in both EN/VI. The setup page retains its inline installation steps and a separate developer build guide pointing to main. Only enable downloads for actual uploaded assets; never infer an Intel download from a cross-build.
+The home page explains three benefits, shows the app and two illustrative context
+states, and offers one Apple Silicon download plus a user-guide link. Compatibility
+is Mac with M1 or later and macOS 14+; Intel availability is a short note. A single
+practical first-launch warning is shown near the download. API cost estimates
+remain distinct from bills and subscription spending.
 
+The EN/VI user guide prioritizes installation, reading context, changing the alert
+threshold and connecting Claude. Troubleshooting, session following, update/removal,
+and technical/signing details are collapsed by default. Keep privacy and estimate
+limitations visible. Source ZIP, patch, release, checksum and installation-note
+links are not part of the download section; no checksum step is required in the
+basic installation instructions. Only link to actual published app assets.
 
 ## Context alerts build (2026-10-18)
 
