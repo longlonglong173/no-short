@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import UsageCore
 
 @MainActor final class ContextNotificationService: NSObject, UNUserNotificationCenterDelegate {
     private let center = UNUserNotificationCenter.current()
@@ -28,7 +29,7 @@ import UserNotifications
     }
     func send(_ alert: UsagePanelModel.ContextAlert) async throws {
         let content = UNMutableNotificationContent()
-        content.title = "Cảnh báo context · \(alert.provider.title)"
+        content.title = AppLocalization(language: alert.language).text("Cảnh báo context · %@", alert.provider.title)
         content.body = alert.message
         content.sound = .default
         // No prompt, session title or transcript content enters notifications.

@@ -4,6 +4,26 @@ The optional **No Short Usage.app** shows local Codex and Claude Code usage on t
 
 Amounts are **estimated API-equivalent USD costs**, not ChatGPT charges, credits, account balance or remaining quota. Closing Codex does not create new usage: the app can only report logs that Codex has written and retained.
 
+## Interface language
+
+The app supports **English**, **Tiếng Việt** and **简体中文**. On first launch,
+it uses the first supported macOS preferred language, falling back to English.
+Choose **⚙ → Language / Ngôn ngữ / 语言**, or the same submenu in the right-click
+menu, to change it immediately. The choice is stored locally as `usageLanguage`
+and restored on later launches. Vietnamese menu labels elsewhere in this guide
+refer to the corresponding action in your chosen language.
+
+The selection applies to the popover, session browser, menu, app dialogs,
+tooltips, accessibility labels and context notification copy. Existing visible
+notices change with it. Names of sessions, providers, models and log paths stay
+as recorded. Costs stay in USD; changing language does not change calculations,
+pinned sessions, tracking, log sources or alert crossing state. macOS-owned
+permission dialogs and standard system controls follow macOS language settings.
+
+The Codex panel has its own language selector and preference; the app does not
+sync language through a server or shared browser storage.
+
+
 ## Install and open
 
 **An experimental Apple Silicon app is now available in [v0.4.2](https://github.com/longlonglong173/no-short/releases/tag/v0.4.2).** The owner tested and approved the exact ZIP for public distribution. It is ad-hoc signed and **not notarized**, so macOS may block first launch. Download the `darwin-arm64-experimental.zip`, `SHA256SUMS-experimental.txt` and `INSTALL-experimental.txt`; verify the checksum before extracting. No Intel app download is provided. Developer ID/notarization and the [remaining checks](releases/0.4.2.md) are still pending for a future notarized release. See [Apple first-launch guidance](https://support.apple.com/en-us/102445).

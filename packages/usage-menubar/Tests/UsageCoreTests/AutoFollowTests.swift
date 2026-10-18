@@ -8,7 +8,7 @@ import XCTest
         try XCTUnwrap(SessionActivity.parse(JSONSerialization.data(withJSONObject:["session_id":id,"hook_event_name":name,"turn_id":turn]),provider:provider,now:now.addingTimeInterval(offset)))
     }
     func model() throws -> UsagePanelModel {
-        let model = UsagePanelModel()
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
         let snapshot = try fixture { o in
             var sessions = o["sessions"] as! [[String:Any]]
             sessions[2]["provider"] = "codex"; sessions[2]["sessionKey"] = "same"
@@ -49,9 +49,9 @@ import XCTest
     func testSavedPinAndProviderRestoreWithoutDependingOnEventAvailability() throws {
         let suite = "no-short-auto-test-" + UUID().uuidString, defaults = UserDefaults(suiteName:suite)!
         defer { defaults.removePersistentDomain(forName:suite) }
-        let first = UsagePanelModel(defaults:defaults)
+        let first = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         first.setProviderFilter("claude"); first.chooseSession("claude:retained")
-        let second = UsagePanelModel(defaults:defaults)
+        let second = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         XCTAssertEqual(second.providerFilter,"claude"); XCTAssertEqual(second.selectedSessionID,"claude:retained")
     }
     func testAllViewUsesAggregateInsteadOfClaimingOneSessionsCostIsTheTotal() throws {
@@ -64,10 +64,10 @@ import XCTest
         let suite = "no-short-filter-test-" + UUID().uuidString, defaults = UserDefaults(suiteName:suite)!
         defer { defaults.removePersistentDomain(forName:suite) }
         let past = try event(.claude,"same")
-        let first = UsagePanelModel(defaults:defaults)
+        let first = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         first.applyActivities([past],now:now)
         first.setProviderFilter("all")
-        let reopened = UsagePanelModel(defaults:defaults)
+        let reopened = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         reopened.applyActivities([past],now:now.addingTimeInterval(1))
         XCTAssertEqual(reopened.providerFilter,"all")
         reopened.applyActivities([past,try event(.codex,"next",offset:2)],now:now.addingTimeInterval(2))

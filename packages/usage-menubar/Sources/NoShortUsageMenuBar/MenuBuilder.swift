@@ -2,6 +2,12 @@ import AppKit
 import UsageCore
 
 @MainActor final class MenuBuilder: NSObject, NSMenuDelegate {
+    private var threshold = 70
+    private var language: AppLanguage = .vietnamese
+    private var localizedItems: [(NSMenuItem, String)] = []
+    private var languageItems: [NSMenuItem] = []
+    var onLanguageChange: ((AppLanguage) -> Void)?
+    private func l(_ key: String, _ arguments: String...) -> String { AppLocalization(language: language).text(key, arguments: arguments) }
     let menu = NSMenu()
     var onOpen: (() -> Void)?
     var onRefresh: (() -> Void)?
@@ -20,22 +26,34 @@ import UsageCore
     override init() {
         super.init(); menu.autoenablesItems = false; menu.delegate = self
         _ = line("No Short Usage")
-        _ = line("Ước tính tương đương API · USD")
-        _ = line("Không phải hóa đơn hoặc hạn mức ChatGPT")
+        _ = line(l("Ước tính tương đương API · USD"))
+        _ = line(l("Không phải hóa đơn hoặc hạn mức ChatGPT"))
         menu.addItem(.separator())
-        today = (0..<4).map { _ in line("Đang đọc dữ liệu…") }
-        menu.addItem(.separator()); month = [line("Tháng này: —")]
-        menu.addItem(.separator()); session = [line("Phiên: —"), line("—")]
+        today = (0..<4).map { _ in line(l("Đang đọc dữ liệu…")) }
+        menu.addItem(.separator()); month = [line(l("Tháng này: —"))]
+        menu.addItem(.separator()); session = [line(l("Phiên: —")), line("—")]
         menu.addItem(.separator())
-        updated = line("Chưa cập nhật"); sourceItem = line("Nguồn: —"); noticeItem = line("")
+        updated = line(l("Chưa cập nhật")); sourceItem = line(l("Nguồn: —")); noticeItem = line("")
         menu.addItem(.separator())
-        refreshItem = action("Làm mới", #selector(refresh), key: "r")
-        _ = action("Chọn thư mục log…", #selector(chooseSource))
-        _ = action("Dùng nguồn log mặc định", #selector(resetSource))
-        contextAlertItem = action("Ngưỡng cảnh báo context…", #selector(configureContextAlerts))
-        loginItem = action("Mở cùng macOS", #selector(toggleLogin))
-        settingsItem = action("Mở cài đặt Login Items…", #selector(openSettings))
-        menu.addItem(.separator()); _ = action("Thoát No Short Usage", #selector(quit), key: "q")
+        refreshItem = action(l("Làm mới"), #selector(refresh), key: "r")
+        _ = action(l("Chọn thư mục log…"), #selector(chooseSource))
+        _ = action(l("Dùng nguồn log mặc định"), #selector(resetSource))
+        contextAlertItem = action(l("Ngưỡng cảnh báo context…"), #selector(configureContextAlerts))
+        loginItem = action(l("Mở cùng macOS"), #selector(toggleLogin))
+        settingsItem = action(l("Mở cài đặt Login Items…"), #selector(openSettings))
+        menu.addItem(.separator()); _ = action(l("Thoát No Short Usage"), #selector(quit), key: "q")
+        localizedItems = menu.items.compactMap { AppLocalization.catalog[$0.title] == nil ? nil : ($0, $0.title) }
+        let languages = NSMenuItem(title: "Ngôn ngữ", action: nil, keyEquivalent: "")
+        let submenu = NSMenu(); languages.submenu = submenu
+        for value in AppLanguage.allCases {
+            let item = NSMenuItem(title: value.title, action: #selector(changeLanguage(_:)), keyEquivalent: "")
+            item.target = self; item.representedObject = value.rawValue; submenu.addItem(item); languageItems.append(item)
+        }
+        menu.insertItem(languages, at: menu.items.count - 2); localizedItems.append((languages, "Ngôn ngữ"))
+    }
+    @objc private func changeLanguage(_ sender: NSMenuItem) {
+        guard let code = sender.representedObject as? String, let value = AppLanguage(rawValue: code) else { return }
+        onLanguageChange?(value)
     }
     private func line(_ text: String) -> NSMenuItem {
         let item = NSMenuItem(title: text, action: nil, keyEquivalent: "")
@@ -50,29 +68,34 @@ import UsageCore
         item.title = clean.count > limit ? String(clean.prefix(limit)) + "…" : clean
         item.toolTip = clean
     }
-    func update(presentation: UsagePresentation, source: LogSource, isLoading: Bool, notice: String?, loginState: LoginItemState, snapshot: UsageSnapshot?) {
-        for (i, item) in today.enumerated() { put(presentation.todayLines.indices.contains(i) ? presentation.todayLines[i] : (i == 0 ? "Hôm nay: —" : ""), in: item); item.isHidden = i > 0 && presentation.todayLines.isEmpty }
-        put(presentation.monthLines.first ?? "Tháng này: —", in: month[0])
-        for (i, item) in session.enumerated() { put(presentation.sessionLines.indices.contains(i) ? presentation.sessionLines[i] : (i == 0 ? "Chưa có phiên chính" : ""), in: item, limit: i == 0 ? 60 : 80); item.isHidden = i > 0 && presentation.sessionLines.count < 2 }
+    func update(presentation: UsagePresentation, source: LogSource, isLoading: Bool, notice: String?, loginState: LoginItemState, snapshot: UsageSnapshot?, language: AppLanguage = .vietnamese) {
+        self.language = language
+        for (item, key) in localizedItems { item.title = l(key) }
+        for item in languageItems { item.state = (item.representedObject as? String) == language.rawValue ? .on : .off }
+        for (i, item) in today.enumerated() { put(presentation.todayLines.indices.contains(i) ? presentation.todayLines[i] : (i == 0 ? l("Hôm nay: —") : ""), in: item); item.isHidden = i > 0 && presentation.todayLines.isEmpty }
+        put(presentation.monthLines.first ?? l("Tháng này: —"), in: month[0])
+        for (i, item) in session.enumerated() { put(presentation.sessionLines.indices.contains(i) ? presentation.sessionLines[i] : (i == 0 ? l("Chưa có phiên chính") : ""), in: item, limit: i == 0 ? 60 : 80); item.isHidden = i > 0 && presentation.sessionLines.count < 2 }
         if let snapshot {
-            let formatter = DateFormatter(); formatter.locale = Locale(identifier: "vi_VN")
-            formatter.timeZone = TimeZone(identifier: snapshot.timeZone); formatter.dateFormat = "HH:mm:ss dd/MM/yyyy"
-            put("Cập nhật: \(formatter.string(from: snapshot.generatedAt))", in: updated)
-        } else { put("Chưa cập nhật", in: updated) }
-        put("Nguồn: \(source.displayName)", in: sourceItem)
-        let warning = notice ?? (presentation.statusTitle.contains("⚠") ? "⚠ Dữ liệu cũ · đang chờ cập nhật" : "")
+            let formatter = DateFormatter(); formatter.locale = language.locale
+            formatter.timeZone = TimeZone(identifier: snapshot.timeZone); formatter.setLocalizedDateFormatFromTemplate("HHmmssyyyyMMdd")
+            put(l("Cập nhật: %@", String(formatter.string(from: snapshot.generatedAt))), in: updated)
+        } else { put(l("Chưa cập nhật"), in: updated) }
+        put(l("Nguồn: %@", String(source.displayName)), in: sourceItem)
+        let warning = notice.map { l($0) } ?? (presentation.statusTitle.contains("⚠") ? l("⚠ Dữ liệu cũ · đang chờ cập nhật") : "")
         put(warning, in: noticeItem); noticeItem.isHidden = warning.isEmpty
-        refreshItem.title = isLoading ? "Đang cập nhật…" : "Làm mới"; refreshItem.isEnabled = !isLoading
+        refreshItem.title = isLoading ? l("Đang cập nhật…") : l("Làm mới"); refreshItem.isEnabled = !isLoading
         switch loginState {
-        case .enabled: loginItem.state = .on; loginItem.title = "Mở cùng macOS"
-        case .requiresApproval: loginItem.state = .mixed; loginItem.title = "Mở cùng macOS · Cần phê duyệt"
-        case .notRegistered: loginItem.state = .off; loginItem.title = "Mở cùng macOS"
-        case .notFound: loginItem.state = .off; loginItem.title = "Mở cùng macOS · Chưa khả dụng"
+        case .enabled: loginItem.state = .on; loginItem.title = l("Mở cùng macOS")
+        case .requiresApproval: loginItem.state = .mixed; loginItem.title = l("Mở cùng macOS · Cần phê duyệt")
+        case .notRegistered: loginItem.state = .off; loginItem.title = l("Mở cùng macOS")
+        case .notFound: loginItem.state = .off; loginItem.title = l("Mở cùng macOS · Chưa khả dụng")
         }
+        updateContextAlertThreshold(threshold)
         settingsItem.isHidden = loginState != .requiresApproval && loginState != .notFound
     }
     func updateContextAlertThreshold(_ value: Int) {
-        contextAlertItem.title = "Ngưỡng cảnh báo context: \(value)%…"
+        threshold = value
+        contextAlertItem.title = l("Ngưỡng cảnh báo context: %@%…", String(value))
     }
     @objc private func configureContextAlerts() { onConfigureContextAlerts?() }
     func menuWillOpen(_ menu: NSMenu) { onOpen?() }

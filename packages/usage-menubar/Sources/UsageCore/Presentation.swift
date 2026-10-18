@@ -16,23 +16,24 @@ public struct UsagePresentation: Sendable {
         formatter.numberStyle = .decimal; formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: value)) ?? "—"
     }
-    public static func make(snapshot: UsageSnapshot?, stale: Bool, loading: Bool, now: Date) -> Self {
+    public static func make(snapshot: UsageSnapshot?, stale: Bool, loading: Bool, now: Date, language: AppLanguage = .vietnamese) -> Self {
+        func l(_ key: String, _ arguments: String...) -> String { AppLocalization(language: language).text(key, arguments: arguments) }
         guard let s = snapshot else {
-            return Self(statusTitle: loading ? "NS …" : "NS —", tooltip: "No Short Usage · Chưa có dữ liệu", todayLines: [], monthLines: [], sessionLines: [])
+            return Self(statusTitle: loading ? "NS …" : "NS —", tooltip: l("No Short Usage · Chưa có dữ liệu"), todayLines: [], monthLines: [], sessionLines: [])
         }
         let old = stale || s.isStale(at: now)
         let tokens = s.today.tokens
-        let today = ["Hôm nay: \(money(s.today.cost))", "Input: \(number(tokens.input)) · Output: \(number(tokens.output))", "Cache read: \(number(tokens.cacheRead)) · Cache write: \(number(tokens.cacheWrite))", "Tổng token: \(number(tokens.total))"]
-        let month = ["Tháng này: \(money(s.month.cost)) · \(number(s.month.tokens.total)) token"]
-        let session = s.latestSession.map { ["Phiên: \(cleanTitle($0.title))", "\(money($0.cost)) · \(number($0.tokens.total)) token"] } ?? ["Chưa có phiên chính"]
-        let updated = DateFormatter(); updated.locale = Locale(identifier: "vi_VN"); updated.timeZone = TimeZone(identifier: s.timeZone)
-        updated.dateFormat = "HH:mm:ss dd/MM/yyyy"
-        var tooltipLines = ["No Short Usage · Ước tính tương đương API · USD"]
+        let today = [l("Hôm nay: %@", String(money(s.today.cost))), l("Input: %@ · Output: %@", number(tokens.input), number(tokens.output)), l("Cache read: %@ · Cache write: %@", number(tokens.cacheRead), number(tokens.cacheWrite)), l("Tổng token: %@", String(number(tokens.total)))]
+        let month = [l("Tháng này: %@ · %@ token", String(money(s.month.cost)), String(number(s.month.tokens.total)))]
+        let session = s.latestSession.map { [l("Phiên: %@", String(cleanTitle($0.title))), "\(money($0.cost)) · \(number($0.tokens.total)) token"] } ?? [l("Chưa có phiên chính")]
+        let updated = DateFormatter(); updated.locale = language.locale; updated.timeZone = TimeZone(identifier: s.timeZone)
+        updated.setLocalizedDateFormatFromTemplate("HHmmssyyyyMMdd")
+        var tooltipLines = [l("No Short Usage · Ước tính tương đương API · USD")]
         tooltipLines.append(contentsOf: today)
         tooltipLines.append(contentsOf: month)
         tooltipLines.append(contentsOf: session)
-        tooltipLines.append("Cập nhật: \(updated.string(from: s.generatedAt)) (\(s.timeZone))")
-        if old { tooltipLines.append("⚠ Dữ liệu cũ hoặc không khả dụng") }
+        tooltipLines.append(l("Cập nhật: %@ (%@)", String(updated.string(from: s.generatedAt)), String(s.timeZone)))
+        if old { tooltipLines.append(l("⚠ Dữ liệu cũ hoặc không khả dụng")) }
         let tip = tooltipLines.joined(separator: "\n")
         return Self(statusTitle: "NS \(money(s.today.cost))" + (old ? " ⚠" : ""), tooltip: tip, todayLines: today, monthLines: month, sessionLines: session)
     }
