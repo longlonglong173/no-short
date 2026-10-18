@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=7`, `app.js?v=11`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=8`, `app.js?v=12`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -96,3 +96,12 @@ so the metadata declares those actual dimensions and a square summary card. It i
 served from this website, without an external image dependency. The old
 `social.png` remains available for previously cached URLs. Actual preview layout
 and refresh timing are controlled by the sharing platform.
+
+
+## Sticky header
+
+All public pages share a full-width sticky header with an inner content wrapper.
+Its solid background follows the current theme. A ResizeObserver records the
+actual header height for anchor scroll padding, including the two-row mobile
+navigation and language/font changes. CSS provides desktop/mobile fallback
+heights without JavaScript. The keyboard skip link stays above the header.

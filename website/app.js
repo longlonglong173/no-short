@@ -277,3 +277,11 @@ if (language !== 'en' && language !== 'vi') {
   try { language = localStorage.getItem('no-short-language'); } catch { language = 'en'; }
 }
 setLanguage(language);
+
+// Keep in-page targets clear of the sticky header at every responsive height.
+const siteHeader = document.querySelector('.site-header');
+if (siteHeader && typeof ResizeObserver === 'function') {
+  const updateHeaderOffset = () => document.documentElement.style.setProperty('--header-height', `${siteHeader.getBoundingClientRect().height}px`);
+  updateHeaderOffset();
+  new ResizeObserver(updateHeaderOffset).observe(siteHeader);
+}
