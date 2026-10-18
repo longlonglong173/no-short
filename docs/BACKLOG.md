@@ -15,16 +15,18 @@ task khi có yêu cầu của người dùng.
 - **Phụ thuộc:** Không.
 - **Nội dung:** Tách thông báo kết nối thành công khỏi lỗi dữ liệu.
 - **Tiêu chí nghiệm thu:** Thông báo thành công không che lỗi đọc log hoặc cảnh báo dữ liệu cũ. Kiểm tra trường hợp nhiều thông báo xuất hiện đồng thời.
-- **Bằng chứng hoàn thành:** Đổi thứ tự hiển thị trong `UsagePopoverView.warning`: lỗi đọc dữ liệu → phiên không còn dữ liệu → dữ liệu cũ → thông báo kết nối. Giữ thông báo kết nối để hiển thị lại sau khi dữ liệu phục hồi và vẫn cho phép ẩn. Ba test hồi quy trong `PopoverRenderingTests.swift` đã thất bại trước bản sửa (4 assertion), rồi qua sau bản sửa. `npm run test:usage-menubar`: 71 test Swift và 4 test đóng gói qua; `npm test`: 33 test usage qua; `npm run validate` và `git diff --check` qua. Đã render ảnh minh họa trước/sau bằng giao diện SwiftUI với dữ liệu mẫu; đây không phải kiểm chứng giao diện app đang chạy. Chưa cài lại app hoặc phát hành. NS-02 trở đi chưa bắt đầu.
+- **Bằng chứng hoàn thành:** Đổi thứ tự hiển thị trong `UsagePopoverView.warning`: lỗi đọc dữ liệu → phiên không còn dữ liệu → dữ liệu cũ → thông báo kết nối. Giữ thông báo kết nối để hiển thị lại sau khi dữ liệu phục hồi và vẫn cho phép ẩn. Ba test hồi quy trong `PopoverRenderingTests.swift` đã thất bại trước bản sửa (4 assertion), rồi qua sau bản sửa. `npm run test:usage-menubar`: 71 test Swift và 4 test đóng gói qua; `npm test`: 33 test usage qua; `npm run validate` và `git diff --check` qua. Đã render ảnh minh họa trước/sau bằng giao diện SwiftUI với dữ liệu mẫu; đây không phải kiểm chứng giao diện app đang chạy. Chưa cài lại app hoặc phát hành. Đã merge qua PR #18; các task khác theo trạng thái riêng bên dưới.
 
 ### NS-02 — Kiểm tra thư mục nguồn log
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-19)
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không.
 - **Nội dung:** Xác nhận cấu trúc `sessions` của Codex hoặc `projects` của Claude và quyền đọc trước khi lưu lựa chọn.
 - **Tiêu chí nghiệm thu:** Khi nguồn không hợp lệ hoặc không đọc được, giữ nguồn hiện tại và giải thích cách chọn đúng. Kiểm tra thư mục hợp lệ, sai cấu trúc và thiếu quyền đọc cho cả hai provider.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** `LogSourceStore` kiểm tra thư mục home và thư mục con `sessions`/`projects` đúng provider, quyền đọc/truy cập và khả năng liệt kê trước khi ghi lựa chọn. Chọn sai giữ nguyên nguồn; app hiển thị hướng dẫn bằng ba ngôn ngữ và không khởi động lại bộ đọc khi bị từ chối. Thư mục log rỗng hợp lệ; reset và nguồn kế thừa không thay đổi. Test hồi quy đã tái hiện việc nguồn không hợp lệ bị lưu trước bản sửa, rồi qua sau bản sửa. `npm run test:usage-menubar`: 75 test Swift (gồm 6 test nguồn log, kiểm tra quyền POSIX thực tế, không skip) và 4 test đóng gói qua. `npm test`: 33 test usage qua; `npm run validate` và `git diff --check` qua. Chưa kiểm chứng hộp chọn thư mục trên app đang chạy, chưa cài lại app hoặc phát hành. NS-03 trở đi chưa bắt đầu.
+
+- [x] **Mở rộng NS-02 — Nhiều thư mục mỗi provider (2026-10-19):** Cửa sổ danh sách cho phép thêm nhiều thư mục, bỏ từng nguồn, hiển thị lỗi từng dòng và chỉ lưu toàn bộ danh sách hợp lệ. Hủy không ghi cấu hình. Lưu danh sách riêng Codex/Claude, đọc cấu hình một nguồn cũ, loại đường dẫn trùng và symlink cùng nguồn; reset chỉ tác động provider tương ứng. `npm run test:usage-menubar`: 79 test Swift và 4 test đóng gói qua. `npm test`: 34 test usage qua, gồm test chạy ccusage thật với phiên riêng và bản sao Codex/Claude trên hai nguồn. Typecheck, validation và diff check qua. Đã render vùng danh sách bằng dữ liệu mẫu ở ba ngôn ngữ; chưa kiểm chứng thao tác cửa sổ modal trên app đang chạy hoặc cài lại app.
 
 ### NS-03 — Hướng dẫn lần đầu và chẩn đoán kết nối
 
@@ -79,6 +81,7 @@ task khi có yêu cầu của người dùng.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** Không.
 - **Nội dung:** Đo thời gian quét với lịch sử lớn, bổ sung cache theo file thay đổi.
+- **Phát hiện cần khảo sát:** Trong fixture nhiều nguồn, ccusage 20.0.34 có thể gộp sự kiện của hai phiên Codex khác nhau nếu timestamp và số token hoàn toàn giống nhau: hai phiên đều có 110 token nhưng tổng ngày chỉ 110. Fixture với thời điểm riêng cho mỗi phiên và bản sao giữ nguyên timestamp trả đúng tổng 220. Đây là giới hạn quan sát được của bộ đọc hiện tại, chưa được sửa trong phần chọn nhiều nguồn; cần giữ thành ca điều tra riêng khi đánh giá độ tin cậy tổng ngày.
 - **Tiêu chí nghiệm thu:** Ghi số đo trước/sau trên cùng bộ dữ liệu và môi trường. Kiểm tra đổi tên, ghi thêm, xóa và chuyển nguồn; kết quả metadata sau tối ưu phải giữ nguyên, không trả dữ liệu cũ hoặc lẫn nguồn.
 - **Bằng chứng hoàn thành:** Chưa có.
 

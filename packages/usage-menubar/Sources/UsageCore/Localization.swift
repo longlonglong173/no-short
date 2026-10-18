@@ -34,6 +34,16 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Thêm ít nhất một thư mục hoặc dùng nguồn log mặc định trong Cài đặt.": ["Add at least one folder, or use the default log source in Settings.", "请至少添加一个文件夹，或在设置中使用默认日志来源。"],
+        "Quản lý danh sách thư mục. Chỉ lưu khi tất cả nguồn hợp lệ; hủy để giữ cấu hình cũ.": ["Manage the folder list. Save only when every source is valid; cancel to keep your previous settings.", "管理文件夹列表。所有来源有效后才能保存；取消将保留原有设置。"],
+        "Nguồn log Codex": ["Codex log sources", "Codex 日志来源"],
+        "Nguồn log Claude Code": ["Claude Code log sources", "Claude Code 日志来源"],
+        "Bỏ khỏi danh sách": ["Remove from list", "从列表移除"],
+        "Thêm thư mục…": ["Add folders…", "添加文件夹…"],
+        "Hãy chọn một thư mục log trên máy. Nguồn log hiện tại được giữ nguyên.": ["Choose a local log folder. Your current log source has been kept.", "请选择本机上的日志文件夹。当前日志来源保持不变。"],
+        "Hãy chọn thư mục Codex home chứa thư mục sessions, không chọn sessions hoặc tệp log bên trong. Nguồn log hiện tại được giữ nguyên.": ["Choose the Codex home folder containing the sessions folder, rather than sessions or a log file inside it. Your current log source has been kept.", "请选择包含 sessions 文件夹的 Codex 主目录，而非 sessions 或其中的日志文件。当前日志来源保持不变。"],
+        "Hãy chọn thư mục Claude Code chứa thư mục projects, không chọn projects hoặc tệp log bên trong. Nguồn log hiện tại được giữ nguyên.": ["Choose the Claude Code folder containing the projects folder, rather than projects or a log file inside it. Your current log source has been kept.", "请选择包含 projects 文件夹的 Claude Code 文件夹，而非 projects 或其中的日志文件。当前日志来源保持不变。"],
+        "Không đọc hoặc truy cập được thư mục log. Kiểm tra quyền đọc và truy cập thư mục rồi chọn lại. Nguồn log hiện tại được giữ nguyên.": ["Cannot read or access the log folder. Check folder read and access permissions, then choose it again. Your current log source has been kept.", "无法读取或访问日志文件夹。请检查文件夹的读取和访问权限后重新选择。当前日志来源保持不变。"],
         "\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line.": ["\nConnect Claude Code context in Settings to receive status line readings.", "\n在设置中连接 Claude Code 上下文，以接收状态栏数据。"],
         "%@\n%@\n%@ USD · Ước tính API\n%@\n%@\nHôm nay: %@ · Tháng này: %@": ["%@\n%@\n%@ USD · API estimate\n%@\n%@\nToday: %@ · This month: %@", "%@\n%@\n%@ USD · API 估算\n%@\n%@\n今天：%@ · 本月：%@"],
         "%@ phiên · Chọn để xem chi phí và token": ["%@ sessions · Select to see costs and tokens", "%@ 个会话 · 选择以查看费用和 token"],
