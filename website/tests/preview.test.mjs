@@ -4,24 +4,25 @@ import vm from 'node:vm';
 import test from 'node:test';
 
 const script = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
-function page({ query = '', stored } = {}) {
+function page({ query = '', stored, hash = '', details } = {}) {
+  const listeners = new Map();
   const previews = ['light', 'dark'].map(theme => ({ dataset: { preview: theme }, src: '' }));
-  const location = { href: `https://no-short.test/${query}`, search: query, pathname: '/', origin: 'https://no-short.test' };
+  const location = { href: `https://no-short.test/${query}`, search: query, pathname: '/', origin: 'https://no-short.test', hash };
   const document = {
     documentElement: { dataset: {} },
     querySelectorAll: selector => selector === '[data-preview]' ? previews : [],
     querySelector: selector => selector.startsWith('meta[') ? { content: '' } : null,
-    getElementById: () => null
+    getElementById: id => id === 'session-tracking' ? details ?? null : null
   };
   const context = vm.createContext({
     document, location, URL, URLSearchParams,
     localStorage: { getItem: () => stored, setItem: () => {} },
     history: { replaceState: () => {} },
-    window: { dispatchEvent: () => {}, addEventListener: () => {} },
+    window: { dispatchEvent: () => {}, addEventListener: (name, callback) => listeners.set(name, callback) },
     CustomEvent: class {}
   });
   vm.runInContext(script, context);
-  return { previews, switchTo: language => vm.runInContext(`setLanguage(${JSON.stringify(language)}, true)`, context) };
+  return { previews, navigateTo: hash => { location.hash = hash; listeners.get('hashchange')(); }, switchTo: language => vm.runInContext(`setLanguage(${JSON.stringify(language)}, true)`, context) };
 }
 
 test('initial and live language choices select both matching native screenshots', () => {
@@ -48,4 +49,23 @@ test('all six preview files exist with the dimensions declared in HTML', () => {
       assert.equal(png.readUInt32BE(20), 1512);
     }
   }
+});
+
+
+test('guide deep links reveal the matching details on load and hash changes', () => {
+  const details = { open: false, matches: selector => selector === 'details' };
+  page({ hash: '#session-tracking', details });
+  assert.equal(details.open, true);
+  details.open = false;
+  const current = page({ details });
+  assert.equal(details.open, false);
+  current.navigateTo('#session-tracking');
+  assert.equal(details.open, true);
+});
+
+test('missing targets and non-details anchors do not open guide details', () => {
+  const target = { open: false, matches: () => false };
+  const current = page({ hash: '#session-tracking', details: target });
+  assert.equal(target.open, false);
+  assert.doesNotThrow(() => current.navigateTo('#missing'));
 });

@@ -10,12 +10,12 @@ From the repository root:
 python3 -m http.server 4173 --bind 127.0.0.1 --directory website
 ```
 
-Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi`, `?lang=en` or `?lang=zh-CN` selects a language; the switch saves the preference locally. The page introduces No Short Usage, puts the app download in the hero, shows native previews and context rings, and links to the user guide, separate skills repository and website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
+Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=vi`, `?lang=en` or `?lang=zh-CN` selects a language; the switch saves the preference locally. The page introduces No Short Usage, offers direct ZIP downloads in the header and hero, shows a native app preview beside the introduction and context rings below, and links to the user guide, separate skills repository and website privacy page. Fonts are self-hosted, with their original OFL license files under `fonts/`.
 
 ## Content boundaries
 
 - Reusable skills are maintained and installed from `longlonglong173/no-short-skills`. The product site links there; it does not present skills installation as Usage installation.
-- Usage 0.4.2 includes an owner-approved experimental Apple Silicon app, explicitly labeled ad-hoc signed and not notarized. Its app download links to the published release asset; checksum and installation-note files remain on the release without extra links in the download section. Intel app downloads remain unavailable. Source archives are a separate developer option. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI/简体中文. Documentation points to `main`, not a temporary feature branch.
+- Usage 0.4.2 includes an owner-approved experimental Apple Silicon app, explicitly labeled ad-hoc signed and not notarized. Its app download links to the published release asset; checksum and installation-note files remain on the release. Compatibility and experimental status appear next to the main download button. Intel app downloads remain unavailable. Source archives are a separate developer option. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI/简体中文. Documentation points to `main`, not a temporary feature branch.
 - `images/` contains native AppKit renders with synthetic data only, in both themes; these are not live account screenshots. Their provider marks retain their respective owners’ rights (see the repository `NOTICE.md`).
 - Usage previews contain illustrative data, not actual account usage.
 - API-equivalent estimates are distinguished from bills, credits and quota.
