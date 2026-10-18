@@ -16,8 +16,8 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preload" href="/fonts/dm-sans.ttf" as="font" type="font/ttf" crossorigin>
   <script src="/theme.js?v=2"></script>
-  <link rel="stylesheet" href="/style.css?v=4">
-  <script src="/app.js?v=5" defer></script>
+  <link rel="stylesheet" href="/style.css?v=5">
+  <script src="/app.js?v=6" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
@@ -54,7 +54,19 @@
     <p data-i18n="usage.description">See local Codex and Claude Code costs from your macOS menu bar. Check a session, pin it, or follow new submissions after connecting automatic tracking.</p>
     <ul class="usage-features"><li data-i18n="usage.feature1">A context ring around each provider logo, from 0–100%. Unknown stays dashed.</li><li data-i18n="usage.feature2">Session, daily and monthly API-equivalent estimates, with a seven-day chart.</li><li data-i18n="usage.feature3">macOS 14+ · Apple Silicon and Intel build targets · No DMG, runtime installation or API key.</li></ul>
     <a class="button button-primary" href="/usage.html"><span data-i18n="usage.cta">Setup &amp; release status</span><span aria-hidden="true">↗</span></a>
-    <p><a class="text-link" href="https://github.com/longlonglong173/no-short/releases/tag/v0.4.2" data-i18n="guide.releases">View v0.4.2 source release ↗</a></p>
+<section class="usage-downloads" aria-labelledby="downloads-title">
+  <h3 id="downloads-title" data-i18n="download.title">Downloads</h3>
+  <p data-i18n="download.note">Source code requires building. Ready-to-run macOS apps are not available yet.</p>
+  <div class="download-actions">
+    <a class="button button-primary" href="https://github.com/longlonglong173/no-short/archive/refs/tags/v0.4.2.zip" data-i18n="download.source">Download source v0.4.2 (ZIP)</a>
+    <a class="text-link" href="https://github.com/longlonglong173/no-short/releases/tag/v0.4.2" data-i18n="download.release">View release ↗</a>
+  </div>
+  <div class="download-options" aria-describedby="app-download-note">
+    <button class="download-option" type="button" disabled aria-describedby="app-download-note"><strong translate="no">Apple Silicon</strong><span class="mono">arm64 · M-series</span><span data-i18n="download.unavailable">No app download yet</span></button>
+    <button class="download-option" type="button" disabled aria-describedby="app-download-note"><strong translate="no">Intel</strong><span class="mono">x64</span><span data-i18n="download.unavailable">No app download yet</span></button>
+  </div>
+  <p id="app-download-note" class="download-footnote" data-i18n="download.appNote">App packages await Developer ID signing, notarization and installation checks.</p>
+</section>
     <p class="usage-disclaimer" data-i18n="usage.disclaimer">v0.4.2 is published as source code only, not a ready-to-run app. App downloads await signing, notarization and release checks. Context is estimated occupancy, not subscription quota; costs are not bills or credits.</p>
   </div>
   <figure class="usage-app-preview"><img class="preview-light" src="/images/popover-light.png" width="800" height="1424" loading="lazy" alt="No Short Usage app preview with illustrative costs / Giao diện với số liệu minh họa"><img class="preview-dark" src="/images/popover-dark.png" width="800" height="1424" loading="lazy" alt="No Short Usage dark app preview / Giao diện tối với số liệu minh họa"><figcaption class="illustration-label" data-i18n="usage.sample">Native app preview · Illustrative data</figcaption></figure>

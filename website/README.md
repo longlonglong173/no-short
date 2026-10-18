@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=4`, `app.js?v=5`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=5`, `app.js?v=6`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -51,3 +51,7 @@ npm run validate
 ## First app release
 
 Keep source-only release wording until verified app artifacts actually exist. The owner has held public app distribution pending Developer ID setup. Do not invent download URLs or use development ZIPs. After approved app-binary publication, update both languages and exact architecture/checksum links on the home and setup pages; verify them in the browser. See `docs/releases/0.4.2.md`. Website preview deployment from a PR is separate from native-app publication.
+
+## Download section
+
+The home and Usage setup pages link directly to the v0.4.2 source ZIP and release. The source ZIP needs a development build. Apple Silicon/Intel app controls are disabled and labeled unavailable; they must not link to source archives or ad-hoc development packages. Enable them only after verified app assets exist. All labels are available in EN/VI.
