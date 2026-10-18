@@ -27,6 +27,7 @@ jobs:
       - name: Validate website scripts and theme behavior
         run: |
           node --check website/app.js
+          node --check website/skills.js
           node --check website/theme.js
           node --test website/tests/theme.test.mjs
 

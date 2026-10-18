@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=9`, `app.js?v=14`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=10`, `app.js?v=15`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -105,3 +105,7 @@ Its solid background follows the current theme. A ResizeObserver records the
 actual header height for anchor scroll padding, including the two-row mobile
 navigation and language/font changes. CSS provides desktop/mobile fallback
 heights without JavaScript. The keyboard skip link stays above the header.
+
+## No Short Skills introduction
+
+`/skills.html` introduces the independent `no-short-skills` repository. It reuses the website's typography, EN/VI preferences and theme controls, with two skill cards, an illustrative edit, FAQ and keyboard-accessible Skills CLI/Codex/Claude installation tabs. `skills.js` owns installer interactions; shared `app.js` owns localization and page metadata. Skill instructions remain in the separate skills repository.

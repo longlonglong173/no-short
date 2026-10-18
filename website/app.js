@@ -79,6 +79,59 @@ const vietnamese = {
   "faq.skills": "Mở No Short Skills ↗",
   "faq.q4": "App hỗ trợ những máy Mac nào?",
   "faq.a4": "Bản tải thử nghiệm dành cho Mac chip M1 trở lên, chạy macOS 14+. Chưa có bản tải Intel. macOS có thể chặn lần mở đầu.",
+  "skillsPage.common.copy": "Sao chép",
+  "skillsPage.common.readSkill": "Đọc nội dung skill",
+  "skillsPage.common.try": "THỬ MỘT CÂU LỆNH",
+  "skillsPage.demo.after": "“Chúng tôi đã cập nhật luồng hướng dẫn người dùng mới.”",
+  "skillsPage.demo.afterLabel": "SAU KHI SỬA",
+  "skillsPage.demo.before": "“Chúng tôi vô cùng vui mừng thông báo đã triển khai thành công một giải pháp toàn diện nhằm nâng cao trải nghiệm tiếp nhận người dùng mới.”",
+  "skillsPage.demo.beforeLabel": "BẢN NHÁP",
+  "skillsPage.demo.example": "Ví dụ minh họa",
+  "skillsPage.demo.explanation": "Cùng một cập nhật, diễn đạt gọn hơn.",
+  "skillsPage.example.description": "Đưa bản nháp cho agent và yêu cầu chỉnh sửa. Skill giữ ý chính, thông tin và giải thích những gì đã thay đổi.",
+  "skillsPage.example.eyebrow": "VÍ DỤ SỬ DỤNG",
+  "skillsPage.example.mode": "CHỈNH SỬA",
+  "skillsPage.example.title": "Bản nháp rõ hơn.<br>Vẫn là giọng bạn.",
+  "skillsPage.faq.a1": "Skill là bộ hướng dẫn để AI agent thực hiện một việc cụ thể. No Short Skills đóng gói hướng dẫn viết và báo cáo cá nhân, kèm manifest plugin tương thích và cấu trúc dùng được với Skills CLI.",
+  "skillsPage.faq.a2": "Không. Báo cáo chỉ dùng những nguồn bạn chọn. Có thể chỉ dùng GitHub, không cần Jira hay Slack. Ít nhất một nguồn được chọn phải kết nối thành công và trả về hoạt động có thể kiểm chứng.",
+  "skillsPage.faq.a3": "Không. Chế độ rà soát chỉ ra các kiểu diễn đạt quan sát được và cách cải thiện. Skill không xác định tác giả hay đưa ra tỷ lệ xác suất văn bản do AI viết.",
+  "skillsPage.faq.a4": "Dùng no-short-skills để cài và cập nhật skills từ nay. Hai skills giữ nguyên hướng dẫn và file hỗ trợ. Giữ plugin no-short riêng nếu bạn dùng bảng Usage; app thanh menu hoạt động độc lập.",
+  "skillsPage.faq.eyebrow": "MỘT VÀI CHI TIẾT",
+  "skillsPage.faq.q1": "Agent skill là gì?",
+  "skillsPage.faq.q2": "Có cần kết nối tất cả các dịch vụ không?",
+  "skillsPage.faq.q3": "no-ai-slop có xác định văn bản do AI viết không?",
+  "skillsPage.faq.q4": "Tôi đã cài skills từ no-short cũ. Cần đổi gì?",
+  "skillsPage.faq.title": "Thông tin cần biết.",
+  "skillsPage.hero.description": "Viết đúng giọng của bạn. Tổng hợp công việc từ nguồn đã kiểm chứng. Thêm các skill cho Codex, Claude Code và những AI agent khác.",
+  "skillsPage.hero.explore": "Khám phá các skill",
+  "skillsPage.hero.eyebrow": "NO SHORT SKILLS",
+  "skillsPage.hero.line1": "Skill thiết thực",
+  "skillsPage.hero.line2": "cho AI agent.",
+  "skillsPage.hero.more": "& các agent khác",
+  "skillsPage.hero.source": "Xem mã nguồn",
+  "skillsPage.hero.works": "DÙNG CÙNG",
+  "skillsPage.install.eyebrow": "BẮT ĐẦU",
+  "skillsPage.install.runtimeNote": "Các skill dạng hướng dẫn. Không kèm app Usage hay runtime MCP.",
+  "skillsPage.install.security": "Skill hoạt động trong phạm vi quyền bạn cấp cho agent. Báo cáo cần quyền đọc các nguồn bạn chọn.",
+  "skillsPage.install.title": "Thêm skills vào agent.",
+  "skillsPage.nav.install": "Bắt đầu",
+  "skillsPage.nav.skills": "Các skill",
+  "skillsPage.report.description": "Tổng hợp hoạt động Jira, GitHub hoặc Slack đã kiểm chứng thành báo cáo cá nhân. Giữ liên kết nguồn, đúng trạng thái và ghi rõ điều cần xác nhận.",
+  "skillsPage.report.prompt": "“Dùng personal-work-report để tổng hợp hoạt động GitHub của tôi tuần này. Đính kèm nguồn và ghi các việc chưa merge là đang thực hiện.”",
+  "skillsPage.report.tag1": "Kèm liên kết nguồn",
+  "skillsPage.report.tag2": "Giữ đúng trạng thái",
+  "skillsPage.report.title": "Báo cáo công việc, kèm nguồn đối chiếu.",
+  "skillsPage.skills.eyebrow": "CÁC SKILL",
+  "skillsPage.skills.intro": "Chọn skill cho việc bạn cần làm. Đọc hướng dẫn trước khi thêm vào cách làm việc của bạn.",
+  "skillsPage.skills.reporting": "BÁO CÁO",
+  "skillsPage.skills.title": "Hai skill. Hai việc cụ thể.",
+  "skillsPage.skills.writing": "VIẾT LÁCH",
+  "skillsPage.skillsHome": "No Short Usage",
+  "skillsPage.writing.description": "Chỉnh bản nháp, giữ nguyên thông tin, sắc thái và cá tính. Hoặc rà soát các kiểu diễn đạt cụ thể, không đoán ai là tác giả.",
+  "skillsPage.writing.prompt": "“Dùng no-ai-slop để viết gọn bản nháp này. Giữ giọng văn của tôi và đừng thêm thông tin mới.”",
+  "skillsPage.writing.tag1": "Chỉnh sửa hoặc rà soát",
+  "skillsPage.writing.tag2": "Giữ giọng văn",
+  "skillsPage.writing.title": "Giữ giọng văn. Rõ điều muốn nói.",
 };
 
 const elements = [...document.querySelectorAll('[data-i18n]')];
@@ -108,7 +161,15 @@ function setLanguage(language, persist = false) {
   }
   const privacy = location.pathname.includes('privacy');
   const usageGuide = location.pathname.endsWith('/usage.html');
-  const metadata = usageGuide
+  const skillsPage = location.pathname.endsWith('/skills.html');
+  const metadata = skillsPage
+    ? {
+        title: currentLanguage === 'vi' ? 'No Short Skills — Skill viết và báo cáo công việc' : 'No Short Skills — Writing & work-report skills',
+        description: currentLanguage === 'vi'
+          ? 'Các skill viết và báo cáo cho Codex, Claude Code và AI agent khác. Giữ giọng văn và tổng hợp công việc từ hoạt động đã kiểm chứng.'
+          : 'Reusable writing and work-report skills for Codex, Claude Code and other AI agents. Keep your voice and build reports from verified activity.'
+      }
+    : usageGuide
     ? {
         title: currentLanguage === 'vi' ? 'No Short Usage — Theo dõi chi phí và context trên macOS' : 'No Short Usage — Cost & context tracking for macOS',
         description: currentLanguage === 'vi'
@@ -138,6 +199,7 @@ function setLanguage(language, persist = false) {
   const chart = document.querySelector('.chart');
   if (chart) chart.setAttribute('aria-label', currentLanguage === 'vi' ? 'Biểu đồ usage bảy ngày minh họa, không phải dữ liệu thực' : 'Illustrative seven-day usage chart, not live usage');
   renderThemeControls();
+  window.dispatchEvent(new CustomEvent('no-short-languagechange', { detail: currentLanguage }));
   if (persist) {
     try { localStorage.setItem('no-short-language', currentLanguage); } catch { /* Storage is optional. */ }
     const url = new URL(location.href);
