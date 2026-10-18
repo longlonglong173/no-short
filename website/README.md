@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=7`, `app.js?v=10`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=7`, `app.js?v=11`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -80,3 +80,19 @@ The tagged v0.4.2 source archive is the base source. Apply the release asset
 patch was verified against the tag. The new checksum and installation notes match
 this build. Local build/smoke checks do not claim owner acceptance, macOS banner
 delivery or installation on other Macs. Intel remains build-only.
+
+
+## Link preview metadata
+
+All three public pages include page-specific title, description, canonical URL,
+Open Graph and Twitter Card metadata directly in HTML. Static English values work
+for crawlers without JavaScript; the existing language switch synchronizes browser
+and social metadata for the selected EN/VI language. Query-string language choices
+do not create server-rendered localized previews for crawlers that skip JavaScript.
+
+`images/no-short-share-avatar.png` is the original, unmodified PNG downloaded from
+the owner's supplied GitHub avatar URL (user 71415818). The response is 256×256,
+so the metadata declares those actual dimensions and a square summary card. It is
+served from this website, without an external image dependency. The old
+`social.png` remains available for previously cached URLs. Actual preview layout
+and refresh timing are controlled by the sharing platform.
