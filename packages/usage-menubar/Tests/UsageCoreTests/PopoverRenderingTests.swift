@@ -5,6 +5,42 @@ import SwiftUI
 @testable import NoShortUsageMenuBar
 
 @MainActor final class PopoverRenderingTests: XCTestCase {
+    func testConnectionSuccessCannotHideReadFailure() throws {
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
+        model.connectionNotice = "Đã kết nối context Claude Code. Status line sẽ gửi số liệu khi phiên cập nhật."
+        model.update(snapshot: try fixture(), source: "a", isLoading: false, isStale: true,
+                     notice: "Đọc dữ liệu thất bại", loginState: .notRegistered)
+        model.chooseSession("removed")
+        XCTAssertEqual(UsagePopoverView(model: model).warning, "Đọc dữ liệu thất bại")
+    }
+
+    func testConnectionSuccessCannotHideStaleDataOrMissingSelection() throws {
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
+        model.connectionNotice = "Đã cấu hình hooks. Codex: mở /hooks để tin cậy. Claude Code: mở lại phiên để nạp hooks."
+        model.update(snapshot: try fixture(), source: "a", isLoading: false, isStale: true,
+                     notice: nil, loginState: .notRegistered)
+        XCTAssertEqual(UsagePopoverView(model: model).warning, "Dữ liệu cũ · đang chờ cập nhật")
+
+        model.update(snapshot: try fixture(), source: "a", isLoading: false, isStale: false,
+                     notice: nil, loginState: .notRegistered)
+        model.chooseSession("removed")
+        XCTAssertEqual(UsagePopoverView(model: model).warning, "Phiên đã chọn không còn dữ liệu. Chọn phiên khác để tiếp tục.")
+    }
+
+    func testConnectionNoticeReturnsAfterDataRecoversAndCanBeDismissed() throws {
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
+        model.connectionNotice = "Đã ngắt bộ thu context Claude Code."
+        model.update(snapshot: try fixture(), source: "a", isLoading: false, isStale: true,
+                     notice: nil, loginState: .notRegistered)
+        XCTAssertEqual(UsagePopoverView(model: model).warning, "Dữ liệu cũ · đang chờ cập nhật")
+
+        model.update(snapshot: try fixture(), source: "a", isLoading: false, isStale: false,
+                     notice: nil, loginState: .notRegistered)
+        XCTAssertEqual(UsagePopoverView(model: model).warning, "Đã ngắt bộ thu context Claude Code.")
+        model.connectionNotice = nil
+        XCTAssertNil(UsagePopoverView(model: model).warning)
+    }
+
     func testReferencePanelRendersInLightDarkAndSessionList() throws {
         _ = NSApplication.shared
         let model = UsagePanelModel(preferredLanguages: ["vi"])
