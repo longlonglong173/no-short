@@ -10,10 +10,12 @@ import UsageCore
     var onToggleLogin: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onQuit: (() -> Void)?
+    var onConfigureContextAlerts: (() -> Void)?
     private var today: [NSMenuItem] = []
     private var month: [NSMenuItem] = []
     private var session: [NSMenuItem] = []
     private var updated = NSMenuItem(), sourceItem = NSMenuItem(), noticeItem = NSMenuItem()
+    private var contextAlertItem = NSMenuItem()
     private var refreshItem = NSMenuItem(), loginItem = NSMenuItem(), settingsItem = NSMenuItem()
     override init() {
         super.init(); menu.autoenablesItems = false; menu.delegate = self
@@ -30,6 +32,7 @@ import UsageCore
         refreshItem = action("Làm mới", #selector(refresh), key: "r")
         _ = action("Chọn thư mục log…", #selector(chooseSource))
         _ = action("Dùng nguồn log mặc định", #selector(resetSource))
+        contextAlertItem = action("Ngưỡng cảnh báo context…", #selector(configureContextAlerts))
         loginItem = action("Mở cùng macOS", #selector(toggleLogin))
         settingsItem = action("Mở cài đặt Login Items…", #selector(openSettings))
         menu.addItem(.separator()); _ = action("Thoát No Short Usage", #selector(quit), key: "q")
@@ -68,6 +71,10 @@ import UsageCore
         }
         settingsItem.isHidden = loginState != .requiresApproval && loginState != .notFound
     }
+    func updateContextAlertThreshold(_ value: Int) {
+        contextAlertItem.title = "Ngưỡng cảnh báo context: \(value)%…"
+    }
+    @objc private func configureContextAlerts() { onConfigureContextAlerts?() }
     func menuWillOpen(_ menu: NSMenu) { onOpen?() }
     @objc private func refresh() { onRefresh?() }
     @objc private func chooseSource() { onChooseSource?() }

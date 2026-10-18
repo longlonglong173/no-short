@@ -10,6 +10,7 @@ import UsageCore
     private var terminating = false
     private var contextSuspended = false
     private let contextReader = ContextReader()
+    private lazy var contextNotifications = ContextNotificationService()
     private var contextTask:Task<Void,Never>?
     private var contextKey:String?, contextSelection:String?
     private var activityMonitor:ActivityMonitor?
@@ -31,6 +32,7 @@ import UsageCore
         menu.onResetSource = { [weak self] in guard let self else { return }; self.sources.reset(); self.controller.setSource(self.sources.current); self.startMonitoring() }
         menu.onToggleLogin = { [weak self] in self?.toggleLogin() }
         menu.onOpenSettings = { [weak self] in self?.login.openSettings() }
+        menu.onConfigureContextAlerts = { [weak self] in self?.configureContextAlertThreshold() }
         menu.onQuit = { NSApp.terminate(nil) }
         panelModel.onSelectionChange = { [weak self] in self?.render() }
         panelModel.onRefresh = { [weak self] in self?.controller.refresh() }
@@ -49,6 +51,8 @@ import UsageCore
         panelModel.onRemoveClaudeContext = { [weak self] in self?.configureClaudeContext(remove:true) }
         panelModel.onInstallHooks = { [weak self] in self?.configureHooks(remove:false) }
         panelModel.onRemoveHooks = { [weak self] in self?.configureHooks(remove:true) }
+        panelModel.onConfigureContextAlerts = { [weak self] in self?.configureContextAlertThreshold() }
+        panelModel.onContextAlertSettingsChange = { [weak self] in self?.render() }
         let center = NSWorkspace.shared.notificationCenter
         center.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
         center.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
@@ -60,9 +64,11 @@ import UsageCore
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
         refreshContexts()
+        deliverContextAlerts()
         if panel.popover.isShown { panel.updateSize() }
         if let button = statusItem?.button { StatusItemRenderer.apply(to:button,model:panelModel) }
         statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\n\(panelModel.activityLabel)\n\(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\n\(panelModel.contextTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
+        menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot)
     }
     private func refreshContexts() {
@@ -82,6 +88,46 @@ import UsageCore
             guard let self, !Task.isCancelled, self.contextKey == key, !self.contextSuspended, !self.terminating else { return }
             self.panelModel.updateContexts(values); self.render()
         }
+    }
+    private func deliverContextAlerts() {
+        let alerts = panelModel.consumeContextAlerts(), source = panelModel.source
+        guard !alerts.isEmpty else { return }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                guard try await contextNotifications.authorize() else {
+                    panelModel.connectionNotice = "Thông báo macOS chưa được cho phép. Bật No Short Usage trong Cài đặt hệ thống → Thông báo; cảnh báo trong panel vẫn hoạt động."
+                    if panel.popover.isShown { panel.updateSize() }
+                    return
+                }
+                for alert in alerts {
+                    guard !terminating, panelModel.contextNotificationsEnabled, panelModel.source == source,
+                          let current = panelModel.activeContextAlerts.first(where:{ $0.provider == alert.provider && $0.reading.sessionID == alert.reading.sessionID }) else { continue }
+                    try await contextNotifications.send(current)
+                }
+            } catch {
+                panelModel.connectionNotice = "Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống."
+                if panel.popover.isShown { panel.updateSize() }
+            }
+        }
+    }
+    private func configureContextAlertThreshold() {
+        panel.close()
+        let alert = NSAlert()
+        alert.messageText = "Ngưỡng cảnh báo context"
+        alert.informativeText = "Nhập phần trăm từ 1 đến 100 (mặc định 70). Icon chuyển đỏ khi context chạm ngưỡng."
+        let input = NSTextField(string:"\(panelModel.contextAlertThreshold)")
+        input.frame = NSRect(x:0,y:0,width:240,height:24)
+        input.setAccessibilityLabel("Ngưỡng context (%)")
+        alert.accessoryView = input
+        alert.addButton(withTitle:"Lưu"); alert.addButton(withTitle:"Hủy")
+        alert.window.initialFirstResponder = input
+        NSApp.activate(ignoringOtherApps:true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        guard let value = Int(input.stringValue.trimmingCharacters(in:.whitespacesAndNewlines)), (1...100).contains(value) else {
+            showError("Ngưỡng context phải là số nguyên từ 1 đến 100."); return
+        }
+        panelModel.setContextAlertThreshold(value)
     }
     private func configureClaudeContext(remove:Bool) {
         guard let executable=Bundle.main.executableURL else { return }

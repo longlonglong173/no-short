@@ -118,6 +118,50 @@ import AppKit
         }
     }
 
+    func testThresholdMakesOnlyTheHighProviderRedIncludingAllMode() throws {
+        _ = NSApplication.shared
+        let model = UsagePanelModel(), snapshot = try fixture { object in
+            var sessions = object["sessions"] as! [[String:Any]]
+            var claude = sessions[2]
+            claude["id"] = "claude:second"; claude["provider"] = "claude"; claude["sessionKey"] = "second"
+            sessions.append(claude); object["sessions"] = sessions
+        }
+        model.update(snapshot:snapshot,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
+        model.updateContexts([.codex:ContextReading(sessionID:"main",usedTokens:70,limitTokens:100,recordedAt:Date()),
+                              .claude:ContextReading(sessionID:"second",usedTokens:30,limitTokens:100,recordedAt:Date())])
+        let item = NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength)
+        defer { NSStatusBar.system.removeStatusItem(item) }
+        let button = try XCTUnwrap(item.button)
+        StatusItemRenderer.apply(to:button,model:model)
+        XCTAssertEqual(button.image?.isTemplate,false)
+        func redPixels(_ image: NSImage, from: Int, to: Int) throws -> Int {
+            let bitmap = try XCTUnwrap(NSBitmapImageRep(data:try XCTUnwrap(image.tiffRepresentation)))
+            var count = 0
+            for x in from..<min(to,bitmap.pixelsWide) {
+                for y in 0..<bitmap.pixelsHigh {
+                    if let c = bitmap.colorAt(x:x,y:y)?.usingColorSpace(.deviceRGB), c.alphaComponent > 0.2,
+                       c.redComponent > 0.6, c.redComponent > c.greenComponent * 1.5 { count += 1 }
+                }
+            }
+            return count
+        }
+        XCTAssertGreaterThan(try redPixels(XCTUnwrap(button.image),from:0,to:22),10)
+        try capture(button,name:"context-alert")
+        // The fixture also has an unknown session ahead of main. Select the
+        // active main via a real activity event, as all-mode does in the app.
+        let event = try XCTUnwrap(SessionActivity.parse(Data(#"{"session_id":"main","hook_event_name":"UserPromptSubmit"}"#.utf8),provider:.codex))
+        model.applyActivities([event])
+        model.setProviderFilter("all")
+        StatusItemRenderer.apply(to:button,model:model)
+        XCTAssertEqual(button.image?.isTemplate,false)
+        XCTAssertGreaterThan(try redPixels(XCTUnwrap(button.image),from:0,to:22),10)
+        XCTAssertEqual(try redPixels(XCTUnwrap(button.image),from:26,to:48),0)
+        try capture(button,name:"mixed-context-alert")
+        model.setContextAlertThreshold(80)
+        StatusItemRenderer.apply(to:button,model:model)
+        XCTAssertEqual(button.image?.isTemplate,true)
+    }
+
     private func capture(_ button:NSStatusBarButton,name:String) throws {
         guard let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] else { return }
         let url = URL(fileURLWithPath:directory)

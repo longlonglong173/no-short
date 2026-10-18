@@ -21,7 +21,7 @@ import SwiftUI
             ]
         }
         model.update(snapshot:s,source:"~/.codex",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
-        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("all", .dark, false), ("waiting", .light, false), ("warning", .light, false)] {
+        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("all", .dark, false), ("waiting", .light, false), ("warning", .light, false), ("context-alert-light", .light, false), ("context-alert-dark", .dark, false)] {
             if name == "all" { model.setProviderFilter("all") }
             if name == "waiting" {
                 let event = try XCTUnwrap(SessionActivity.parse(Data(#"{"session_id":"new-claude-session","hook_event_name":"UserPromptSubmit"}"#.utf8),provider:.claude))
@@ -36,6 +36,12 @@ import SwiftUI
                     ]
                 }
                 model.update(snapshot:partial,source:"~/.codex",isLoading:false,isStale:true,notice:"Không cập nhật được thống kê. Kiểm tra quyền đọc log, kết nối và thử lại.",loginState:.requiresApproval)
+            }
+            if name.hasPrefix("context-alert") {
+                model.setProviderFilter("codex"); model.chooseSession("main")
+                model.update(snapshot:s,source:"~/.codex",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
+                model.updateContexts([.codex:ContextReading(sessionID:"main",usedTokens:74,limitTokens:100,recordedAt:Date())])
+                XCTAssertNotNil(model.contextWarning)
             }
             model.showsSessions = showList
             let host = NSHostingView(rootView: UsagePopoverView(model:model).environment(\.colorScheme,scheme))

@@ -220,3 +220,34 @@ sleep/wake integration remain separate unverified checks. Local ZIPs use ad-hoc
 development signatures and are not notarized. The owner-approved experimental
 Apple Silicon ZIP was subsequently published separately; see the installation
 notice above. Intel execution remains unverified.
+
+
+## Context threshold alerts — local development
+
+The default threshold is **70%**. Open the panel's gear menu → **Ngưỡng cảnh báo
+context: 70%…**, or use the same item in the right-click menu, and enter an integer
+from 1 to 100. The setting persists across app launches. At or above the threshold,
+the provider logo and its context ring turn red and the panel shows a warning.
+In **Tất cả**, each provider is evaluated separately. Unknown, stale and mismatched
+session readings do not trigger alerts. Threshold comparisons use the underlying
+fraction; the displayed percentage remains rounded.
+
+**Thông báo macOS khi vượt ngưỡng** is enabled by default and can be turned off in
+the gear menu independently of the red icon and panel warning. The app requests
+macOS notification permission when it first needs to send an alert. If permission
+is denied or delivery fails, the panel shows a notice; enable the app under System
+Settings → Notifications. Focus and notification preferences can suppress banners.
+
+A notification is emitted once when a valid reading first reaches the threshold.
+Refreshes, temporary unknown readings, switching away and back, and app restarts
+do not repeat that alert. A measured drop below the threshold rearms it for the
+next crossing, including a drop after compaction. State is stored locally per
+log source, provider and session in UserDefaults, retaining at most 512 entries;
+an evicted entry can notify again. Crossings observed while notifications are
+disabled are consumed, so enabling notifications does not replay them. Only the
+sessions whose context is currently displayed are evaluated.
+
+Native rendering checks cover light/dark warnings and mixed-provider icons. Unit
+tests cover the exact threshold, rearming, unknown data, independent sources and
+providers, persisted state, settings and stale suppression. These checks do not
+prove a macOS notification banner was delivered on a user's machine.

@@ -19,12 +19,19 @@ struct DailyCostPoint: Identifiable {
     @Published private(set) var providerFilter = "codex"
     @Published private(set) var followedActivity: SessionActivity?
     @Published var connectionNotice: String?
+    @Published private(set) var contextAlertThreshold = 70
+    @Published private(set) var contextNotificationsEnabled = true
+    private var contextAlertTracker = ContextAlertTracker()
     private let defaults: UserDefaults?
     private var activities: [SessionActivity] = []
     private var activityNow = Date()
     private var lastSubmissionAt = Date.distantPast
     init(defaults: UserDefaults? = nil) {
         self.defaults = defaults
+        let threshold = defaults?.integer(forKey:"usageContextAlertThreshold") ?? 0
+        if (1...100).contains(threshold) { contextAlertThreshold = threshold }
+        if let enabled = defaults?.object(forKey:"usageContextNotificationsEnabled") as? Bool { contextNotificationsEnabled = enabled }
+        if let data = defaults?.data(forKey:"usageContextAlertTracker"), let tracker = try? JSONDecoder().decode(ContextAlertTracker.self,from:data) { contextAlertTracker = tracker }
         let filter = defaults?.string(forKey:"usageProviderFilter") ?? "codex"
         providerFilter = ["all","codex","claude"].contains(filter) ? filter : "codex"
         selectedSessionID = defaults?.string(forKey:"usagePinnedSession")
@@ -47,6 +54,51 @@ struct DailyCostPoint: Identifiable {
     var onRemoveClaudeContext: (() -> Void)?
     var onInstallHooks: (() -> Void)?
     var onRemoveHooks: (() -> Void)?
+    var onConfigureContextAlerts: (() -> Void)?
+    var onContextAlertSettingsChange: (() -> Void)?
+
+    func setContextAlertThreshold(_ value: Int) {
+        guard (1...100).contains(value) else { return }
+        contextAlertThreshold = value
+        defaults?.set(value,forKey:"usageContextAlertThreshold")
+        onContextAlertSettingsChange?()
+    }
+    func setContextNotificationsEnabled(_ enabled: Bool) {
+        contextNotificationsEnabled = enabled
+        defaults?.set(enabled,forKey:"usageContextNotificationsEnabled")
+        onContextAlertSettingsChange?()
+    }
+    struct ContextAlert {
+        let provider: UsageProvider
+        let reading: ContextReading
+        let threshold: Int
+        var message: String { "Context \(provider.title) đã dùng \(reading.percent)%, chạm ngưỡng \(threshold)%." }
+    }
+    var activeContextAlerts: [ContextAlert] {
+        UsageProvider.allCases.compactMap { provider in
+            guard let reading = contextReading(for:provider), reading.fraction * 100 >= Double(contextAlertThreshold) else { return nil }
+            return ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold)
+        }
+    }
+    var contextWarning: String? {
+        let messages = activeContextAlerts.map(\.message)
+        return messages.isEmpty ? nil : messages.joined(separator:"\n")
+    }
+    func consumeContextAlerts() -> [ContextAlert] {
+        var result: [ContextAlert] = []
+        for provider in UsageProvider.allCases {
+            let reading = contextReading(for:provider)
+            let crossed = contextAlertTracker.consume(reading,provider:provider,source:source,threshold:contextAlertThreshold)
+            if crossed, contextNotificationsEnabled, let reading {
+                result.append(ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold))
+            }
+        }
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        if let data = try? encoder.encode(contextAlertTracker), defaults?.data(forKey:"usageContextAlertTracker") != data {
+            defaults?.set(data,forKey:"usageContextAlertTracker")
+        }
+        return result
+    }
 
     func update(snapshot: UsageSnapshot?, source: String, isLoading: Bool, isStale: Bool, notice: String?, loginState: LoginItemState) {
         if !self.source.isEmpty && self.source != source { selectedSessionID = nil; followedActivity = nil; search = ""; defaults?.removeObject(forKey:"usagePinnedSession") }
@@ -94,7 +146,7 @@ struct DailyCostPoint: Identifiable {
     }
     var selectionMissing: Bool { snapshot != nil && selectedSessionID != nil && selectedSession == nil }
     var panelHeight: CGFloat {
-        712 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
+        712 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0) + (contextWarning != nil ? (isAll ? 64 : 44) : 0)
     }
     var isAll:Bool { providerFilter == "all" }
     var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }
@@ -150,7 +202,7 @@ struct DailyCostPoint: Identifiable {
     var contextTooltip:String {
         let explanation = "Vòng ngoài: context đã dùng, không phải quota thuê bao hay token cộng dồn."
         if providerFilter == "claude" && contextReading(for:.claude) == nil { return explanation + "\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line." }
-        return explanation + "\n" + contextLabel
+        return explanation + "\n" + contextLabel + (contextWarning.map { "\n⚠ " + $0 } ?? "")
     }
     var statusTitle: String {
         if snapshot == nil { return isLoading ? "…" : "—" }

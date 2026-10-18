@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=7`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=8`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -55,3 +55,18 @@ The owner approved public distribution of the exact Apple Silicon ZIP they teste
 ## Download section
 
 The home and setup pages expose the experimental Apple Silicon app, checksum, installation notes, source ZIP and release. The Intel control stays disabled. Both EN/VI pages distinguish a runnable experimental app from source archives requiring a build. Only enable downloads for actual uploaded assets; never infer an Intel download from a cross-build.
+
+
+## Context alerts build (2026-10-18)
+
+The latest Apple Silicon download uses a separate `context-alerts-experimental`
+asset on the v0.4.2 release. Original assets remain unchanged. Both home and setup
+pages describe the default 70% threshold, red menu bar logo/ring, configurable
+threshold, panel warnings, macOS notification permission and crossing deduplication
+in EN/VI. The new screenshot files have unique names for cache invalidation.
+
+The tagged v0.4.2 source archive is the base source. Apply the linked
+`SOURCE-context-alerts-experimental.patch` to reproduce this native build; the
+patch was verified against the tag. The new checksum and installation notes match
+this build. Local build/smoke checks do not claim owner acceptance, macOS banner
+delivery or installation on other Macs. Intel remains build-only.
