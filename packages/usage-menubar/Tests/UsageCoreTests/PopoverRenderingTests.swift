@@ -7,7 +7,7 @@ import SwiftUI
 @MainActor final class PopoverRenderingTests: XCTestCase {
     func testReferencePanelRendersInLightDarkAndSessionList() throws {
         _ = NSApplication.shared
-        let model = UsagePanelModel()
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
         let s = try fixture { object in
             object["chart"] = (12...18).enumerated().map { index, day in
                 ["date":"2026-10-\(day)", "cost":["amountUSD":[0.8,1.3,0.6,1.1,2.7,1.2,1.2][index],"knownCostUSD":0,"status":"estimated"]]
@@ -21,7 +21,7 @@ import SwiftUI
             ]
         }
         model.update(snapshot:s,source:"~/.codex",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
-        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("all", .dark, false), ("waiting", .light, false), ("warning", .light, false), ("context-alert-light", .light, false), ("context-alert-dark", .dark, false)] {
+        for (name,scheme,showList) in [("light", ColorScheme.light, false), ("dark", .dark, false), ("sessions", .light, true), ("all", .dark, false), ("waiting", .light, false), ("warning", .light, false), ("context-alert-light", .light, false), ("context-alert-dark", .dark, false), ("en-light", .light, false), ("en-dark", .dark, false), ("zh-light", .light, false), ("zh-dark", .dark, false), ("zh-sessions", .light, true)] {
             if name == "all" { model.setProviderFilter("all") }
             if name == "waiting" {
                 let event = try XCTUnwrap(SessionActivity.parse(Data(#"{"session_id":"new-claude-session","hook_event_name":"UserPromptSubmit"}"#.utf8),provider:.claude))
@@ -43,6 +43,8 @@ import SwiftUI
                 model.updateContexts([.codex:ContextReading(sessionID:"main",usedTokens:74,limitTokens:100,recordedAt:Date())])
                 XCTAssertNotNil(model.contextWarning)
             }
+            if name.hasPrefix("en-") { model.setLanguage(.english) }
+            if name.hasPrefix("zh-") { model.setLanguage(.simplifiedChinese) }
             model.showsSessions = showList
             let host = NSHostingView(rootView: UsagePopoverView(model:model).environment(\.colorScheme,scheme))
             host.frame = NSRect(x:0,y:0,width:400,height:model.panelHeight)
@@ -60,7 +62,7 @@ import SwiftUI
         }
     }
     func testTransientPopoverHostsTheActualPanel() {
-        let presenter = UsagePopoverController(model:UsagePanelModel())
+        let presenter = UsagePopoverController(model:UsagePanelModel(preferredLanguages: ["vi"]))
         XCTAssertEqual(presenter.popover.behavior,.transient)
         XCTAssertNotNil(presenter.popover.contentViewController as? NSHostingController<UsagePopoverView>)
     }

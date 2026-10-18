@@ -22,11 +22,22 @@ struct DailyCostPoint: Identifiable {
     @Published private(set) var contextAlertThreshold = 70
     @Published private(set) var contextNotificationsEnabled = true
     private var contextAlertTracker = ContextAlertTracker()
+    @Published private(set) var language: AppLanguage
+    var onLanguageChange: (() -> Void)?
+    func l(_ key: String, _ arguments: String...) -> String {
+        AppLocalization(language: language).text(key, arguments: arguments)
+    }
+    func setLanguage(_ value: AppLanguage) {
+        guard language != value else { return }
+        language = value; defaults?.set(value.rawValue, forKey: "usageLanguage")
+        onLanguageChange?()
+    }
     private let defaults: UserDefaults?
     private var activities: [SessionActivity] = []
     private var activityNow = Date()
     private var lastSubmissionAt = Date.distantPast
-    init(defaults: UserDefaults? = nil) {
+    init(defaults: UserDefaults? = nil, preferredLanguages: [String] = Locale.preferredLanguages) {
+        language = AppLanguage.resolve(saved: defaults?.string(forKey: "usageLanguage"), preferred: preferredLanguages)
         self.defaults = defaults
         let threshold = defaults?.integer(forKey:"usageContextAlertThreshold") ?? 0
         if (1...100).contains(threshold) { contextAlertThreshold = threshold }
@@ -72,12 +83,14 @@ struct DailyCostPoint: Identifiable {
         let provider: UsageProvider
         let reading: ContextReading
         let threshold: Int
-        var message: String { "Context \(provider.title) đã dùng \(reading.percent)%, chạm ngưỡng \(threshold)%." }
+        var language: AppLanguage = .vietnamese
+        func l(_ key: String, _ arguments: String...) -> String { AppLocalization(language: language).text(key, arguments: arguments) }
+        var message: String { l("Context %@ đã dùng %@%, chạm ngưỡng %@%.", String(provider.title), String(reading.percent), String(threshold)) }
     }
     var activeContextAlerts: [ContextAlert] {
         UsageProvider.allCases.compactMap { provider in
             guard let reading = contextReading(for:provider), reading.fraction * 100 >= Double(contextAlertThreshold) else { return nil }
-            return ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold)
+            return ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold,language:language)
         }
     }
     var contextWarning: String? {
@@ -90,7 +103,7 @@ struct DailyCostPoint: Identifiable {
             let reading = contextReading(for:provider)
             let crossed = contextAlertTracker.consume(reading,provider:provider,source:source,threshold:contextAlertThreshold)
             if crossed, contextNotificationsEnabled, let reading {
-                result.append(ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold))
+                result.append(ContextAlert(provider:provider,reading:reading,threshold:contextAlertThreshold,language:language))
             }
         }
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
@@ -152,21 +165,21 @@ struct DailyCostPoint: Identifiable {
     var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }
     var mainCost: String { isAll ? todayCost : selectedSession.map { UsagePresentation.money($0.cost) } ?? "—" }
     var selectionLabel: String {
-        if isAll { return "Tổng Codex và Claude Code hôm nay" }
-        if selectionMissing { return "Phiên đã chọn không còn dữ liệu" }
-        if waitingForUsage { return "Phiên mới · \(followedActivity?.sessionID.prefix(8) ?? "") · Chờ dữ liệu" }
-        return selectedSession.map { UsagePresentation.cleanTitle($0.title) } ?? "Chưa có phiên chính"
+        if isAll { return l("Tổng Codex và Claude Code hôm nay") }
+        if selectionMissing { return l("Phiên đã chọn không còn dữ liệu") }
+        if waitingForUsage { return l("Phiên mới · %@ · Chờ dữ liệu", String(followedActivity?.sessionID.prefix(8) ?? "")) }
+        return selectedSession.map { UsagePresentation.cleanTitle($0.title) } ?? l("Chưa có phiên chính")
     }
     var activityLabel:String {
-        if selectedSessionID != nil { return "Đã ghim phiên · \(UsageProvider(rawValue:providerFilter)?.title ?? "")" }
-        if isAll { return "Tổng chi phí API quy đổi · Hôm nay" }
-        guard let current = followedActivity, current.provider.rawValue == providerFilter else { return "Tự động · Chờ sự kiện gửi tin nhắn" }
+        if selectedSessionID != nil { return l("Đã ghim phiên · %@", String(UsageProvider(rawValue:providerFilter)?.title ?? "")) }
+        if isAll { return l("Tổng chi phí API quy đổi · Hôm nay") }
+        guard let current = followedActivity, current.provider.rawValue == providerFilter else { return l("Tự động · Chờ sự kiện gửi tin nhắn") }
         let ended = activities.contains { event in
             event.provider == current.provider && event.sessionID == current.sessionID && event.recordedAt >= current.recordedAt &&
             (event.event == .stopped || event.event == .ended) && (event.turnID == nil || current.turnID == nil || event.turnID == current.turnID)
         }
-        let state = ended ? "Đã dừng xử lý" : activityNow.timeIntervalSince(current.recordedAt) > 900 ? "Chờ cập nhật" : "Đang xử lý"
-        return "Tự động · \(current.provider.title) · \(state)"
+        let state = ended ? l("Đã dừng xử lý") : activityNow.timeIntervalSince(current.recordedAt) > 900 ? l("Chờ cập nhật") : l("Đang xử lý")
+        return l("Tự động · %@ · %@", String(current.provider.title), String(state))
     }
     var providerBreakdown:ProviderBreakdown? { snapshot?.providerBreakdowns?.first { $0.provider.rawValue == providerFilter } }
     var visibleToday:UsageAggregate? { isAll ? snapshot?.today : providerBreakdown?.today ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.today : nil) }
@@ -196,12 +209,12 @@ struct DailyCostPoint: Identifiable {
     var contextLabel:String {
         if isAll { return UsageProvider.allCases.map { "\($0.title): \(contextReading(for:$0).map { "\($0.percent)%" } ?? "—")" }.joined(separator:" · ") }
         let provider = UsageProvider(rawValue:providerFilter) ?? .codex
-        guard let value=contextReading(for:provider) else { return "Context chưa xác định" }
-        return "Context \(value.percent)% · \(Self.compact(value.limitTokens)) token · Ước tính"
+        guard let value=contextReading(for:provider) else { return l("Context chưa xác định") }
+        return l("Context %@% · %@ token · Ước tính", String(value.percent), String(Self.compact(value.limitTokens)))
     }
     var contextTooltip:String {
-        let explanation = "Vòng ngoài: context đã dùng, không phải quota thuê bao hay token cộng dồn."
-        if providerFilter == "claude" && contextReading(for:.claude) == nil { return explanation + "\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line." }
+        let explanation = l("Vòng ngoài: context đã dùng, không phải quota thuê bao hay token cộng dồn.")
+        if providerFilter == "claude" && contextReading(for:.claude) == nil { return explanation + l("\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line.") }
         return explanation + "\n" + contextLabel + (contextWarning.map { "\n⚠ " + $0 } ?? "")
     }
     var statusTitle: String {
@@ -209,8 +222,8 @@ struct DailyCostPoint: Identifiable {
         return mainCost + (isStale ? " ⚠" : "")
     }
     var tokenTooltip: String {
-        guard let tokens = displayTokens else { return "Chưa có dữ liệu token" }
-        return "Input: \(UsagePresentation.number(tokens.input))\nCache read: \(UsagePresentation.number(tokens.cacheRead))\nCache write: \(UsagePresentation.number(tokens.cacheWrite))\nOutput: \(UsagePresentation.number(tokens.output))\nTổng: \(UsagePresentation.number(tokens.total))"
+        guard let tokens = displayTokens else { return l("Chưa có dữ liệu token") }
+        return l("Input: %@\nCache read: %@\nCache write: %@\nOutput: %@\nTổng: %@", String(UsagePresentation.number(tokens.input)), String(UsagePresentation.number(tokens.cacheRead)), String(UsagePresentation.number(tokens.cacheWrite)), String(UsagePresentation.number(tokens.output)), String(UsagePresentation.number(tokens.total)))
     }
     var inputText: String { displayTokens.map { Self.compact($0.input) } ?? "—" }
     var outputText: String { displayTokens.map { Self.compact($0.output) } ?? "—" }
@@ -220,7 +233,7 @@ struct DailyCostPoint: Identifiable {
     var chartPoints: [DailyCostPoint] {
         (isAll ? snapshot?.chart ?? [] : providerBreakdown?.chart ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.chart ?? [] : [])).map { point in
             let parts = point.date.split(separator: "-")
-            let label = parts.count == 3 ? "\(parts[2])/\(parts[1])" : point.date
+            let label = parts.count == 3 ? (language == .english ? "\(parts[1])/\(parts[2])" : language == .simplifiedChinese ? "\(parts[1])月\(parts[2])日" : "\(parts[2])/\(parts[1])") : point.date
             let amount = point.cost.status == "unknown" ? nil : (point.cost.amountUSD ?? point.cost.knownCostUSD)
             return DailyCostPoint(id: point.date, label: label, amount: amount, cost: point.cost)
         }
@@ -233,9 +246,9 @@ struct DailyCostPoint: Identifiable {
         return all.filter { $0.title.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil || $0.id.localizedCaseInsensitiveContains(query) }
     }
     var updatedLabel: String {
-        guard let snapshot else { return "Chưa cập nhật" }
-        let f = DateFormatter(); f.locale = Locale(identifier: "vi_VN")
-        f.timeZone = TimeZone(identifier: snapshot.timeZone); f.dateFormat = "HH:mm:ss · dd/MM"
+        guard let snapshot else { return l("Chưa cập nhật") }
+        let f = DateFormatter(); f.locale = language.locale
+        f.timeZone = TimeZone(identifier: snapshot.timeZone); f.setLocalizedDateFormatFromTemplate("HHmmssMMdd")
         return f.string(from: snapshot.generatedAt)
     }
     static func compact(_ value: Double) -> String {

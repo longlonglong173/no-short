@@ -1,7 +1,8 @@
 import type { Cost, DashboardResult } from '../src/types';
+import { translate, type Language } from './localization';
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-export function costText(cost: Cost): string {
-  return cost.amountUSD === null ? cost.status === 'partial' ? 'Chưa đầy đủ' : 'Chưa xác định' : dollars.format(cost.amountUSD);
+export function costText(cost: Cost, language: Language = 'vi'): string {
+  return cost.amountUSD === null ? translate(language, cost.status === 'partial' ? 'Chưa đầy đủ' : 'Chưa xác định') : dollars.format(cost.amountUSD);
 }
 export const tokenText = (n: number) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 export function decodeResult(result: unknown): DashboardResult | null {

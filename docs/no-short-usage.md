@@ -2,6 +2,23 @@
 
 No Short Usage provides the optional local Codex usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs using **ccusage 20.0.34**. These amounts are **not** ChatGPT subscription charges, invoices, remaining quota, or credits deducted.
 
+## Interface language
+
+The Usage panel supports **EN**, **VI** and **中文** (Simplified Chinese).
+Use the buttons above the heading to change language immediately. On first use,
+the panel selects a supported browser language and otherwise uses English.
+An explicit choice takes priority on later loads. It is kept in the host's
+widget state where supported, with browser local storage as a fallback
+(`no-short-usage-language-v1`). If both storage surfaces are unavailable, the
+choice lasts for the current mounted panel.
+
+Changing language preserves the current period, pinned session and amounts.
+Application labels, empty/error states, accessible labels and missing-price
+messages are translated. Session titles and model names remain as recorded;
+amounts remain USD. Date/time display follows the selected language while using
+the snapshot's time zone. The native macOS app has a separate preference in ⚙.
+
+
 ## Requirements and installation
 
 - macOS 14 or newer, Apple Silicon or Intel, with a compatible ChatGPT/Codex Desktop host supporting local MCP Apps.

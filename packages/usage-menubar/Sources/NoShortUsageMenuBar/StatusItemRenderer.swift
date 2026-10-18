@@ -63,7 +63,7 @@ import UsageCore
     static func apply(to button:NSStatusBarButton,model:UsagePanelModel) {
         let name:String
         switch model.providerFilter {
-        case "all": button.image = combined(model); name = "Codex và Claude Code"
+        case "all": button.image = combined(model); name = model.l("Codex và Claude Code")
         case "claude": button.image = image(provider:.claude,reading:model.contextReading(for:.claude),threshold:model.contextAlertThreshold); name = UsageProvider.claude.title
         default: button.image = image(provider:.codex,reading:model.contextReading(for:.codex),threshold:model.contextAlertThreshold); name = UsageProvider.codex.title
         }

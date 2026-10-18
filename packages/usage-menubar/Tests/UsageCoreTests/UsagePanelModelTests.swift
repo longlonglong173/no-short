@@ -4,7 +4,7 @@ import XCTest
 
 @MainActor final class UsagePanelModelTests: XCTestCase {
     func testDefaultSelectionAndExplicitSessionDriveCostAndTokens() throws {
-        let model = UsagePanelModel(), s = try fixture()
+        let model = UsagePanelModel(preferredLanguages: ["vi"]), s = try fixture()
         model.update(snapshot: s, source: "a", isLoading: false, isStale: false, notice: nil, loginState: .notRegistered)
         XCTAssertEqual(model.selectedSession?.id, "main")
         XCTAssertEqual(model.mainCost, "$2.35")
@@ -17,7 +17,7 @@ import XCTest
         XCTAssertEqual(model.selectedSession?.id, "main")
     }
     func testMissingSelectionAndSourceChangeDoNotShowAnotherSessionAsSelected() throws {
-        let model = UsagePanelModel(), s = try fixture()
+        let model = UsagePanelModel(preferredLanguages: ["vi"]), s = try fixture()
         model.update(snapshot: s, source: "a", isLoading: false, isStale: false, notice: nil, loginState: .notRegistered)
         model.chooseSession("removed")
         XCTAssertNil(model.selectedSession); XCTAssertEqual(model.mainCost, "—")
@@ -26,7 +26,7 @@ import XCTest
         XCTAssertEqual(model.selectedSession?.id, "main")
     }
     func testUnknownAndPartialPricesAndSearchAndStaleRemainHonest() throws {
-        let model = UsagePanelModel()
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
         let s = try fixture { o in
             var sessions = o["sessions"] as! [[String:Any]]
             sessions[2]["cost"] = ["amountUSD":NSNull(), "knownCostUSD":2.35, "status":"partial"]
@@ -41,7 +41,7 @@ import XCTest
         XCTAssertEqual(model.mainCost, "—"); XCTAssertEqual(model.statusTitle, "…")
     }
     func testChartKeepsUnknownAsGapAndCompactsTokensWithoutLosingTooltipPrecision() throws {
-        let model = UsagePanelModel()
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
         let s = try fixture { o in o["chart"] = [
             ["date":"2026-10-17", "cost":["amountUSD":NSNull(), "knownCostUSD":0,"status":"unknown"]],
             ["date":"2026-10-18", "cost":["amountUSD":1.5,"knownCostUSD":1.5,"status":"estimated"]]

@@ -1,0 +1,181 @@
+import Foundation
+
+public enum AppLanguage: String, CaseIterable, Sendable, Identifiable {
+    case english = "en", vietnamese = "vi", simplifiedChinese = "zh-CN"
+    public var id: String { rawValue }
+    public var title: String {
+        switch self { case .english: "English"; case .vietnamese: "Tiếng Việt"; case .simplifiedChinese: "简体中文" }
+    }
+    public var locale: Locale { Locale(identifier: rawValue) }
+    public static func resolve(saved: String?, preferred: [String] = Locale.preferredLanguages) -> Self {
+        if let saved, let value = Self(rawValue: saved) { return value }
+        for tag in preferred {
+            let base = tag.lowercased().split(whereSeparator: { $0 == "-" || $0 == "_" }).first
+            if base == "vi" { return .vietnamese }
+            if base == "zh" { return .simplifiedChinese }
+            if base == "en" { return .english }
+        }
+        return .english
+    }
+}
+
+/// Fixed application copy. Arguments are inserted once, never interpreted as format strings.
+/// Vietnamese source keys preserve the existing UI; each entry contains English and Simplified Chinese.
+public struct AppLocalization: Sendable {
+    public let language: AppLanguage
+    public init(language: AppLanguage) { self.language = language }
+    public func text(_ key: String, _ arguments: String...) -> String { text(key, arguments: arguments) }
+    public func text(_ key: String, arguments: [String]) -> String {
+        let template = language == .vietnamese ? key : Self.catalog[key]?[language == .english ? 0 : 1] ?? key
+        let parts = template.components(separatedBy: "%@")
+        guard parts.count > 1 else { return template }
+        return parts.enumerated().map { index, part in
+            index == 0 ? part : (arguments.indices.contains(index - 1) ? arguments[index - 1] : "%@") + part
+        }.joined()
+    }
+    public static let catalog: [String: [String]] = [
+        "\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line.": ["\nConnect Claude Code context in Settings to receive status line readings.", "\n在设置中连接 Claude Code 上下文，以接收状态栏数据。"],
+        "%@\n%@\n%@ USD · Ước tính API\n%@\n%@\nHôm nay: %@ · Tháng này: %@": ["%@\n%@\n%@ USD · API estimate\n%@\n%@\nToday: %@ · This month: %@", "%@\n%@\n%@ USD · API 估算\n%@\n%@\n今天：%@ · 本月：%@"],
+        "%@ phiên · Chọn để xem chi phí và token": ["%@ sessions · Select to see costs and tokens", "%@ 个会话 · 选择以查看费用和 token"],
+        "%@ · Tổng tất cả phiên · %@ USD": ["%@ · All sessions total · %@ USD", "%@ · 所有会话总计 · %@ USD"],
+        "%@ đô la Mỹ": ["%@ US dollars", "%@ 美元"],
+        "7 ngày · Tất cả phiên": ["7 days · All sessions", "7 天 · 所有会话"],
+        "Báo cáo quá lớn để hiển thị. Hãy chọn nguồn log nhỏ hơn.": ["The report is too large to display. Choose a smaller log source.", "报告过大，无法显示。请选择较小的日志来源。"],
+        "Cache": ["Cache", "缓存"],
+        "Cache read: %@ · Cache write: %@": ["Cache read: %@ · Cache write: %@", "缓存读取：%@ · 缓存写入：%@"],
+        "Chi phí API quy đổi · Hôm nay": ["API-equivalent cost · Today", "API 等值费用 · 今天"],
+        "Chi phí API quy đổi · Phiên này": ["API-equivalent cost · This session", "API 等值费用 · 当前会话"],
+        "Chi phí hôm nay theo công cụ": ["Today's costs by tool", "今天各工具费用"],
+        "Chi phí phiên %@ đô la Mỹ, ước tính": ["Session cost %@ US dollars, estimated", "会话费用 %@ 美元，估算值"],
+        "Chi phí theo ngày": ["Daily costs", "每日费用"],
+        "Chưa có dữ liệu": ["No data yet", "暂无数据"],
+        "Chưa có dữ liệu biểu đồ": ["No chart data yet", "暂无图表数据"],
+        "Chưa có dữ liệu token": ["No token data yet", "暂无 token 数据"],
+        "Chưa có phiên chính": ["No main session yet", "暂无主会话"],
+        "Chưa cập nhật": ["Not updated", "尚未更新"],
+        "Chưa xác định loại phiên": ["Unknown session type", "未知会话类型"],
+        "Chọn": ["Choose", "选择"],
+        "Chọn phiên đang theo dõi": ["Choose the followed session", "选择跟踪的会话"],
+        "Chọn thư mục Claude Code chứa projects": ["Choose the Claude Code folder containing projects", "选择包含 projects 的 Claude Code 文件夹"],
+        "Chọn thư mục Codex home chứa sessions": ["Choose the Codex home folder containing sessions", "选择包含 sessions 的 Codex 主目录"],
+        "Chọn thư mục log Claude Code…": ["Choose Claude Code log folder…", "选择 Claude Code 日志文件夹…"],
+        "Chọn thư mục log Codex…": ["Choose Codex log folder…", "选择 Codex 日志文件夹…"],
+        "Chọn thư mục log…": ["Choose log folder…", "选择日志文件夹…"],
+        "Chờ cập nhật": ["Waiting for updates", "等待更新"],
+        "Claude Code đã có status line riêng; app giữ nguyên. Xem tài liệu để nối bộ thu context vào script hiện có.": ["Claude Code already has a custom status line; it was left unchanged. See the guide to integrate the context collector with your script.", "Claude Code 已有自定义状态栏；应用保留原样。请查看文档，将上下文收集器集成到现有脚本。"],
+        "Codex và Claude Code": ["Codex and Claude Code", "Codex 和 Claude Code"],
+        "Context %@ đã dùng %@%, chạm ngưỡng %@%.": ["%@ context is at %@%, reaching the %@% threshold.", "%@ 上下文已用 %@%，达到 %@% 提醒阈值。"],
+        "Context %@% · %@ token · Ước tính": ["Context %@% · %@ tokens · Estimated", "上下文 %@% · %@ token · 估算值"],
+        "Context chưa xác định": ["Context unknown", "上下文未知"],
+        "Cài đặt": ["Settings", "设置"],
+        "Công cụ": ["Tool", "工具"],
+        "Cảnh báo context · %@": ["Context alert · %@", "上下文提醒 · %@"],
+        "Cấu hình Claude Code không hợp lệ hoặc là liên kết. App chưa thay đổi tệp.": ["The Claude Code configuration is invalid or a link. The file was not changed.", "Claude Code 配置无效或为链接。应用未修改文件。"],
+        "Cần cập nhật": ["Needs update", "需要更新"],
+        "Cập nhật: %@": ["Updated: %@", "更新：%@"],
+        "Cập nhật: %@ (%@)": ["Updated: %@ (%@)", "更新：%@（%@）"],
+        "Dùng log Claude Code mặc định": ["Use default Claude Code logs", "使用默认 Claude Code 日志"],
+        "Dùng log Codex mặc định": ["Use default Codex logs", "使用默认 Codex 日志"],
+        "Dùng nguồn log mặc định": ["Use default log source", "使用默认日志来源"],
+        "Dữ liệu Usage không tương thích. Hãy kiểm tra phiên bản runtime.": ["Incompatible Usage data. Check the runtime version.", "Usage 数据不兼容。请检查运行时版本。"],
+        "Dữ liệu ccusage không tương thích. Hãy cập nhật plugin.": ["Incompatible ccusage data. Update the plugin.", "ccusage 数据不兼容。请更新插件。"],
+        "Dữ liệu cũ · đang chờ cập nhật": ["Stale data · waiting for updates", "数据已过期 · 等待更新"],
+        "Gỡ hooks theo dõi chat": ["Remove chat tracking hooks", "移除聊天跟踪 hooks"],
+        "Hôm nay": ["Today", "今天"],
+        "Hôm nay: %@": ["Today: %@", "今天：%@"],
+        "Hôm nay: —": ["Today: —", "今天：—"],
+        "Hủy": ["Cancel", "取消"],
+        "Input": ["Input", "输入"],
+        "Input: %@\nCache read: %@\nCache write: %@\nOutput: %@\nTổng: %@": ["Input: %@\nCache read: %@\nCache write: %@\nOutput: %@\nTotal: %@", "输入：%@\n缓存读取：%@\n缓存写入：%@\n输出：%@\n总计：%@"],
+        "Input: %@ · Output: %@": ["Input: %@ · Output: %@", "输入：%@ · 输出：%@"],
+        "Không cấu hình được hooks. Kiểm tra tệp cấu hình hiện có; tệp chưa hợp lệ được giữ nguyên.": ["Could not configure hooks. Check the existing configuration; invalid files were left unchanged.", "无法配置 hooks。请检查现有配置；无效文件保持原样。"],
+        "Không cập nhật được status line Claude Code. Kiểm tra quyền đọc/ghi cấu hình.": ["Could not update the Claude Code status line. Check configuration read/write permissions.", "无法更新 Claude Code 状态栏。请检查配置文件的读写权限。"],
+        "Không cập nhật được thống kê. Kiểm tra quyền đọc log, kết nối và thử lại.": ["Could not refresh usage. Check log permissions and connectivity, then try again.", "无法刷新用量。请检查日志权限和连接，然后重试。"],
+        "Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống.": ["Could not send a macOS notification. Panel warnings still work; check Notifications permissions in System Settings.", "无法发送 macOS 通知。面板提醒仍然有效；请检查系统设置中的通知权限。"],
+        "Không khởi động được bộ đọc Usage.": ["Could not start the Usage reader.", "无法启动 Usage 读取器。"],
+        "Không phải hóa đơn hoặc hạn mức ChatGPT": ["Not a ChatGPT bill or quota", "并非 ChatGPT 账单或额度"],
+        "Không thay đổi được Login Items. Hãy đặt ứng dụng trong Applications và kiểm tra cài đặt macOS.": ["Could not change Login Items. Move the app to Applications and check macOS settings.", "无法更改登录项。请将应用移至 Applications 并检查 macOS 设置。"],
+        "Không tìm thấy bộ đọc ccusage. Hãy cài lại gói runtime đúng phiên bản.": ["The ccusage reader is missing. Reinstall the matching runtime package.", "找不到 ccusage 读取器。请重新安装匹配版本的运行时包。"],
+        "Không tìm thấy phiên phù hợp": ["No matching sessions", "未找到匹配会话"],
+        "Không đọc được Usage. Hãy kiểm tra quyền truy cập log và thử lại.": ["Could not read Usage. Check log permissions and try again.", "无法读取 Usage。请检查日志权限并重试。"],
+        "Không đọc được báo cáo ccusage. Kiểm tra quyền đọc thư mục Codex và thử lại.": ["Could not read the ccusage report. Check Codex folder permissions and try again.", "无法读取 ccusage 报告。请检查 Codex 文件夹的读取权限并重试。"],
+        "Kết nối context Claude Code…": ["Connect Claude Code context…", "连接 Claude Code 上下文…"],
+        "Kết nối tự theo dõi chat…": ["Connect automatic chat tracking…", "连接自动聊天跟踪…"],
+        "Làm mới": ["Refresh", "刷新"],
+        "Lưu": ["Save", "保存"],
+        "Múi giờ: %@": ["Time zone: %@", "时区：%@"],
+        "Một panel khác đang cập nhật dữ liệu.": ["Another panel is updating the data.", "其他面板正在更新数据。"],
+        "Một panel khác đang cập nhật. Vui lòng thử lại sau.": ["Another panel is updating. Try again later.", "其他面板正在更新。请稍后重试。"],
+        "Mở cài đặt Login Items…": ["Open Login Items settings…", "打开登录项设置…"],
+        "Mở cùng macOS": ["Open at login", "登录时启动"],
+        "Mở cùng macOS · Chưa khả dụng": ["Open at login · Unavailable", "登录时启动 · 不可用"],
+        "Mở cùng macOS · Cần phê duyệt": ["Open at login · Approval required", "登录时启动 · 需要批准"],
+        "Nguồn: %@": ["Source: %@", "来源：%@"],
+        "Nguồn: ccusage · Log trên máy": ["Source: ccusage · Local logs", "来源：ccusage · 本地日志"],
+        "Nguồn: —": ["Source: —", "来源：—"],
+        "Ngày": ["Day", "日期"],
+        "Ngày %@": ["Day %@", "日期 %@"],
+        "Ngày thiếu giá hiển thị phần đã biết hoặc —.": ["Days with missing prices show known costs or —.", "缺少价格的日期显示已知费用或 —。"],
+        "Ngôn ngữ": ["Language", "语言"],
+        "Ngưỡng context (%)": ["Context threshold (%)", "上下文阈值（%）"],
+        "Ngưỡng context phải là số nguyên từ 1 đến 100.": ["The context threshold must be an integer from 1 to 100.", "上下文阈值必须是 1 到 100 之间的整数。"],
+        "Ngưỡng cảnh báo context": ["Context alert threshold", "上下文提醒阈值"],
+        "Ngưỡng cảnh báo context: %@%…": ["Context alert threshold: %@%…", "上下文提醒阈值：%@%…"],
+        "Ngưỡng cảnh báo context…": ["Context alert threshold…", "上下文提醒阈值…"],
+        "Ngắt context Claude Code": ["Disconnect Claude Code context", "断开 Claude Code 上下文"],
+        "Nhập phần trăm từ 1 đến 100 (mặc định 70). Icon chuyển đỏ khi context chạm ngưỡng.": ["Enter a percentage from 1 to 100 (default 70). The icon turns red when context reaches the threshold.", "输入 1 到 100 之间的百分比（默认 70）。上下文达到阈值时图标变红。"],
+        "No Short Usage · Chưa có dữ liệu": ["No Short Usage · No data yet", "No Short Usage · 暂无数据"],
+        "No Short Usage · Ước tính tương đương API · USD": ["No Short Usage · API-equivalent estimates · USD", "No Short Usage · API 等值估算 · USD"],
+        "Output": ["Output", "输出"],
+        "Phiên chính": ["Main session", "主会话"],
+        "Phiên mới · %@ · Chờ dữ liệu": ["New session · %@ · Waiting for data", "新会话 · %@ · 等待数据"],
+        "Phiên đang theo dõi": ["Followed session", "跟踪的会话"],
+        "Phiên đã chọn không còn dữ liệu": ["Selected session has no data", "所选会话已无数据"],
+        "Phiên đã chọn không còn dữ liệu. Chọn phiên khác để tiếp tục.": ["The selected session has no data. Choose another to continue.", "所选会话已无数据。请选择其他会话继续。"],
+        "Phiên: %@": ["Session: %@", "会话：%@"],
+        "Phiên: —": ["Session: —", "会话：—"],
+        "Plugin chưa có quyền đọc log hoặc ghi cache. Kiểm tra quyền thư mục và thử lại.": ["The plugin cannot read logs or write cache. Check folder permissions and try again.", "插件无权读取日志或写入缓存。请检查文件夹权限并重试。"],
+        "Quay lại thống kê": ["Back to usage", "返回用量"],
+        "Thiếu runtime. Hãy cài lại No Short Usage.": ["Runtime missing. Reinstall No Short Usage.", "缺少运行时。请重新安装 No Short Usage。"],
+        "Thoát No Short Usage": ["Quit No Short Usage", "退出 No Short Usage"],
+        "Tháng này": ["This month", "本月"],
+        "Tháng này: %@ · %@ token": ["This month: %@ · %@ tokens", "本月：%@ · %@ token"],
+        "Tháng này: —": ["This month: —", "本月：—"],
+        "Thông báo macOS chưa được cho phép. Bật No Short Usage trong Cài đặt hệ thống → Thông báo; cảnh báo trong panel vẫn hoạt động.": ["macOS notifications are not allowed. Enable No Short Usage in System Settings → Notifications; panel warnings still work.", "尚未允许 macOS 通知。请在系统设置 → 通知中启用 No Short Usage；面板提醒仍然有效。"],
+        "Thông báo macOS khi vượt ngưỡng": ["Notify via macOS when threshold is reached", "达到阈值时发送 macOS 通知"],
+        "Tác vụ con": ["Subagent", "子任务"],
+        "Tên thư mục không được chứa dấu phẩy vì bộ đọc dùng dấu phẩy để tách nguồn log.": ["Folder names cannot contain commas because the reader uses commas to separate log sources.", "文件夹名称不能包含逗号，因为读取器使用逗号分隔日志来源。"],
+        "Tìm phiên": ["Search sessions", "搜索会话"],
+        "Tìm tên hoặc ID phiên": ["Search session name or ID", "搜索会话名称或 ID"],
+        "Tất cả": ["All", "全部"],
+        "Tổng Codex và Claude Code hôm nay": ["Codex and Claude Code total today", "今天 Codex 和 Claude Code 总计"],
+        "Tổng chi phí API quy đổi · Hôm nay": ["Total API-equivalent cost · Today", "API 等值费用总计 · 今天"],
+        "Tổng token: %@": ["Total tokens: %@", "token 总计：%@"],
+        "Tự theo dõi chat vừa gửi tin nhắn": ["Follow the chat with the latest submission", "跟踪最近提交消息的聊天"],
+        "Tự động · %@ · %@": ["Automatic · %@ · %@", "自动 · %@ · %@"],
+        "Tự động · Chờ sự kiện gửi tin nhắn": ["Automatic · Waiting for a submission", "自动 · 等待消息提交"],
+        "Vòng ngoài: context đã dùng, không phải quota thuê bao hay token cộng dồn.": ["Outer ring: context used, not subscription quota or cumulative tokens.", "外环表示上下文用量，并非订阅额度或累计 token。"],
+        "Xem các phiên": ["View sessions", "查看会话"],
+        "hệ thống": ["system", "系统"],
+        "Đang cập nhật": ["Updating", "正在更新"],
+        "Đang cập nhật…": ["Updating…", "正在更新…"],
+        "Đang xử lý": ["Processing", "处理中"],
+        "Đang đọc dữ liệu…": ["Reading data…", "正在读取数据…"],
+        "Đang đọc thống kê…": ["Reading usage…", "正在读取用量…"],
+        "Đã cấu hình hooks. Codex: mở /hooks để tin cậy. Claude Code: mở lại phiên để nạp hooks.": ["Hooks configured. Codex: open /hooks to trust them. Claude Code: reopen the session to load hooks.", "Hooks 已配置。Codex：打开 /hooks 以信任它们。Claude Code：重新打开会话以加载 hooks。"],
+        "Đã cập nhật": ["Updated", "已更新"],
+        "Đã dừng xử lý": ["Processing stopped", "已停止处理"],
+        "Đã ghim phiên · %@": ["Pinned session · %@", "已固定会话 · %@"],
+        "Đã gỡ hooks Usage. Có thể bật lại trong Cài đặt.": ["Usage hooks removed. Reconnect them in Settings.", "已移除 Usage hooks。可在设置中重新连接。"],
+        "Đã kết nối context Claude Code. Status line sẽ gửi số liệu khi phiên cập nhật.": ["Claude Code context connected. The status line will send readings when the session updates.", "已连接 Claude Code 上下文。会话更新时状态栏会发送数据。"],
+        "Đã ngắt bộ thu context Claude Code.": ["Claude Code context collector disconnected.", "已断开 Claude Code 上下文收集器。"],
+        "Đọc log quá lâu. Hãy thử lại hoặc chọn thư mục log khác.": ["Reading logs timed out. Try again or choose another log folder.", "读取日志超时。请重试或选择其他日志文件夹。"],
+        "Đọc log quá lâu. Thử lại hoặc giảm số thư mục log.": ["Reading logs timed out. Try again or reduce the number of log folders.", "读取日志超时。请重试或减少日志文件夹数量。"],
+        "Ước tính": ["Estimated", "估算值"],
+        "Ước tính API · Không phải hóa đơn thuê bao": ["API estimate · Not a subscription bill", "API 估算 · 并非订阅账单"],
+        "Ước tính tương đương API · USD": ["API-equivalent estimates · USD", "API 等值估算 · USD"],
+        "Ẩn thông báo kết nối": ["Dismiss connection notice", "关闭连接提示"],
+        "⚠ Dữ liệu cũ hoặc không khả dụng": ["⚠ Stale or unavailable data", "⚠ 数据已过期或不可用"],
+        "⚠ Dữ liệu cũ · đang chờ cập nhật": ["⚠ Stale data · waiting for updates", "⚠ 数据已过期 · 等待更新"],
+    ]
+}

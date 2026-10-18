@@ -2,6 +2,7 @@ import AppKit
 import UsageCore
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
+    private func l(_ key: String, _ arguments: String...) -> String { AppLocalization(language: panelModel.language).text(key, arguments: arguments) }
     private var statusItem: NSStatusItem?
     private let menu = MenuBuilder(), login = LoginItemManager(), sources = LogSourceStore()
     private let panelModel = UsagePanelModel(defaults:.standard)
@@ -26,6 +27,8 @@ import UsageCore
         statusItem?.button?.sendAction(on: [.leftMouseUp, .rightMouseUp])
         statusItem?.button?.setAccessibilityLabel("No Short Usage")
         controller.onChange = { @MainActor @Sendable [weak self] in self?.render() }
+        menu.onLanguageChange = { [weak self] in self?.panelModel.setLanguage($0) }
+        panelModel.onLanguageChange = { [weak self] in self?.render() }
         menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh() }
         menu.onRefresh = { [weak self] in self?.controller.refresh() }
         menu.onChooseSource = { [weak self] in self?.chooseSource() }
@@ -60,16 +63,16 @@ import UsageCore
         if CommandLine.arguments.contains("--show-panel") { showPanel() }
     }
     private func render() {
-        let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date())
+        let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
         refreshContexts()
         deliverContextAlerts()
         if panel.popover.isShown { panel.updateSize() }
         if let button = statusItem?.button { StatusItemRenderer.apply(to:button,model:panelModel) }
-        statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\n\(panelModel.activityLabel)\n\(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\n\(panelModel.contextTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
+        statusItem?.button?.toolTip = l("%@\n%@\n%@ USD · Ước tính API\n%@\n%@\nHôm nay: %@ · Tháng này: %@", String(panelModel.selectionLabel), String(panelModel.activityLabel), String(panelModel.mainCost), String(panelModel.tokenTooltip), String(panelModel.contextTooltip), String(panelModel.todayCost), String(panelModel.monthCost))
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
-        menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot)
+        menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
     }
     private func refreshContexts() {
         guard !contextSuspended, !terminating else { return }
@@ -96,7 +99,7 @@ import UsageCore
             guard let self else { return }
             do {
                 guard try await contextNotifications.authorize() else {
-                    panelModel.connectionNotice = "Thông báo macOS chưa được cho phép. Bật No Short Usage trong Cài đặt hệ thống → Thông báo; cảnh báo trong panel vẫn hoạt động."
+                    panelModel.connectionNotice = ("Thông báo macOS chưa được cho phép. Bật No Short Usage trong Cài đặt hệ thống → Thông báo; cảnh báo trong panel vẫn hoạt động.")
                     if panel.popover.isShown { panel.updateSize() }
                     return
                 }
@@ -106,7 +109,7 @@ import UsageCore
                     try await contextNotifications.send(current)
                 }
             } catch {
-                panelModel.connectionNotice = "Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống."
+                panelModel.connectionNotice = ("Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống.")
                 if panel.popover.isShown { panel.updateSize() }
             }
         }
@@ -114,18 +117,18 @@ import UsageCore
     private func configureContextAlertThreshold() {
         panel.close()
         let alert = NSAlert()
-        alert.messageText = "Ngưỡng cảnh báo context"
-        alert.informativeText = "Nhập phần trăm từ 1 đến 100 (mặc định 70). Icon chuyển đỏ khi context chạm ngưỡng."
+        alert.messageText = l("Ngưỡng cảnh báo context")
+        alert.informativeText = l("Nhập phần trăm từ 1 đến 100 (mặc định 70). Icon chuyển đỏ khi context chạm ngưỡng.")
         let input = NSTextField(string:"\(panelModel.contextAlertThreshold)")
         input.frame = NSRect(x:0,y:0,width:240,height:24)
-        input.setAccessibilityLabel("Ngưỡng context (%)")
+        input.setAccessibilityLabel(l("Ngưỡng context (%)"))
         alert.accessoryView = input
-        alert.addButton(withTitle:"Lưu"); alert.addButton(withTitle:"Hủy")
+        alert.addButton(withTitle:l("Lưu")); alert.addButton(withTitle:l("Hủy"))
         alert.window.initialFirstResponder = input
         NSApp.activate(ignoringOtherApps:true)
         guard alert.runModal() == .alertFirstButtonReturn else { return }
         guard let value = Int(input.stringValue.trimmingCharacters(in:.whitespacesAndNewlines)), (1...100).contains(value) else {
-            showError("Ngưỡng context phải là số nguyên từ 1 đến 100."); return
+            showError(l("Ngưỡng context phải là số nguyên từ 1 đến 100.")); return
         }
         panelModel.setContextAlertThreshold(value)
     }
@@ -136,9 +139,9 @@ import UsageCore
             for (path,provider) in HookInstaller.configurationFiles() where provider == .claude {
                 if remove { try installer.remove(at:path) } else { try installer.install(at:path) }
             }
-            panelModel.connectionNotice = remove ? "Đã ngắt bộ thu context Claude Code." : "Đã kết nối context Claude Code. Status line sẽ gửi số liệu khi phiên cập nhật."
+            panelModel.connectionNotice = remove ? ("Đã ngắt bộ thu context Claude Code.") : ("Đã kết nối context Claude Code. Status line sẽ gửi số liệu khi phiên cập nhật.")
         } catch let error as ClaudeContextInstallationError { panelModel.connectionNotice=error.localizedDescription }
-        catch { panelModel.connectionNotice="Không cập nhật được status line Claude Code. Kiểm tra quyền đọc/ghi cấu hình." }
+        catch { panelModel.connectionNotice=("Không cập nhật được status line Claude Code. Kiểm tra quyền đọc/ghi cấu hình.") }
         contextKey=nil; render()
     }
     @objc private func toggleUsagePanel(_ sender: Any?) {
@@ -161,10 +164,11 @@ import UsageCore
         panel.close()
         let picker = NSOpenPanel(); picker.canChooseDirectories = true; picker.canChooseFiles = false
         picker.allowsMultipleSelection = false; picker.canCreateDirectories = false
-        picker.showsHiddenFiles = true; picker.title = claude ? "Chọn thư mục Claude Code chứa projects" : "Chọn thư mục Codex home chứa sessions"
+        picker.prompt = l("Chọn")
+        picker.showsHiddenFiles = true; picker.title = claude ? l("Chọn thư mục Claude Code chứa projects") : l("Chọn thư mục Codex home chứa sessions")
         NSApp.activate(ignoringOtherApps: true)
         guard picker.runModal() == .OK, let url = picker.url else { return }
-        guard sources.canChoose(url) else { showError("Tên thư mục không được chứa dấu phẩy vì bộ đọc dùng dấu phẩy để tách nguồn log."); return }
+        guard sources.canChoose(url) else { showError(l("Tên thư mục không được chứa dấu phẩy vì bộ đọc dùng dấu phẩy để tách nguồn log.")); return }
         if claude { sources.chooseClaude(url) } else { sources.choose(url) }
         controller.setSource(sources.current); startMonitoring()
     }
@@ -184,14 +188,14 @@ import UsageCore
             for (config,provider) in HookInstaller.configurationFiles() {
                 if remove { try installer.remove(at:config) } else { try installer.install(at:config,provider:provider) }
             }
-            panelModel.connectionNotice = remove ? "Đã gỡ hooks Usage. Có thể bật lại trong Cài đặt." : "Đã cấu hình hooks. Codex: mở /hooks để tin cậy. Claude Code: mở lại phiên để nạp hooks."
+            panelModel.connectionNotice = remove ? ("Đã gỡ hooks Usage. Có thể bật lại trong Cài đặt.") : ("Đã cấu hình hooks. Codex: mở /hooks để tin cậy. Claude Code: mở lại phiên để nạp hooks.")
             UserDefaults.standard.set(!remove,forKey:"usageHooksConfigured")
-        } catch { panelModel.connectionNotice = "Không cấu hình được hooks. Kiểm tra tệp cấu hình hiện có; tệp chưa hợp lệ được giữ nguyên." }
+        } catch { panelModel.connectionNotice = ("Không cấu hình được hooks. Kiểm tra tệp cấu hình hiện có; tệp chưa hợp lệ được giữ nguyên.") }
         render()
     }
     private func toggleLogin() {
         do { try login.setEnabled(login.state != .enabled && login.state != .requiresApproval) }
-        catch { showError("Không thay đổi được Login Items. Hãy đặt ứng dụng trong Applications và kiểm tra cài đặt macOS.") }
+        catch { showError(l("Không thay đổi được Login Items. Hãy đặt ứng dụng trong Applications và kiểm tra cài đặt macOS.")) }
         render()
     }
     private func showError(_ message: String) {

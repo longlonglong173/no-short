@@ -88,3 +88,86 @@ test('a failed refresh retains the last successful amount with a visible warning
   await expect(page.getByRole('alert')).toContainText('Không cập nhật được thống kê');
   await expect(page.getByTestId('main-cost')).toHaveText('$0.05');
 });
+
+test('language switching preserves session, amount and period and survives reload', async ({ page }) => {
+  await page.route('**/__usage/snapshot', route => route.fulfill({ json: dashboard() }));
+  await page.goto('/');
+  await expect(page.getByTestId('main-cost')).toHaveText('$0.05');
+  await page.getByRole('button', { name: 'Ghim phiên', exact: true }).click();
+  await page.getByRole('button', { name: 'EN', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await expect(page.getByRole('button', { name: 'Unpin session', exact: true })).toBeVisible();
+  await expect(page.getByTestId('main-cost')).toHaveText('$0.05');
+  await page.getByRole('tab', { name: 'Today', exact: true }).click();
+  await page.getByRole('button', { name: '中文', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '今天', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByTestId('main-cost')).toHaveText('$0.47');
+  await page.reload();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await expect(page.getByRole('button', { name: '取消固定会话', exact: true })).toBeVisible();
+  await expect(page.getByTestId('main-cost')).toHaveText('$0.05');
+  await page.getByRole('button', { name: 'VI', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Bỏ ghim phiên', exact: true })).toBeVisible();
+});
+
+test('all languages fit mobile and desktop in both themes with translated unknown prices and errors', async ({ page }) => {
+  const value = dashboard(); let fail = false;
+  value.snapshot.sessions[0].cost = {amountUSD: null, knownCostUSD: 0, status: 'unknown'};
+  await page.route('**/__usage/snapshot', route => route.fulfill(fail ? {status: 500, body: 'unavailable'} : {json: value}));
+  await page.goto('/');
+  for (const [button, unknown, refresh, error] of [
+    ['EN', 'Unknown', 'Refresh usage', 'Could not refresh usage'],
+    ['中文', '未知', '刷新用量', '无法刷新用量'],
+    ['VI', 'Chưa xác định', 'Cập nhật thống kê', 'Không cập nhật được thống kê']
+  ]) {
+    await page.getByRole('button', {name: button, exact: true}).click();
+    await expect(page.getByTestId('main-cost')).toHaveText(unknown);
+    for (const width of [320, 480]) {
+      await page.setViewportSize({width, height: 1000});
+      for (const colorScheme of ['light', 'dark'] as const) {
+        await page.emulateMedia({colorScheme});
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+        await page.screenshot({path: `../../.artifacts/usage/panel-${button === '中文' ? 'zh' : button.toLowerCase()}-${width}-${colorScheme}.png`, fullPage: true});
+      }
+    }
+    fail = true;
+    await page.getByRole('button', {name: refresh, exact: true}).click();
+    await expect(page.getByRole('alert')).toContainText(error);
+    fail = false;
+    await page.getByRole('button', {name: refresh, exact: true}).click();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+  }
+});
+
+test('blocked browser storage still uses host preference and preserves unrelated host state', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'localStorage', { get() { throw new Error('denied'); } });
+    window.openai = {
+      widgetState: { noShortUsageLanguage: 'en', unrelated: 'keep' },
+      setWidgetState: state => { (window as any).lastWidgetState = state; }
+    };
+  });
+  await page.route('**/__usage/snapshot', route => route.fulfill({json: dashboard()}));
+  await page.goto('/');
+  await expect(page.getByRole('tab', {name: 'Today', exact: true})).toBeVisible();
+  await page.getByRole('button', {name: 'Pin session', exact: true}).click();
+  await page.getByRole('button', {name: '中文', exact: true}).click();
+  await expect(page.getByRole('button', {name: '取消固定会话', exact: true})).toBeVisible();
+  const state = await page.evaluate(() => (window as any).lastWidgetState);
+  expect(state.noShortUsageLanguage).toBe('zh-CN');
+  expect(state.noShortUsageSelection.sessionId).toBeTruthy();
+  expect(state.unrelated).toBe('keep');
+});
+
+test('late host preference is restored but cannot override a manual choice', async ({ page }) => {
+  await page.route('**/__usage/snapshot', route => route.fulfill({json: dashboard()}));
+  await page.goto('/');
+  await page.evaluate(() => {
+    window.openai = {widgetState: {noShortUsageLanguage: 'zh-CN'}};
+    window.dispatchEvent(new Event('openai:set_globals'));
+  });
+  await expect(page.locator('html')).toHaveAttribute('lang', 'zh-CN');
+  await page.getByRole('button', {name: 'EN', exact: true}).click();
+  await page.evaluate(() => window.dispatchEvent(new Event('openai:set_globals')));
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+});

@@ -8,7 +8,7 @@ import AppKit
         _ = NSApplication.shared
         let item = NSStatusBar.system.statusItem(withLength:NSStatusItem.variableLength)
         defer { NSStatusBar.system.removeStatusItem(item) }
-        let button = try XCTUnwrap(item.button), model = UsagePanelModel()
+        let button = try XCTUnwrap(item.button), model = UsagePanelModel(preferredLanguages: ["vi"])
         let snapshot = try fixture { object in
             var sessions = object["sessions"] as! [[String:Any]]
             var claude = sessions[2]
@@ -47,7 +47,7 @@ import AppKit
     }
 
     func testLoadingUnknownAndPartialStaleAmountsKeepTheirMeaning() throws {
-        let model = UsagePanelModel()
+        let model = UsagePanelModel(preferredLanguages: ["vi"])
         model.update(snapshot:nil,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
         XCTAssertEqual(model.statusTitle,"—")
         let snapshot = try fixture { object in
@@ -74,7 +74,7 @@ import AppKit
     }
 
     func testPinnedSessionAndStaleDataCannotBorrowAnotherSessionsContext() throws {
-        let model=UsagePanelModel()
+        let model=UsagePanelModel(preferredLanguages: ["vi"])
         let snapshot=try fixture()
         model.update(snapshot:snapshot,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
         let value=ContextReading(sessionID:"main",usedTokens:250,limitTokens:1000,recordedAt:Date())
@@ -120,7 +120,7 @@ import AppKit
 
     func testThresholdMakesOnlyTheHighProviderRedIncludingAllMode() throws {
         _ = NSApplication.shared
-        let model = UsagePanelModel(), snapshot = try fixture { object in
+        let model = UsagePanelModel(preferredLanguages: ["vi"]), snapshot = try fixture { object in
             var sessions = object["sessions"] as! [[String:Any]]
             var claude = sessions[2]
             claude["id"] = "claude:second"; claude["provider"] = "claude"; claude["sessionKey"] = "second"

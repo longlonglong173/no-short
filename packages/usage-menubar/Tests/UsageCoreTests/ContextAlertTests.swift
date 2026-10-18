@@ -29,7 +29,7 @@ final class ContextAlertTests: XCTestCase {
 
 @MainActor final class ContextAlertModelTests: XCTestCase {
     func testDisablingNotificationsKeepsWarningAndDoesNotReplayOldCrossings() throws {
-        let model = UsagePanelModel(), snapshot = try fixture()
+        let model = UsagePanelModel(preferredLanguages: ["vi"]), snapshot = try fixture()
         model.update(snapshot:snapshot,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
         model.setContextNotificationsEnabled(false)
         model.updateContexts([.codex:ContextReading(sessionID:"main",usedTokens:80,limitTokens:100,recordedAt:Date())])
@@ -45,19 +45,19 @@ final class ContextAlertTests: XCTestCase {
     func testDefaultThresholdSettingsPersistenceAndStaleSuppression() throws {
         let suite = "context-alert-tests-\(UUID())", defaults = try XCTUnwrap(UserDefaults(suiteName:suite))
         defer { defaults.removePersistentDomain(forName:suite) }
-        let snapshot = try fixture(), model = UsagePanelModel(defaults:defaults)
+        let snapshot = try fixture(), model = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         model.update(snapshot:snapshot,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
         model.updateContexts([.codex:ContextReading(sessionID:"main",usedTokens:70,limitTokens:100,recordedAt:Date())])
         XCTAssertNotNil(model.contextWarning)
         XCTAssertEqual(model.consumeContextAlerts().map(\.provider),[.codex])
         XCTAssertTrue(model.consumeContextAlerts().isEmpty)
-        let restored = UsagePanelModel(defaults:defaults)
+        let restored = UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"])
         restored.update(snapshot:snapshot,source:"a",isLoading:false,isStale:false,notice:nil,loginState:.notRegistered)
         restored.updateContexts(model.contextReadings)
         XCTAssertTrue(restored.consumeContextAlerts().isEmpty)
         model.setContextAlertThreshold(80)
         XCTAssertNil(model.contextWarning)
-        XCTAssertEqual(UsagePanelModel(defaults:defaults).contextAlertThreshold,80)
+        XCTAssertEqual(UsagePanelModel(defaults:defaults, preferredLanguages: ["vi"]).contextAlertThreshold,80)
         model.setContextAlertThreshold(0)
         XCTAssertEqual(model.contextAlertThreshold,80)
         model.setContextAlertThreshold(70)
