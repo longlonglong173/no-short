@@ -8,7 +8,7 @@ Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charg
 
 ## Download the macOS app
 
-[Download for Apple Silicon — multi-source experimental v0.4.2](https://github.com/longlonglong173/no-short/releases/download/v0.4.2/no-short-usage-menubar-0.4.2-darwin-arm64-multi-source-experimental.zip)
+[Download for Apple Silicon — multi-source experimental v0.4.2](https://github.com/longlonglong173/no-short/releases/download/v0.4.2/NoShortUsage-0.4.2-arm64.zip)
 
 Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 

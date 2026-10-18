@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.4.2/no-short-usage-menubar-0.4.2-darwin-arm64-multi-source-experimental.zip';
+const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.4.2/NoShortUsage-0.4.2-arm64.zip';
 for (const page of ['index.html', 'usage.html']) {
   test(`${page} links directly to the multi-source app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');

@@ -50,7 +50,7 @@ npm run validate
 
 ## App distribution status
 
-The current download is `no-short-usage-menubar-0.4.2-darwin-arm64-multi-source-experimental.zip`
+The current download is `NoShortUsage-0.4.2-arm64.zip`
 on the v0.4.2 release. It adds validated source lists per provider and retains
 EN/VI/Simplified Chinese. The source commit and archive checksum are recorded in
 `docs/releases/0.4.2.md`; earlier experimental assets remain available unchanged.
