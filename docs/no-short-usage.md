@@ -42,7 +42,9 @@ The first online scan may fetch public model pricing from LiteLLM. Later scans u
 
 Snapshots and locks live under `~/Library/Caches/no-short/usage`, scoped by roots, timezone, engine and schema versions. Snapshots contain session names/IDs and usage, not prompts or messages. Titles can still be private; delete the cache when appropriate. Source-install downloads live in the separate `no-short/runtime` cache. Codex logs are not modified.
 
-The model receives a bounded selected-session/totals summary. The complete session list is widget-only MCP metadata. Values displayed inside Desktop are processed by that host under its terms.
+The MCP plugin returns the selected session's title/ID, provider (when available), token counts, models, dates and estimated cost, plus session count and period totals, in structured tool results that may enter model context. The complete session list is widget-only MCP metadata. These results are available to the ChatGPT/Codex host and are processed under its terms, privacy policy and account settings; local log processing does not mean that all displayed results stay on your device. The standalone menu bar app does not send snapshots through MCP. See [Privacy Policy](../PRIVACY.md) for retention and removal details.
+
+ccusage is MIT-licensed. Runtime bundles must include its full copyright and permission notice in `THIRD_PARTY_NOTICES.txt`; the build downloads the actual license file at the pinned source commit and rejects incomplete ccusage license text. Cost estimates are independent calculations, not official billing or provider approval. Using ccusage does not itself establish OpenAI directory eligibility.
 
 ## Development
 

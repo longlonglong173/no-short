@@ -25,10 +25,18 @@ for (const name of ['@modelcontextprotocol/server', '@modelcontextprotocol/core'
 }
 for (const [label, url] of [
   ['Bun 1.3.13', 'https://raw.githubusercontent.com/oven-sh/bun/bun-v1.3.13/LICENSE.md'],
-  ['ccusage 20.0.34', 'https://raw.githubusercontent.com/ccusage/ccusage/d7555844929ad76ec97a113d1d51c31de92bee35/LICENSE'],
+  ['ccusage 20.0.34', 'https://raw.githubusercontent.com/ccusage/ccusage/d7555844929ad76ec97a113d1d51c31de92bee35/apps/ccusage/LICENSE'],
 ]) {
   const r = await fetch(url); if (!r.ok) throw new Error(`License download failed: ${label}`);
-  notices += `\n\n${label}\n${await r.text()}\n`;
+  const text = await r.text();
+  // The repository-root ccusage LICENSE is a symlink; raw GitHub returns its
+  // target path, not license text. Never ship that placeholder as attribution.
+  if (label.startsWith('ccusage ') && (!text.includes('MIT License') ||
+    !text.includes('Copyright (c) 2025 ryoppippi') ||
+    !text.includes('The above copyright notice and this permission notice shall be included'))) {
+    throw new Error('Incomplete ccusage MIT license; refusing to package runtime');
+  }
+  notices += `\n\n${label}\n${text}\n`;
 }
 const platforms: Record<string, unknown> = {};
 for (const [platform, entry] of Object.entries(lock.platforms)) {
