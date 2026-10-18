@@ -266,6 +266,9 @@ function announce(message) {
 function setLanguage(language, persist = false) {
   currentLanguage = supportedLanguages.includes(language) ? language : 'en';
   document.documentElement.lang = currentLanguage;
+  for (const preview of document.querySelectorAll('[data-preview]')) {
+    preview.src = `/images/popover-${currentLanguage}-${preview.dataset.preview}.png`;
+  }
   const translations = currentLanguage === 'vi' ? vietnamese : currentLanguage === 'zh-CN' ? chinese : {};
   for (const element of elements) {
     const key = element.dataset.i18n;
