@@ -11,6 +11,11 @@
       codex: 'Run these commands in your terminal, then start a new Codex chat.',
       claude: 'Run these commands in Claude Code, then start a new session.'
     },
+    'zh-CN': {
+      cli: '为支持的 agent 安装已发布的说明型 skill。请根据你的环境查看安装程序的提示。',
+      codex: '在终端中运行这些命令，然后新建一个 Codex 聊天。',
+      claude: '在 Claude Code 中运行这些命令，然后开始新会话。'
+    },
     vi: {
       cli: 'Cài các skill dạng hướng dẫn cho agent được hỗ trợ. Xem các lựa chọn của trình cài cho thiết lập của bạn.',
       codex: 'Chạy các lệnh này trong terminal, rồi bắt đầu một chat Codex mới.',
@@ -23,19 +28,20 @@
   let selected = 'cli';
   let copyVersion = 0;
   let timer;
-  const language = () => document.documentElement.lang === 'vi' ? 'vi' : 'en';
+  const language = () => Object.hasOwn(notes, document.documentElement.lang) ? document.documentElement.lang : 'en';
+  const localized = (en, vi, zh) => ({ en, vi, 'zh-CN': zh })[language()];
   const announce = message => { document.getElementById('announcement').textContent = message; };
 
   function resetCopy() {
     copyVersion++;
     clearTimeout(timer);
-    copy.querySelector('[data-i18n]').textContent = language() === 'vi' ? 'Sao chép' : 'Copy';
+    copy.querySelector('[data-i18n]').textContent = localized('Copy', 'Sao chép', '复制');
   }
 
   function render() {
     command.textContent = commands[selected];
     document.getElementById('install-note').textContent = notes[language()][selected];
-    document.getElementById('command-label').textContent = selected === 'claude' ? 'CLAUDE CODE' : 'TERMINAL';
+    document.getElementById('command-label').textContent = selected === 'claude' ? 'CLAUDE CODE' : localized('TERMINAL', 'TERMINAL', '终端');
     document.getElementById('install-panel').setAttribute('aria-labelledby', `tab-${selected}`);
     for (const tab of tabs) {
       const active = tab.dataset.install === selected;
@@ -66,8 +72,8 @@
     try {
       await navigator.clipboard.writeText(commands[selected]);
       if (version !== copyVersion) return;
-      copy.querySelector('[data-i18n]').textContent = language() === 'vi' ? 'Đã chép ✓' : 'Copied ✓';
-      announce(language() === 'vi' ? 'Đã sao chép lệnh cài đặt.' : 'Installation command copied.');
+      copy.querySelector('[data-i18n]').textContent = localized('Copied ✓', 'Đã chép ✓', '已复制 ✓');
+      announce(localized('Installation command copied.', 'Đã sao chép lệnh cài đặt.', '已复制安装命令。'));
       clearTimeout(timer);
       timer = setTimeout(resetCopy, 2400);
     } catch {
@@ -77,8 +83,8 @@
       const selection = window.getSelection();
       selection.removeAllRanges();
       selection.addRange(range);
-      copy.querySelector('[data-i18n]').textContent = language() === 'vi' ? 'Chép thủ công' : 'Copy manually';
-      announce(language() === 'vi' ? 'Không thể truy cập clipboard. Lệnh đã được chọn để bạn sao chép thủ công.' : 'Clipboard unavailable. The command is selected for you to copy manually.');
+      copy.querySelector('[data-i18n]').textContent = localized('Copy manually', 'Chép thủ công', '手动复制');
+      announce(localized('Clipboard unavailable. The command is selected for you to copy manually.', 'Không thể truy cập clipboard. Lệnh đã được chọn để bạn sao chép thủ công.', '无法访问剪贴板。已选中命令，请手动复制。'));
     }
   });
   window.addEventListener('no-short-languagechange', render);
