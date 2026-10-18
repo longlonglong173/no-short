@@ -1,0 +1,12 @@
+*
+!website
+!website/**
+website/.vercel
+website/.vercel/**
+website/.env*
+website/_qa.html
+website/README.md
+website/.gitignore
+website/.vercelignore
+website/tests
+website/tests/**
