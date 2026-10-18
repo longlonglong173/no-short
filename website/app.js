@@ -174,17 +174,31 @@ function setLanguage(language, persist = false) {
   }
   const privacy = location.pathname.includes('privacy');
   const usageGuide = location.pathname.endsWith('/usage.html');
-  document.title = usageGuide
-    ? (currentLanguage === 'vi' ? 'No Short Usage — Hướng dẫn sử dụng' : 'No Short Usage — User guide')
+  const metadata = usageGuide
+    ? {
+        title: currentLanguage === 'vi' ? 'No Short Usage — Theo dõi chi phí và context trên macOS' : 'No Short Usage — Cost & context tracking for macOS',
+        description: currentLanguage === 'vi'
+          ? 'Theo dõi chi phí ước tính và context của Codex, Claude Code trên Mac. Tải No Short Usage, kết nối phiên và tùy chỉnh cảnh báo context.'
+          : 'Track estimated Codex and Claude Code costs and context on your Mac. Download No Short Usage, set up sessions and customize context alerts.'
+      }
     : privacy
-    ? (currentLanguage === 'vi' ? 'Quyền riêng tư — no-short' : 'Privacy — no-short')
-    : (currentLanguage === 'vi' ? 'no-short — Skill thiết thực cho AI agent.' : 'no-short — Practical skills for your AI agent.');
-  if (usageGuide) document.querySelector('meta[name="description"]').content = currentLanguage === 'vi'
-    ? 'Cài No Short Usage, kết nối Claude Code và chỉnh ngưỡng cảnh báo context trên macOS.'
-    : 'Install No Short Usage, connect Claude Code and adjust context alerts on macOS.';
-  else if (!privacy) document.querySelector('meta[name="description"]').content = currentLanguage === 'vi'
-    ? 'Skill viết và báo cáo cho Codex, Claude Code cùng các AI agent. Giữ giọng văn, dựa trên bằng chứng và tìm hiểu công cụ theo dõi usage cục bộ. Dự án của Long.'
-    : 'Reusable writing and reporting skills for Codex, Claude Code, and other AI agents. Keep your voice, write from evidence, and explore local usage tools. Built by Long.';
+    ? {
+        title: currentLanguage === 'vi' ? 'Quyền riêng tư — no-short' : 'Privacy — no-short',
+        description: currentLanguage === 'vi'
+          ? 'Cách website no-short xử lý dữ liệu, lựa chọn ngôn ngữ và giao diện, dịch vụ lưu trữ cùng các liên kết ra ngoài.'
+          : 'How the no-short website handles data, language and theme preferences, hosting and external links.'
+      }
+    : {
+        title: currentLanguage === 'vi' ? 'no-short — Skill cho AI agent & theo dõi usage' : 'no-short — AI skills & local usage tracking',
+        description: currentLanguage === 'vi'
+          ? 'Skill viết, báo cáo công việc cho Codex, Claude Code cùng công cụ theo dõi chi phí ước tính và context trên macOS.'
+          : 'Writing and work-report skills for Codex, Claude Code and other AI agents, plus estimated cost and context tracking with No Short Usage for macOS.'
+      };
+  document.title = metadata.title;
+  document.querySelector('meta[name="description"]').content = metadata.description;
+  for (const selector of ['meta[property="og:title"]', 'meta[name="twitter:title"]']) document.querySelector(selector).content = metadata.title;
+  for (const selector of ['meta[property="og:description"]', 'meta[name="twitter:description"]']) document.querySelector(selector).content = metadata.description;
+  document.querySelector('meta[property="og:locale"]').content = currentLanguage === 'vi' ? 'vi_VN' : 'en_US';
   const mainNav = document.querySelector('.desktop-nav');
   if (mainNav) mainNav.setAttribute('aria-label', currentLanguage === 'vi' ? 'Điều hướng chính' : 'Main navigation');
   const chart = document.querySelector('.chart');
