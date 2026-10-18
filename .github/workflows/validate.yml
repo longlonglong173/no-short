@@ -24,6 +24,12 @@ jobs:
       - name: Validate repository
         run: npm run validate
 
+      - name: Validate website scripts and theme behavior
+        run: |
+          node --check website/app.js
+          node --check website/theme.js
+          node --test website/tests/theme.test.mjs
+
   usage:
     runs-on: ubuntu-latest
     steps:
@@ -64,7 +70,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: no-short-local-test-package
-          path: .artifacts/usage/releases/no-short-0.4.1.zip
+          path: .artifacts/usage/releases/no-short-0.4.2.zip
 
 
   usage-menubar-macos:

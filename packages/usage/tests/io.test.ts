@@ -75,7 +75,9 @@ test('separate store instances share one calculation and atomic snapshot', async
   const values = await Promise.all([a.get(), b.get(), a.get()]);
   expect(calculations).toBe(1);
   expect(values[0].generatedAt).toBe(values[1].generatedAt);
-  expect((await a.get()).today.cost.amountUSD).toBe(0.47);
+  // Cache integrity must not depend on the fixture day being today's date.
+  expect((await a.get()).sessions.find(s => s.id === fixture.session[0].period)?.cost.amountUSD).toBe(0.42);
+  expect(calculations).toBe(1);
 });
 
 test('failed refresh preserves the last success and does not expose process errors', async () => {
@@ -84,7 +86,7 @@ test('failed refresh preserves the last success and does not expose process erro
   const b = new SnapshotStore(root, async () => { throw new Error('/private/path SECRET'); }, { ttlMs: 0 });
   const result = await b.get();
   expect(result.status).toBe('stale');
-  expect(result.today.cost.amountUSD).toBe(0.47);
+  expect(result.sessions.find(s => s.id === fixture.session[0].period)?.cost.amountUSD).toBe(0.42);
   expect(JSON.stringify(result)).not.toContain('SECRET');
 });
 

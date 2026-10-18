@@ -3,6 +3,7 @@ node_modules/
 *.log
 .artifacts/
 .superpowers/
+.vercel/
 packages/usage/dist/
 packages/usage/runtime/
 packages/usage/coverage/

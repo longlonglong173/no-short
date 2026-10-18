@@ -8,6 +8,10 @@ import UsageCore
     private lazy var panel = UsagePopoverController(model: panelModel)
     private var controller: RefreshController!
     private var terminating = false
+    private var contextSuspended = false
+    private let contextReader = ContextReader()
+    private var contextTask:Task<Void,Never>?
+    private var contextKey:String?, contextSelection:String?
     private var activityMonitor:ActivityMonitor?
     private let activityStore = ActivityStore()
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -41,6 +45,8 @@ import UsageCore
         panelModel.onResetClaudeSource = { [weak self] in
             guard let self else { return }; self.sources.resetClaude(); self.controller.setSource(self.sources.current); self.startMonitoring()
         }
+        panelModel.onConnectClaudeContext = { [weak self] in self?.configureClaudeContext(remove:false) }
+        panelModel.onRemoveClaudeContext = { [weak self] in self?.configureClaudeContext(remove:true) }
         panelModel.onInstallHooks = { [weak self] in self?.configureHooks(remove:false) }
         panelModel.onRemoveHooks = { [weak self] in self?.configureHooks(remove:true) }
         let center = NSWorkspace.shared.notificationCenter
@@ -53,10 +59,41 @@ import UsageCore
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date())
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
+        refreshContexts()
         if panel.popover.isShown { panel.updateSize() }
         if let button = statusItem?.button { StatusItemRenderer.apply(to:button,model:panelModel) }
-        statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\n\(panelModel.activityLabel)\n\(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
+        statusItem?.button?.toolTip = "\(panelModel.selectionLabel)\n\(panelModel.activityLabel)\n\(panelModel.mainCost) USD · Ước tính API\n\(panelModel.tokenTooltip)\n\(panelModel.contextTooltip)\nHôm nay: \(panelModel.todayCost) · Tháng này: \(panelModel.monthCost)"
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot)
+    }
+    private func refreshContexts() {
+        guard !contextSuspended, !terminating else { return }
+        let sessions=panelModel.contextSessionIDs, source=controller.source
+        let selection = source.displayName + sessions.sorted { $0.key.rawValue < $1.key.rawValue }.map { "|\($0.key.rawValue):\($0.value)" }.joined()
+        let key = selection + "|" + String(panelModel.snapshot?.generatedAt.timeIntervalSince1970 ?? 0)
+        guard contextKey != key else { return }
+        contextKey=key; contextTask?.cancel()
+        if contextSelection != selection { contextSelection=selection; panelModel.updateContexts([:]) }
+        contextTask=Task { [weak self,contextReader] in
+            var values:[UsageProvider:ContextReading] = [:]
+            for (provider,id) in sessions {
+                if Task.isCancelled { return }
+                if let reading = await contextReader.read(provider:provider,sessionID:id,source:source) { values[provider]=reading }
+            }
+            guard let self, !Task.isCancelled, self.contextKey == key, !self.contextSuspended, !self.terminating else { return }
+            self.panelModel.updateContexts(values); self.render()
+        }
+    }
+    private func configureClaudeContext(remove:Bool) {
+        guard let executable=Bundle.main.executableURL else { return }
+        let installer=ClaudeContextInstaller(executable:executable)
+        do {
+            for (path,provider) in HookInstaller.configurationFiles() where provider == .claude {
+                if remove { try installer.remove(at:path) } else { try installer.install(at:path) }
+            }
+            panelModel.connectionNotice = remove ? "Đã ngắt bộ thu context Claude Code." : "Đã kết nối context Claude Code. Status line sẽ gửi số liệu khi phiên cập nhật."
+        } catch let error as ClaudeContextInstallationError { panelModel.connectionNotice=error.localizedDescription }
+        catch { panelModel.connectionNotice="Không cập nhật được status line Claude Code. Kiểm tra quyền đọc/ghi cấu hình." }
+        contextKey=nil; render()
     }
     @objc private func toggleUsagePanel(_ sender: Any?) {
         guard let button = statusItem?.button else { return }
@@ -115,11 +152,11 @@ import UsageCore
         let alert = NSAlert(); alert.messageText = "No Short Usage"; alert.informativeText = message
         alert.alertStyle = .warning; NSApp.activate(ignoringOtherApps: true); alert.runModal()
     }
-    @objc private func willSleep(_ notification: Notification) { panel.close(); activityMonitor?.stop(); controller.suspend() }
-    @objc private func didWake(_ notification: Notification) { startMonitoring(); controller.resume() }
+    @objc private func willSleep(_ notification: Notification) { contextSuspended=true; contextTask?.cancel(); contextKey=nil; panel.close(); activityMonitor?.stop(); controller.suspend() }
+    @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !terminating, let controller else { return terminating ? .terminateLater : .terminateNow }
-        terminating = true; panel.close(); activityMonitor?.stop()
+        terminating = true; contextTask?.cancel(); panel.close(); activityMonitor?.stop()
         Task { await controller.shutdown(); sender.reply(toApplicationShouldTerminate: true) }
         return .terminateLater
     }

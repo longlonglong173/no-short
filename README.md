@@ -19,7 +19,11 @@ No Short Usage estimates API-equivalent costs using ccusage 20.0.34. These are n
 
 ## macOS menu bar app
 
-An optional native **No Short Usage.app** keeps local Codex usage visible on the menu bar when the conversation panel is closed. It bundles its runtime, shows API-equivalent USD estimates, and offers an opt-in login item. See [installation, build commands and verification limits](docs/no-short-usage-menubar.md). The companion is a separate local artifact; installing the plugin does not install the app.
+An optional native **No Short Usage.app** keeps local **Codex and Claude Code** usage visible on the menu bar when the conversation panel is closed. It bundles its runtime, shows API-equivalent USD estimates and dynamic context rings, and offers an opt-in login item. The companion is independent: installing the plugin or skills does not install the app.
+
+**0.4.2 is a local release candidate, not a published app download.** Public distribution is held until Developer ID signing, notarization and the remaining installation checks pass. Local development builds are ad-hoc signed. See the [first-release checklist](docs/releases/0.4.2.md) and [build/verification guide](docs/no-short-usage-menubar.md).
+
+When a verified release is available: choose its `darwin-arm64` ZIP for Apple Silicon or `darwin-x64` ZIP for Intel, verify `SHA256SUMS`, extract, move **No Short Usage.app** to **Applications**, and open it. macOS 14+ is required. No DMG, runtime installation or API key is needed. Claude context and automatic session following are separate opt-in connections in the gear menu; existing custom status lines are preserved. Context is estimated occupancy, not a subscription quota.
 
 ## Available skills
 
@@ -41,6 +45,8 @@ An optional native **No Short Usage.app** keeps local Codex usage visible on the
 ├── skills/                            One folder per reusable skill
 ├── mcp.json                           macOS local usage server
 ├── packages/usage/                    Usage engine, MCP server, React panel and release scripts
+├── packages/usage-menubar/            Native macOS companion, context rings and release verification
+├── website/                          Bilingual site and Usage setup guide
 └── scripts/validate.mjs               Repository validation
 ```
 
@@ -110,12 +116,16 @@ claude plugin validate .
 
 The local validator checks manifest consistency, marketplace wiring, and every discovered `SKILL.md`. Claude Code's validator provides an additional product-specific check.
 
-## Distribution roadmap
+## Releases and license
 
-1. Test each published skill from clean Skills CLI, Claude Code, and Codex installations.
-2. Add release notes and choose a license before the first public release.
-3. Add more focused skills based on real workflows and observed gaps.
-4. Consider submission to the public OpenAI plugin directory after the collection has tested skills and complete listing metadata.
+Original no-short code is licensed under [MIT](LICENSE). Third-party dependencies,
+fonts and provider marks retain their own rights; see [NOTICE.md](NOTICE.md).
+Changes and release status are recorded in [CHANGELOG.md](CHANGELOG.md).
+
+The first native app release uses the [0.4.2 release checklist](docs/releases/0.4.2.md).
+GitHub distribution of that independent app is separate from OpenAI Plugin Directory
+submission. Local MCP directory submissions require approved-partner eligibility;
+no public-directory submission or approval is claimed here.
 
 ## Security
 

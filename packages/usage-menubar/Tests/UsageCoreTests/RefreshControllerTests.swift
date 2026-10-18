@@ -69,8 +69,10 @@ final class RefreshControllerTests: XCTestCase {
         c.suspend(); now = now.addingTimeInterval(86_400); c.resume()
         XCTAssertTrue(c.isStale)
         try await waitFor { await loader.calls.count == 2 }
-        await loader.resolve(.success(s)); try await waitFor { !c.isLoading }
+        await loader.resolve(.success(s))
+        // The timer may start the next read before polling observes the brief idle state.
         try await waitFor { await loader.calls.count == 3 }
+        XCTAssertTrue(c.isLoading)
         c.stop(); await loader.resolve(.failure(CancellationError()))
     }
     func testErrorSnapshotDoesNotReplaceGoodNumbers() async throws {

@@ -13,17 +13,6 @@ import UsageCore
     }()
     private static let codex = load("codex"), claude = load("claude")
     static var hasProviderIcons: Bool { codex != nil && claude != nil }
-    private static let combined: NSImage? = {
-        guard let codex, let claude else { return nil }
-        let image = NSImage(size:NSSize(width:36,height:16),flipped:false) { _ in
-            codex.draw(in:NSRect(x:0,y:0,width:16,height:16))
-            claude.draw(in:NSRect(x:20,y:0,width:16,height:16))
-            return true
-        }
-        image.isTemplate = true
-        return image
-    }()
-
     private static func load(_ name:String) -> NSImage? {
         guard let url = resources?.url(forResource:name,withExtension:"pdf"), let image = NSImage(contentsOf:url) else { return nil }
         image.size = NSSize(width:16,height:16)
@@ -31,17 +20,47 @@ import UsageCore
         return image
     }
 
+    static func image(provider:UsageProvider,reading:ContextReading?) -> NSImage? {
+        guard let logo = provider == .codex ? codex : claude else { return nil }
+        let result = NSImage(size:NSSize(width:22,height:22),flipped:false) { _ in
+            let track = NSBezierPath(ovalIn:NSRect(x:1.5,y:1.5,width:19,height:19))
+            track.lineWidth = 1.5
+            if reading == nil { track.setLineDash([1.6,2.1],count:2,phase:0) }
+            NSColor.black.withAlphaComponent(reading == nil ? 0.38 : 0.20).setStroke(); track.stroke()
+            if let reading, reading.fraction > 0 {
+                let arc = NSBezierPath(); arc.lineWidth = 1.7; arc.lineCapStyle = .round
+                arc.appendArc(withCenter:NSPoint(x:11,y:11),radius:9.5,startAngle:90,endAngle:90 - CGFloat(reading.fraction * 360),clockwise:true)
+                NSColor.black.setStroke(); arc.stroke()
+            }
+            logo.draw(in:NSRect(x:5.5,y:5.5,width:11,height:11))
+            return true
+        }
+        result.isTemplate = true
+        return result
+    }
+    private static func combined(_ model:UsagePanelModel) -> NSImage? {
+        guard let codex = image(provider:.codex,reading:model.contextReading(for:.codex)),
+              let claude = image(provider:.claude,reading:model.contextReading(for:.claude)) else { return nil }
+        let image = NSImage(size:NSSize(width:48,height:22),flipped:false) { _ in
+            codex.draw(in:NSRect(x:0,y:0,width:22,height:22))
+            claude.draw(in:NSRect(x:26,y:0,width:22,height:22))
+            return true
+        }
+        image.isTemplate = true
+        return image
+    }
+
     static func apply(to button:NSStatusBarButton,model:UsagePanelModel) {
         let name:String
         switch model.providerFilter {
-        case "all": button.image = combined; name = "Codex và Claude Code"
-        case "claude": button.image = claude; name = UsageProvider.claude.title
-        default: button.image = codex; name = UsageProvider.codex.title
+        case "all": button.image = combined(model); name = "Codex và Claude Code"
+        case "claude": button.image = image(provider:.claude,reading:model.contextReading(for:.claude)); name = UsageProvider.claude.title
+        default: button.image = image(provider:.codex,reading:model.contextReading(for:.codex)); name = UsageProvider.codex.title
         }
         // Keep the provider mark to the left of the amount.
         button.imagePosition = .imageLeft
         button.title = model.statusTitle
         button.setAccessibilityLabel("\(name) · No Short Usage")
-        button.setAccessibilityValue(model.statusTitle)
+        button.setAccessibilityValue(model.statusTitle + " · " + model.contextLabel)
     }
 }

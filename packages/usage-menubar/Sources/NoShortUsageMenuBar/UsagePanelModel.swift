@@ -43,6 +43,8 @@ struct DailyCostPoint: Identifiable {
     var onQuit: (() -> Void)?
     var onChooseClaudeSource: (() -> Void)?
     var onResetClaudeSource: (() -> Void)?
+    var onConnectClaudeContext: (() -> Void)?
+    var onRemoveClaudeContext: (() -> Void)?
     var onInstallHooks: (() -> Void)?
     var onRemoveHooks: (() -> Void)?
 
@@ -92,7 +94,7 @@ struct DailyCostPoint: Identifiable {
     }
     var selectionMissing: Bool { snapshot != nil && selectedSessionID != nil && selectedSession == nil }
     var panelHeight: CGFloat {
-        680 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
+        712 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0)
     }
     var isAll:Bool { providerFilter == "all" }
     var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }
@@ -118,6 +120,38 @@ struct DailyCostPoint: Identifiable {
     var visibleToday:UsageAggregate? { isAll ? snapshot?.today : providerBreakdown?.today ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.today : nil) }
     var visibleMonth:UsageAggregate? { isAll ? snapshot?.month : providerBreakdown?.month ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.month : nil) }
     private var displayTokens:UsageTokens? { isAll ? visibleToday?.tokens : selectedSession?.tokens }
+    @Published private(set) var contextReadings: [UsageProvider:ContextReading] = [:]
+    var contextSessionIDs: [UsageProvider:String] {
+        var result: [UsageProvider:String] = [:]
+        for provider in UsageProvider.allCases where isAll || providerFilter == provider.rawValue {
+            let session:SessionUsage?
+            if !isAll { session=selectedSession }
+            else if let activity = activities.filter({ $0.provider == provider && $0.event == .submitted }).max(by:{ $0.recordedAt < $1.recordedAt }) {
+                session=snapshot?.sessions.first { $0.kind != "subagent" && $0.matches(activity) }
+            } else { session=snapshot?.sessions.first { $0.usageProvider == provider && $0.kind != "subagent" } }
+            if let session {
+                let id = session.sessionKey ?? session.id.range(of:"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",options:.regularExpression).map { String(session.id[$0]) } ?? session.id
+                if ContextReading.validSessionID(id) { result[provider]=id }
+            }
+        }
+        return result
+    }
+    func updateContexts(_ values:[UsageProvider:ContextReading]) { contextReadings=values }
+    func contextReading(for provider:UsageProvider) -> ContextReading? {
+        guard !isStale, let value=contextReadings[provider], value.sessionID == contextSessionIDs[provider] else { return nil }
+        return value
+    }
+    var contextLabel:String {
+        if isAll { return UsageProvider.allCases.map { "\($0.title): \(contextReading(for:$0).map { "\($0.percent)%" } ?? "—")" }.joined(separator:" · ") }
+        let provider = UsageProvider(rawValue:providerFilter) ?? .codex
+        guard let value=contextReading(for:provider) else { return "Context chưa xác định" }
+        return "Context \(value.percent)% · \(Self.compact(value.limitTokens)) token · Ước tính"
+    }
+    var contextTooltip:String {
+        let explanation = "Vòng ngoài: context đã dùng, không phải quota thuê bao hay token cộng dồn."
+        if providerFilter == "claude" && contextReading(for:.claude) == nil { return explanation + "\nKết nối context Claude Code trong Cài đặt để nhận số liệu từ status line." }
+        return explanation + "\n" + contextLabel
+    }
     var statusTitle: String {
         if snapshot == nil { return isLoading ? "…" : "—" }
         return mainCost + (isStale ? " ⚠" : "")
