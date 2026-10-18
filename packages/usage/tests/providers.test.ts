@@ -15,6 +15,37 @@ afterEach(async () => { await Promise.all(dirs.splice(0).map(d => rm(d, { recurs
 const options = { now: new Date('2026-10-17T05:00:00Z'), timeZone: 'UTC', metadata: new Map(), providers: ['codex', 'claude'] as const };
 const nativeCli = process.env.NO_SHORT_USAGE_CCUSAGE ?? new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
 
+test.skipIf(!existsSync(nativeCli))('multiple roots include distinct sessions without billing copied sessions twice', async () => {
+  const root = await temp();
+  const codexRoots = [join(root, 'codex-a'), join(root, 'codex-b')];
+  const claudeRoots = [join(root, 'claude-a'), join(root, 'claude-b')];
+  const ids = ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'];
+  for (let index = 0; index < 2; index++) {
+    await mkdir(join(codexRoots[index], 'sessions'), { recursive: true });
+    await mkdir(join(claudeRoots[index], 'projects/project'), { recursive: true });
+    for (const id of ids.slice(0, index + 1)) {
+      const timestamp = id === ids[0] ? '2026-10-17T03:00:00Z' : '2026-10-17T04:00:00Z';
+      const codex = [
+        { type: 'session_meta', payload: { id, source: 'cli', timestamp: '2026-10-17T03:00:00Z' } },
+        { type: 'turn_context', payload: { model: 'gpt-6.1-sol' } },
+        { type: 'event_msg', timestamp, payload: { type: 'token_count', info: { total_token_usage: { input_tokens: 100, cached_input_tokens: 50, output_tokens: 10, reasoning_output_tokens: 5, total_tokens: 110 } } } },
+      ];
+      await writeFile(join(codexRoots[index], `sessions/rollout-2026-10-17T10-00-00-${id}.jsonl`), codex.map(v => JSON.stringify(v)).join('\n') + '\n');
+      await writeFile(join(claudeRoots[index], `projects/project/${id}.jsonl`), JSON.stringify({
+        type: 'assistant', timestamp: '2026-10-17T03:00:00Z', sessionId: id, requestId: `request-${id}`,
+        message: { id: `message-${id}`, role: 'assistant', model: 'claude-sonnet-4-5-20250929', usage: { input_tokens: 100, output_tokens: 10, cache_creation_input_tokens: 20, cache_read_input_tokens: 50 } },
+      }) + '\n');
+    }
+  }
+  const report = await runReport({ binary: nativeCli, roots: codexRoots, claudeRoots, cacheDir: join(root, 'cache'), timeZone: 'UTC', offline: true });
+  const snapshot = buildSnapshot(report, options);
+  expect(snapshot.sessions.filter(s => s.provider === 'codex')).toHaveLength(2);
+  expect(snapshot.sessions.filter(s => s.provider === 'claude')).toHaveLength(2);
+  expect(snapshot.today.tokens.total).toBe(580);
+  expect(snapshot.providerBreakdowns?.find(p => p.provider === 'codex')?.today.tokens.total).toBe(220);
+  expect(snapshot.providerBreakdowns?.find(p => p.provider === 'claude')?.today.tokens.total).toBe(360);
+}, 15_000);
+
 test('mixed providers retain independent session identities, cached tokens and daily totals', () => {
   const report = structuredClone(raw);
   const claude = { ...structuredClone(report.session[0]), agent: 'claude', totalCost: 1.25 };

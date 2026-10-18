@@ -1,4 +1,5 @@
 import AppKit
+import SwiftUI
 import UsageCore
 
 @MainActor final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -162,15 +163,25 @@ import UsageCore
     }
     private func chooseSource(claude:Bool = false) {
         panel.close()
-        let picker = NSOpenPanel(); picker.canChooseDirectories = true; picker.canChooseFiles = false
-        picker.allowsMultipleSelection = false; picker.canCreateDirectories = false
-        picker.prompt = l("Chọn")
-        picker.showsHiddenFiles = true; picker.title = claude ? l("Chọn thư mục Claude Code chứa projects") : l("Chọn thư mục Codex home chứa sessions")
+        let provider: UsageProvider = claude ? .claude : .codex
+        let model = LogSourcesEditorModel(store: sources, provider: provider, language: panelModel.language)
+        let alert = NSAlert()
+        alert.messageText = claude ? l("Nguồn log Claude Code") : l("Nguồn log Codex")
+        alert.addButton(withTitle: l("Lưu")); alert.addButton(withTitle: l("Hủy"))
+        let host = NSHostingView(rootView: LogSourcesEditorView(model: model, onAdd: { [weak self] in
+            guard let self else { return }
+            let picker = NSOpenPanel(); picker.canChooseDirectories = true; picker.canChooseFiles = false
+            picker.allowsMultipleSelection = true; picker.canCreateDirectories = false
+            picker.prompt = self.l("Chọn"); picker.showsHiddenFiles = true
+            picker.title = claude ? self.l("Chọn thư mục Claude Code chứa projects") : self.l("Chọn thư mục Codex home chứa sessions")
+            if picker.runModal() == .OK { model.add(picker.urls) }
+        }))
+        host.frame = NSRect(x: 0, y: 0, width: 520, height: 340)
+        alert.accessoryView = host
         NSApp.activate(ignoringOtherApps: true)
-        guard picker.runModal() == .OK, let url = picker.url else { return }
-        guard sources.canChoose(url) else { showError(l("Tên thư mục không được chứa dấu phẩy vì bộ đọc dùng dấu phẩy để tách nguồn log.")); return }
-        if claude { sources.chooseClaude(url) } else { sources.choose(url) }
-        controller.setSource(sources.current); startMonitoring()
+        while alert.runModal() == .alertFirstButtonReturn {
+            if model.save() { controller.setSource(sources.current); startMonitoring(); return }
+        }
     }
     private func startMonitoring() {
         activityMonitor?.stop()
