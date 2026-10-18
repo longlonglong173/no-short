@@ -15,7 +15,7 @@ Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=
 ## Content boundaries
 
 - Skill descriptions and commands come from the repository’s published `main` README and skill files.
-- Usage 0.4.2 includes an owner-approved experimental Apple Silicon app, explicitly labeled ad-hoc signed and not notarized. Its download, checksum and installation notes link to actual release assets. Intel app downloads remain unavailable. Source archives are a separate developer option. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
+- Usage 0.4.2 includes an owner-approved experimental Apple Silicon app, explicitly labeled ad-hoc signed and not notarized. Its app download links to the published release asset; checksum and installation-note files remain on the release without extra links in the download section. Intel app downloads remain unavailable. Source archives are a separate developer option. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
 - `images/` contains native AppKit renders with synthetic data only, in both themes; these are not live account screenshots. Their provider marks retain their respective owners’ rights (see the repository `NOTICE.md`).
 - The writing edit, prompts and usage visual are illustrative examples, not user data or actual account usage.
 - API-equivalent estimates are distinguished from bills, credits and quota.
@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=8`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=9`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -54,7 +54,7 @@ The owner approved public distribution of the exact Apple Silicon ZIP they teste
 
 ## Download section
 
-The home and setup pages expose the experimental Apple Silicon app, checksum, installation notes, source ZIP and release. The Intel control stays disabled. Both EN/VI pages distinguish a runnable experimental app from source archives requiring a build. Only enable downloads for actual uploaded assets; never infer an Intel download from a cross-build.
+The home and setup download sections show only the experimental Apple Silicon app and the disabled Intel control, with platform and experimental-build notes. Source ZIP, source patch, release, checksum and installation-note links are omitted from these sections in both EN/VI. The setup page retains its inline installation steps and a separate developer build guide pointing to main. Only enable downloads for actual uploaded assets; never infer an Intel download from a cross-build.
 
 
 ## Context alerts build (2026-10-18)
@@ -65,7 +65,7 @@ pages describe the default 70% threshold, red menu bar logo/ring, configurable
 threshold, panel warnings, macOS notification permission and crossing deduplication
 in EN/VI. The new screenshot files have unique names for cache invalidation.
 
-The tagged v0.4.2 source archive is the base source. Apply the linked
+The tagged v0.4.2 source archive is the base source. Apply the release asset
 `SOURCE-context-alerts-experimental.patch` to reproduce this native build; the
 patch was verified against the tag. The new checksum and installation notes match
 this build. Local build/smoke checks do not claim owner acceptance, macOS banner
