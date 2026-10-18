@@ -7,17 +7,17 @@
   };
   const notes = {
     en: {
-      cli: 'Installs the published instruction-based skills for supported agents. Review the installer’s prompts for your setup.',
+      cli: 'Installs skills for supported agents. Choose your agent and install location when prompted.',
       codex: 'Run these commands in your terminal, then start a new Codex chat.',
       claude: 'Run these commands in Claude Code, then start a new session.'
     },
     'zh-CN': {
-      cli: '为支持的 agent 安装已发布的说明型 skill。请根据你的环境查看安装程序的提示。',
+      cli: '为支持的 agent 安装 skill。按安装程序提示选择 agent 和安装位置。',
       codex: '在终端中运行这些命令，然后新建一个 Codex 聊天。',
       claude: '在 Claude Code 中运行这些命令，然后开始新会话。'
     },
     vi: {
-      cli: 'Cài các skill dạng hướng dẫn cho agent được hỗ trợ. Xem các lựa chọn của trình cài cho thiết lập của bạn.',
+      cli: 'Cài skill cho các agent được hỗ trợ. Chọn agent và nơi cài khi trình cài hỏi.',
       codex: 'Chạy các lệnh này trong terminal, rồi bắt đầu một chat Codex mới.',
       claude: 'Chạy các lệnh này trong Claude Code, rồi bắt đầu một phiên mới.'
     }
