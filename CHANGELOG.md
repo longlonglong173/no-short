@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.2 — release candidate (not published)
+## 0.4.2 — source release and experimental Apple Silicon app
 
 ### Native No Short Usage
 
@@ -25,6 +25,7 @@
   setup page and the actual pending-release status.
 - Keep both existing skills unchanged. No runtime dependency is added for users.
 
-Public app distribution remains blocked pending Developer ID credentials and the
-release checks in [the release record](docs/releases/0.4.2.md). This is not an
-OpenAI public-directory submission or a notarized artifact claim.
+The owner approved public distribution of the exact locally tested Apple Silicon
+ZIP, with checksum and installation notes. It is ad-hoc signed, not notarized;
+Intel app downloads remain unavailable. The [signed-release checks](docs/releases/0.4.2.md)
+remain pending. This is not an OpenAI directory submission or an Apple approval claim.

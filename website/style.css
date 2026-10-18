@@ -155,6 +155,11 @@ h2 { margin-bottom: 0; font-size: 34px; font-weight: 600; line-height: 1.25; let
 .download-option strong { font-size: 15px; color: var(--ink); }
 .download-option .mono { font-size: 11px; margin-block: 4px; }
 .download-option span:last-child { font-size: 13px; }
+.download-ready { background: var(--accent-soft); border-color: var(--accent); cursor: pointer; }
+.download-ready span:last-child { color: var(--accent); font-weight: 600; }
+.download-ready:hover { border-color: var(--ink); }
+.privacy-page .download-option { text-decoration: none; }
+.download-support { margin-top: 12px; }
 .usage-downloads .download-footnote { font-size: 12px; margin: 12px 0 0; }
 @media (max-width: 480px) { .download-options { grid-template-columns: 1fr; } }
 .usage-guide li { color: var(--muted); margin-bottom: 12px; }

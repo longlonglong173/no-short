@@ -15,7 +15,7 @@ Open `http://127.0.0.1:4173`. No installation or build step is required. `?lang=
 ## Content boundaries
 
 - Skill descriptions and commands come from the repository’s published `main` README and skill files.
-- Usage 0.4.2 is a published source-only release, linked directly on the home and setup pages. GitHub source archives require a developer build; ready-to-run app downloads are held until Developer ID, notarization and installation checks pass. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
+- Usage 0.4.2 includes an owner-approved experimental Apple Silicon app, explicitly labeled ad-hoc signed and not notarized. Its download, checksum and installation notes link to actual release assets. Intel app downloads remain unavailable. Source archives are a separate developer option. `/usage.html` explains setup, context, privacy, troubleshooting and removal in EN/VI. Documentation points to `main`, not a temporary feature branch.
 - `images/` contains native AppKit renders with synthetic data only, in both themes; these are not live account screenshots. Their provider marks retain their respective owners’ rights (see the repository `NOTICE.md`).
 - The writing edit, prompts and usage visual are illustrative examples, not user data or actual account usage.
 - API-equivalent estimates are distinguished from bills, credits and quota.
@@ -35,7 +35,7 @@ Vercel linked the GitHub repository during project creation. Its root is set to 
 
 ## Theme and verification
 
-`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=5`, `app.js?v=6`, `theme.js?v=2`).
+`theme.js` runs before CSS to apply the saved theme, or the system preference on first visit. The toggle persists an explicit choice, syncs tabs, and remains usable if storage is blocked. The privacy page shares the control and preference. `app.js` localizes its accessible action label. Versioned CSS/JS URLs invalidate earlier static assets (`style.css?v=6`, `app.js?v=7`, `theme.js?v=2`).
 
 Run the theme behavior tests (system changes, persistence, storage denial, invalid preferences and cross-tab synchronization):
 
@@ -48,10 +48,10 @@ npm run validate
 
 `tests/` is excluded from deployment. Verify EN/VI, both themes, installation tab/copy behavior and mobile layouts in the browser before deploying.
 
-## First app release
+## App distribution status
 
-Keep source-only release wording until verified app artifacts actually exist. The owner has held public app distribution pending Developer ID setup. Do not invent download URLs or use development ZIPs. After approved app-binary publication, update both languages and exact architecture/checksum links on the home and setup pages; verify them in the browser. See `docs/releases/0.4.2.md`. Website preview deployment from a PR is separate from native-app publication.
+The owner approved public distribution of the exact Apple Silicon ZIP they tested locally. Release assets use an explicit `experimental` suffix. The website must disclose ad-hoc signing, missing Apple notarization and possible first-launch blocking. Do not imply clean-machine/Gatekeeper or Intel verification. The signed-release workflow/checklist remains a separate future milestone.
 
 ## Download section
 
-The home and Usage setup pages link directly to the v0.4.2 source ZIP and release. The source ZIP needs a development build. Apple Silicon/Intel app controls are disabled and labeled unavailable; they must not link to source archives or ad-hoc development packages. Enable them only after verified app assets exist. All labels are available in EN/VI.
+The home and setup pages expose the experimental Apple Silicon app, checksum, installation notes, source ZIP and release. The Intel control stays disabled. Both EN/VI pages distinguish a runnable experimental app from source archives requiring a build. Only enable downloads for actual uploaded assets; never infer an Intel download from a cross-build.

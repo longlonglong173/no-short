@@ -6,10 +6,7 @@ Amounts are **estimated API-equivalent USD costs**, not ChatGPT charges, credits
 
 ## Install and open
 
-**0.4.2 is currently a local release candidate. Public downloads are held**
-pending Developer ID signing, notarization and the device/installation checks
-in the [first-release record](releases/0.4.2.md). Do not distribute the ad-hoc
-development ZIPs as a verified release.
+**An experimental Apple Silicon app is now available in [v0.4.2](https://github.com/longlonglong173/no-short/releases/tag/v0.4.2).** The owner tested and approved the exact ZIP for public distribution. It is ad-hoc signed and **not notarized**, so macOS may block first launch. Download the `darwin-arm64-experimental.zip`, `SHA256SUMS-experimental.txt` and `INSTALL-experimental.txt`; verify the checksum before extracting. No Intel app download is provided. Developer ID/notarization and the [remaining checks](releases/0.4.2.md) are still pending for a future notarized release. See [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -220,4 +217,6 @@ cover 0/25/50/75/100/unknown; those previews use synthetic data.
 
 Live Claude status-line delivery, physical Intel execution, VoiceOver and
 sleep/wake integration remain separate unverified checks. Local ZIPs use ad-hoc
-development signatures, are not notarized, and have not been publicly published.
+development signatures and are not notarized. The owner-approved experimental
+Apple Silicon ZIP was subsequently published separately; see the installation
+notice above. Intel execution remains unverified.
