@@ -301,3 +301,7 @@ prove a macOS notification banner was delivered on a user's machine.
 The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
 
 About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The app does not download or replace itself.
+
+## Adaptive popover (NS-07, unreleased source)
+
+The popover clamps to the visible screen area below its menu-bar item. When content does not fit, scroll vertically; Home/End and Page Up/Page Down reach the full content when not editing text. It resizes for warning, language, and screen changes. Existing public downloads are not updated by this source change. Live VoiceOver and multi-display acceptance remain separate checks.

@@ -4,9 +4,31 @@ import UsageCore
 
 struct UsagePopoverView: View {
     @ObservedObject var model: UsagePanelModel
+    var onContentHeightChange: ((CGFloat) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     private var accent: Color { colorScheme == .dark ? Color(red: 0.46, green: 0.83, blue: 0.79) : Color(red: 0, green: 0.43, blue: 0.45) }
     var body: some View {
+        GeometryReader { geometry in
+            ScrollView(.vertical) {
+                content
+                    .frame(width: geometry.size.width)
+                    .frame(minHeight: model.panelHeight, alignment: .top)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(GeometryReader { content in
+                        Color.clear.preference(key: PopoverContentHeight.self, value: content.size.height)
+                    })
+            }
+            .focusable()
+        }
+        .frame(idealWidth: 400, idealHeight: model.panelHeight)
+        .onPreferenceChange(PopoverContentHeight.self) { height in
+            if height > 0 { onContentHeightChange?(height) }
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
+        .tint(accent)
+        .environment(\.locale, model.language.locale)
+    }
+    private var content: some View {
         VStack(spacing: 0) {
             header.padding(.bottom, 12)
             if model.showsSetup {
@@ -23,10 +45,6 @@ struct UsagePopoverView: View {
             }
         }
         .padding(22)
-        .frame(width: 400, height: model.panelHeight, alignment: .top)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .tint(accent)
-        .environment(\.locale, model.language.locale)
     }
     private var header: some View {
         HStack(alignment: .center) {
@@ -254,24 +272,22 @@ struct UsagePopoverView: View {
             }.buttonStyle(.bordered)
             Text(model.l("%@ phiên · Chọn để xem chi phí và token", String(model.filteredSessions.count)))
                 .font(.system(size: 10)).foregroundStyle(.secondary)
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(model.filteredSessions, id: \.id) { session in
-                        Button { model.chooseSession(session.id) } label: {
-                            HStack(alignment: .top, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(UsagePresentation.cleanTitle(session.title)).font(.system(size: 12, weight: .medium)).lineLimit(2)
-                                    Text(session.usageProvider.title + " · " + (session.kind == "subagent" ? model.l("Tác vụ con") : session.kind == "main" ? model.l("Phiên chính") : model.l("Chưa xác định loại phiên"))).font(.system(size: 9)).foregroundStyle(.secondary)
-                                }
-                                Spacer(minLength: 0)
-                                Text(UsagePresentation.money(session.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
-                            }.foregroundStyle(.primary).padding(.vertical, 12).padding(.horizontal, 4).frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }.buttonStyle(.plain).help(session.title)
-                        Divider()
-                    }
-                    if model.filteredSessions.isEmpty { Text(model.l("Không tìm thấy phiên phù hợp")).font(.system(size: 12)).foregroundStyle(.secondary).padding(.vertical, 30) }
+            VStack(spacing: 0) {
+                ForEach(model.filteredSessions, id: \.id) { session in
+                    Button { model.chooseSession(session.id) } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(UsagePresentation.cleanTitle(session.title)).font(.system(size: 12, weight: .medium)).lineLimit(2)
+                                Text(session.usageProvider.title + " · " + (session.kind == "subagent" ? model.l("Tác vụ con") : session.kind == "main" ? model.l("Phiên chính") : model.l("Chưa xác định loại phiên"))).font(.system(size: 9)).foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Text(UsagePresentation.money(session.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                        }.foregroundStyle(.primary).padding(.vertical, 12).padding(.horizontal, 4).frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }.buttonStyle(.plain).help(session.title)
+                    Divider()
                 }
+                if model.filteredSessions.isEmpty { Text(model.l("Không tìm thấy phiên phù hợp")).font(.system(size: 12)).foregroundStyle(.secondary).padding(.vertical, 30) }
             }
             Spacer(minLength: 0)
         }.font(.system(size: 12))
@@ -307,28 +323,26 @@ struct UsagePopoverView: View {
                 Text("USD").frame(width: 96, alignment: .trailing)
             }.font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
             Divider()
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    // Snapshot names need not be unique; keep every source row.
-                    ForEach(Array(model.modelUsages.enumerated()), id: \.offset) { _, row in
-                        HStack(alignment: .top) {
-                            Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
-                                .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).help(row.name)
-                            Text(UsagePresentation.number(row.tokens.total)).font(.system(size: 11)).monospacedDigit()
-                                .frame(width: 65, alignment: .trailing)
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(UsagePresentation.money(row.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
-                                Text(model.pricingLabel(row.cost)).font(.system(size: 9)).foregroundStyle(.secondary)
-                            }.frame(width: 96, alignment: .trailing)
-                        }.padding(.vertical, 12).accessibilityElement(children: .combine)
-                        Divider()
-                    }
-                    if model.modelUsages.isEmpty {
-                        Text(model.l("Chưa có dữ liệu theo model")).font(.system(size: 12)).foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity).padding(.vertical, 30)
-                    }
+            VStack(spacing: 0) {
+                // Snapshot names need not be unique; keep every source row.
+                ForEach(Array(model.modelUsages.enumerated()), id: \.offset) { _, row in
+                    HStack(alignment: .top) {
+                        Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
+                            .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).help(row.name)
+                        Text(UsagePresentation.number(row.tokens.total)).font(.system(size: 11)).monospacedDigit()
+                            .frame(width: 65, alignment: .trailing)
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(UsagePresentation.money(row.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                            Text(model.pricingLabel(row.cost)).font(.system(size: 9)).foregroundStyle(.secondary)
+                        }.frame(width: 96, alignment: .trailing)
+                    }.padding(.vertical, 12).accessibilityElement(children: .combine)
+                    Divider()
                 }
-            }.frame(maxHeight: .infinity)
+                if model.modelUsages.isEmpty {
+                    Text(model.l("Chưa có dữ liệu theo model")).font(.system(size: 12)).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity).padding(.vertical, 30)
+                }
+            }
             Text(model.l("≥ là phần chi phí đã biết; — là giá chưa biết, không phải $0."))
                 .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
             Text(model.l("Nguồn: ccusage · Log trên máy")).help(model.source)
@@ -339,6 +353,10 @@ struct UsagePopoverView: View {
     }
 }
 
+private struct PopoverContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
 
 private struct FooterButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
