@@ -19,6 +19,7 @@ import UsageCore
     var onAbout: (() -> Void)?
     var onHistory: (() -> Void)?
     var onBudgets: (() -> Void)?
+    var onDataManagement: (() -> Void)?
     var onCheckUpdates: (() -> Void)?
     var onReleaseNotes: (() -> Void)?
     var onConfigureContextAlerts: (() -> Void)?
@@ -43,6 +44,7 @@ import UsageCore
         menu.addItem(.separator())
         _ = action(l("Xem chi tiết…"), #selector(history))
         _ = action(l("Ngân sách…"), #selector(budgets))
+        _ = action(l("Quản lý dữ liệu…"), #selector(dataManagement))
         refreshItem = action(l("Làm mới"), #selector(refresh), key: "r")
         _ = action(l("Chọn thư mục log…"), #selector(chooseSource))
         _ = action(l("Dùng nguồn log mặc định"), #selector(resetSource))
@@ -117,6 +119,7 @@ import UsageCore
         checkUpdatesItem.isEnabled = !state.isChecking
         put(state.localizedDescription(language: language), in: updateStatusItem)
     }
+    @objc private func dataManagement() { onDataManagement?() }
     @objc private func budgets() { onBudgets?() }
     @objc private func history() { onHistory?() }
     @objc private func about() { onAbout?() }

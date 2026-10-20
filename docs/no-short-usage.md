@@ -170,3 +170,11 @@ Names and session IDs are omitted by default, including CSV identifier columns. 
 Embedded MCP panels request the host's `downloadFile` capability using an inline resource and respect denial/cancellation. Unsupported hosts show an explicit error; use native export instead. Only the standalone development preview uses a browser Blob download. Local Chrome preview downloads and legacy-host error behavior are tested; a real Codex-host download approval remains unverified.
 
 CSV `recordType` distinguishes range aggregate, range model, day, day-model and optional session-reference records. These are alternative breakdowns, not additive rows: do not sum cost/token columns across different record types.
+
+## Shared-cache maintenance (NS-12, unreleased source)
+
+The native Data management window coordinates clearing generated shared usage-cache files using `.maintenance.lock/owner.json` with process ID, token and millisecond timestamp. Snapshot readers check before fresh-cache return, after scope-lock acquisition and after loading; an active guard returns retained data as stale or first-read unavailable, never a fake zero. Active owners are not evicted merely by age; abandoned guards recover conservatively after a 90-second grace. Unexpected/symlink contents remain protected.
+
+Stop old runtimes before maintenance because they do not implement this guard. Clearing local cache cannot remove results already provided to the host, exported files or original logs. It leaves preferences, backups and configuration intact, and data rebuilds on refresh. Custom cache paths are not cleared by native UI.
+
+Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.

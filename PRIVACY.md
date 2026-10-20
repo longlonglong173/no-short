@@ -31,3 +31,15 @@ Reusable writing and reporting skills are maintained separately in `no-short-ski
 If you contact the project through a GitHub issue, the information you choose to include is processed by GitHub and may be visible according to that repository's settings. Do not include secrets or sensitive personal information in an issue.
 
 For privacy questions or requests, open an issue at https://github.com/longlonglong173/no-short/issues.
+
+## Unreleased source: history, export, budgets and cache maintenance
+
+Optional daily history preserves provider/model/token/price aggregates from retained local logs. MCP history is widget metadata, not expanded into model-visible structured summaries; the host can still process metadata under its own terms. History filters do not read additional logs or change the pinned session.
+
+CSV/JSON export occurs only on an explicit save/download action. Files contain the selected range/provider/timezone and price uncertainty, not messages or log paths. Session names/IDs are excluded by default; an explicit opt-in adds separate last-activity-in-range references, not lifetime usage attribution. Embedded panel downloads use the host capability and its consent/denial flow; development preview uses browser downloads. Exported files and already supplied host results are not removed by cache clearing.
+
+Native budgets and notification preferences are stored locally, disabled by default. Dedup state uses hashed source keys; budget notifications contain provider/period estimates, not session titles or messages. Budget permission requests require explicit notification opt-in; existing context controls remain independent.
+
+The native Data management window can clear recognized generated snapshot/metadata/marker files in the default shared usage-cache scopes after confirmation. It drains the companion reader and coordinates new MCP readers with a root maintenance guard; active scans block deletion. Symlinks, source overlap and custom cache paths are refused; unknown files and original logs/preferences/backups/configuration are retained. Only empty generated directories are removed. Older runtimes should be closed before maintenance. Clearing cache does not reset usage or bills: statistics are rebuilt from retained logs. It does not remove downloaded runtimes, global third-party pricing caches, exports, UserDefaults, activity records or host-held data. Live installed-app confirmation and external-host acceptance are separate from local fixture tests.
+
+Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.

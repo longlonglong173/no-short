@@ -18,6 +18,7 @@ import UsageCore
     private lazy var contextNotifications = ContextNotificationService()
     private lazy var budgets = BudgetController(defaults: .standard, notifications: contextNotifications)
     private var budgetWindow: BudgetSettingsWindowController?
+    private var dataManagementWindow: DataManagementWindowController?
     private var diagnosticsTask: Task<Void, Never>?
     private var contextTask:Task<Void,Never>?
     private var contextKey:String?, contextSelection:String?
@@ -47,6 +48,7 @@ import UsageCore
         menu.onAbout = { [weak self] in self?.showAbout() }
         menu.onHistory = { [weak self] in self?.showHistory() }
         menu.onBudgets = { [weak self] in self?.showBudgets() }
+        menu.onDataManagement = { [weak self] in self?.showDataManagement() }
         budgets.onChange = { [weak self] in self?.renderBudgetState() }
         menu.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
@@ -66,6 +68,7 @@ import UsageCore
         panelModel.onAbout = { [weak self] in self?.showAbout() }
         panelModel.onHistory = { [weak self] in self?.showHistory() }
         panelModel.onBudgets = { [weak self] in self?.showBudgets() }
+        panelModel.onDataManagement = { [weak self] in self?.showDataManagement() }
         panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         panelModel.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         panelModel.onChooseClaudeSource = { [weak self] in self?.chooseSource(claude:true) }
@@ -90,6 +93,8 @@ import UsageCore
         panelModel.applyActivities(activityStore.events())
         budgets.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
         renderBudgetState()
+        dataManagementWindow?.model.language = panelModel.language
+        dataManagementWindow?.window?.title = l("Quản lý dữ liệu…")
         budgetWindow?.model.language = panelModel.language
         budgetWindow?.window?.title = l("Ngân sách…")
         Task { @MainActor [weak self] in
@@ -169,6 +174,26 @@ import UsageCore
         panelModel.budgetReadings = budgets.readings
         panelModel.budgetNotificationNotice = budgets.notificationNotice
         if panel.popover.isShown { panel.updateSize() }
+    }
+    private func showDataManagement() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.terminating else { return }
+            if self.dataManagementWindow == nil {
+                let model = DataManagementModel(language: self.panelModel.language, onClear: { [weak self] in
+                    guard let self, !self.terminating else { throw CacheMaintenanceError.cancelled }
+                    let roots = DataManagementModel.protectedRoots(source: self.sources.current)
+                    return try await self.controller.withMaintenance {
+                        try await Task.detached(priority: .utility) {
+                            try CacheMaintenance.clear(root: CacheMaintenance.defaultRoot, protectedRoots: roots)
+                        }.value
+                    }
+                })
+                self.dataManagementWindow = DataManagementWindowController(model: model)
+            }
+            self.dataManagementWindow?.model.language = self.panelModel.language
+            self.dataManagementWindow?.present()
+        }
     }
     private func showBudgets() {
         panel.close()

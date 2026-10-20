@@ -115,12 +115,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-12 — Quản lý dữ liệu và gỡ app
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local, chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** Không.
 - **Nội dung:** Thêm thao tác xóa cache có xác nhận và hướng dẫn ngắt hooks/context/login.
 - **Tiêu chí nghiệm thu:** Phân biệt dữ liệu dùng chung với plugin, bản sao cấu hình và log gốc. Xóa đúng phạm vi đã xác nhận, xử lý việc đọc/ghi đang diễn ra và lỗi quyền truy cập. Không xóa log Codex/Claude hoặc cấu hình bên thứ ba; hướng dẫn rõ dữ liệu nào còn lại sau khi gỡ app.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Cửa sổ Data management được giữ một instance, xác nhận mặc định Cancel; chỉ xóa file cache đã biết trong thư mục mặc định, từ chối override/symlink/nguồn được bảo vệ/scan đang chạy. Suspend và chờ reader kết thúc trước khi xóa; shutdown chờ maintenance hoàn tất. Guard chung có owner/nonce và kernel flock ổn định cho native; TS chỉ kiểm tra hoặc bỏ qua guard đã bỏ lại sau xác minh, không xóa guard. Giữ file lạ, log gốc, cấu hình và bản sao; hướng dẫn ngắt hooks/context/login và gỡ app, không tự thay cấu hình. Test hồi quy stale-recovery/shutdown/localization có RED trước sửa; 143 Usage (25 maintenance), 32 browser, 181 Swift và 4 đóng gói qua; typecheck/build UI/validation qua. Safety review không còn P1/P2. Chỉ dùng fixture cô lập, không xóa cache thật của người dùng; UI tương tác app đã cài/VoiceOver chưa nghiệm thu.
 
 ## P3 — Phân tích nâng cao
 
