@@ -224,6 +224,10 @@ struct UsagePopoverView: View {
                 Toggle(isOn: Binding(get: { model.loginState == .enabled || model.loginState == .requiresApproval }, set: { _ in model.onToggleLogin?() })) { Text(model.loginState == .requiresApproval ? model.l("Mở cùng macOS · Cần phê duyệt") : model.l("Mở cùng macOS")) }
                 if model.loginState == .requiresApproval || model.loginState == .notFound { Button(model.l("Mở cài đặt Login Items…")) { model.onOpenSettings?() } }
                 Divider()
+                Button(model.l("Giới thiệu No Short Usage…")) { model.onAbout?() }
+                Button(model.l("Kiểm tra bản cập nhật…")) { model.onCheckUpdates?() }
+                Button(model.l("Ghi chú phát hành…")) { model.onReleaseNotes?() }
+                Divider()
                 Button(model.l("Thoát No Short Usage")) { model.onQuit?() }.keyboardShortcut("q")
             } label: { Color.clear.frame(width: 34, height: 34) }
             .menuStyle(.borderlessButton).menuIndicator(.hidden).frame(width: 34, height: 34)
