@@ -1,3 +1,4 @@
+import { usageVersion as version } from '../src/version';
 import { mkdir, readFile, writeFile, copyFile, chmod, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -5,7 +6,6 @@ import lock from '../ccusage-lock.json';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
-const version = '0.4.3';
 const output = join(root, '.artifacts/usage/releases');
 const runtimeRoot = join(usage, 'runtime');
 await mkdir(output, { recursive: true });
