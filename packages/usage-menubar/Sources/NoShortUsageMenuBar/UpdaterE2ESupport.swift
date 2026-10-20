@@ -26,8 +26,16 @@ import ObjectiveC
         UserDefaults.standard.set(Bundle.main.object(forInfoDictionaryKey:"NS14Language") as? String ?? "en",forKey:"usageLanguage")
         if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == "0.6.0" {
             UserDefaults.standard.set("NS14-KEEP",forKey:"NS14Sentinel")
+            UserDefaults.standard.set("http://127.0.0.1:9/forbidden-legacy-feed.xml",forKey:"SUFeedURL")
         }
         UserDefaults.standard.synchronize()
+    }
+    static var feedURL: String {
+        _ = root
+        guard let value=Bundle.main.object(forInfoDictionaryKey:"SUFeedURL") as? String,
+              let url=URL(string:value), url.scheme=="http", url.host=="127.0.0.1",
+              let port=url.port, port>=1024, url.path=="/feed.xml", url.query==nil, url.fragment==nil, url.user==nil else { exit(77) }
+        return value
     }
     static var configuration: UpdateConfiguration? {
         try? UpdateConfiguration(feedURL:UpdateConfiguration.productionFeed,publicKey:Bundle.main.object(forInfoDictionaryKey:"SUPublicEDKey") as? String ?? "")

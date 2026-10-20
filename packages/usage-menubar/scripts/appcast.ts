@@ -3,8 +3,9 @@ import {readFile,writeFile,mkdir,mkdtemp,rm,open,realpath} from 'node:fs/promise
 import {constants} from 'node:fs';
 import {basename,join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
-import {readPlist,assertAppArchitecture} from './update-channel';
+import {readPlist,assertAppArchitecture,assertUpdateDistribution} from './update-channel';
 import {assertSafeBundleLinks} from './sparkle-bundle';
+import {verifyBundle,manifest} from './bundle';
 export const sparkleTools=resolve(import.meta.dirname,'../.build/artifacts/sparkle/Sparkle/bin');
 export function verifyArchiveSignature(bytes:Uint8Array,signature:string,publicKey:string):boolean {
  try {
@@ -51,6 +52,8 @@ export async function createSignedAppcast(o:{archive:string;version:string;publi
   const info=await readPlist(app);
   validateUpdateArtifact({...o,bundleVersion:info.CFBundleVersion});
   if(info.CFBundleShortVersionString!==o.version||info.CFBundleIdentifier!=='dev.noshort.usage.menubar'||info.SUPublicEDKey!==o.publicKey||info.LSMinimumSystemVersion!=='14.0')throw Error('App metadata does not match update');
+  await assertUpdateDistribution(app);
+  await verifyBundle(app,'darwin-arm64',await manifest());
   const signed=Bun.spawn(['/usr/bin/codesign','--verify','--deep','--strict',app],{stdout:'ignore',stderr:'ignore'});if(await signed.exited)throw Error('App code signature failed');
   await mkdir(out,{recursive:true});
   const xml=join(out,'experimental-arm64.xml');

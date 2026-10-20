@@ -33,8 +33,23 @@ npm run test:usage-menubar:update-e2e -- --scenario=corrupt-feed --allow-system-
 
 Other scenarios: `success`, `cancel`, `unsigned-feed`, `corrupt-archive`, `wrong-key`, `wrong-architecture`, `equal-version`, `network`. `--language=vi --framework-language=en` tests independent language choices. The runner requires explicit cache consent, times out rather than faking success and rejects unexpected B installation in negative cases. Every run writes public fixture identity, requests, ready/result markers and application logs under its printed owned root. The harness is compiled only with `NO_SHORT_UPDATER_E2E`; normal release builds have no test hooks or loopback exception.
 
-Local regression:144 Usage tests,32 browser tests,15 website tests,189 Swift tests and19 packaging/config/crypto/harness tests passed; TypeScript typecheck passed. Exact extracted local development bundles are checked separately before PR handoff. Existing CI runs the scripted native/packaging/crypto guards and both native development builds, **not** interactive installation. CI artifacts remain unconfigured development builds and are never a working updater bootstrap.
+Local regression:144 Usage tests,32 browser tests,15 website tests,190 Swift tests and19 packaging/config/crypto/harness tests passed; TypeScript typecheck passed. Exact extracted local development bundles are checked separately before PR handoff. Existing CI runs the scripted native/packaging/crypto guards and both native development builds, **not** interactive installation. CI artifacts remain unconfigured development builds and are never a working updater bootstrap.
 
 ## Separate production gates (not done here)
 
 Owner review/commit of the public key and exact HTTPS feed config; private-key backup/secret handling; separately approved version bump/bootstrap build; final archive signing, immutable asset upload/verification before signed-feed deployment. Public0.5.0 still needs one manual bootstrap. Developer ID/notarization, clean-machine installation, Intel, OS permissions/login retention and VoiceOver remain NS-05 gates. Native updates do not update MCP.
+
+## Exact local development ZIPs
+
+Both ZIPs were extracted with `ditto`; the extracted apps passed framework/link/resource/provenance/architecture/deep-strict signature verification. Normal executables contain no NS14 test hooks; Info.plist has no test root, ATS override, feed or key. ARM distribution rejects missing reviewed production configuration. These are local unconfigured0.5.0 development files, not replacements for public0.5.0 assets.
+
+| Target | Capability | SHA256 |
+| --- | --- | --- |
+| darwin-arm64 | unconfigured | `77eba5c10308e72c4583f9439b2d097202f8a31657f8ae570664fec54176ae68` |
+| darwin-x64 | unsupported-architecture | `613bf8707c911794c96d8999e29331409c0af23d3d8ce693e78ed29d48c73812` |
+
+## Final independent review
+
+The one fresh-context whole-branch reviewer found two P2 issues: deprecated saved Sparkle feed URL precedence, and incomplete final-archive validation in the appcast producer. Both received failing regression tests before fixes. The driver now supplies its canonical production feed through the highest-priority delegate (loopback override only in guarded test builds); the producer requires reviewed distribution configuration and full extracted bundle/provenance/framework verification before emitting a feed. Synthetic crypto tests call SDK tools directly and cannot qualify a fake app for production publication. Duplicate stale NS-14 backlog status was removed.
+
+Post-fix actual standard-UI repeat: run `d7ecee72-946e-484f-92c7-f8f54bc14566-Q43voG`, A PID37055 → B PID37330, 54 active-maintenance observations, final test ZIP SHA256 `3bed320028e0ffba221d81daf6b79d5bf05f615c987bd61214f475f929a77356`. A deprecated saved `SUFeedURL` pointed at an unused loopback port; only the pinned fixture feed/ZIP were requested. Preferences/cache confinement and cleanup passed again. Final normal ZIP hashes above are from the post-fix builds.

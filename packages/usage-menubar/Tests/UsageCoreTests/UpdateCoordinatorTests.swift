@@ -1,11 +1,19 @@
 import XCTest
 import CryptoKit
 import AppKit
+import Sparkle
 @testable import UsageCore
 @testable import NoShortUsageMenuBar
 
 @MainActor final class UpdateCoordinatorTests: XCTestCase {
     private func config() throws -> UpdateConfiguration { try .init(feedURL: UpdateConfiguration.productionFeed, publicKey: Curve25519.Signing.PrivateKey().publicKey.rawRepresentation.base64EncodedString()) }
+    func testDriverPinsFeedInsteadOfUsingSavedSparklePreferences() {
+        let driver=SparkleUpdateDriver()
+        let controller=SPUStandardUpdaterController(startingUpdater:false,updaterDelegate:driver,userDriverDelegate:nil)
+        XCTAssertEqual(driver.feedURLString(for:controller.updater),UpdateConfiguration.productionFeed)
+        XCTAssertEqual(controller.updater.feedURL?.absoluteString,UpdateConfiguration.productionFeed)
+        XCTAssertTrue(driver.responds(to:NSSelectorFromString("feedURLStringForUpdater:")))
+    }
     func testLazySharedSessionAndRecovery() throws {
         let driver=FakeNativeDriver(); var creations=0
         let c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{true},makeDriver:{creations+=1;return driver})

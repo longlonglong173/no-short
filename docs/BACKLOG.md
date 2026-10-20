@@ -56,16 +56,14 @@ task khi có yêu cầu của người dùng.
 - **Tiêu chí nghiệm thu:** Mỗi kiểm tra ghi phiên bản, môi trường, kết quả và bằng chứng. Thiếu thiết bị hoặc chứng chỉ được ghi là bị chặn, không đánh dấu đã đạt. Phân biệt bản build local với artifact phát hành được kiểm chứng. Không tự publish.
 - **Bằng chứng hiện có:** 102 test Swift tích hợp, 4 test đóng gói và 34 test Usage; build/provenance/signature/smoke cùng artifact được ghi tại [release 0.4.3](releases/0.4.3.md) và `release-validation.json`. Notarization, máy sạch, Intel runtime, hooks/context thực tế, thông báo, sleep/wake, login và VoiceOver chưa được đánh dấu đạt. PR riêng theo dõi phần chuẩn bị Experimental; task chưa hoàn tất.
 
-### NS-14 — Cập nhật trong app có xác nhận
+### NS-14 — Cập nhật trong app có xác nhận và chữ ký
 
-- [ ] **Trạng thái:** Thiết kế đã duyệt — chờ duyệt kế hoạch và chọn cách thực thi (2026-10-21).
+- [x] **Trạng thái:** Source và E2E local đã kiểm chứng (2026-10-21); chưa merge/phát hành/bootstrap hoặc bật feed production.
 - **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
-- **Phụ thuộc:** Chốt thiết kế/key/feed; giữ NS-05 signing và nghiệm thu thiết bị riêng.
-- **Nội dung:** Sparkle kiểm tra/tải/xác minh/cài/relaunch khi người dùng yêu cầu; không cài nền. Cần một lần cài tay bản bootstrap sau 0.5.0.
-- **Tiêu chí nghiệm thu:** Archive/feed được ký; không cài khi xác minh lỗi; cancel/error giữ bản cũ; chờ reader/maintenance trước terminate; dữ liệu/cấu hình không bị xóa. Test A→B trên app copies và test key/feed cô lập, không đụng app thật. Có PR riêng, không tự merge/phát hành.
-- **Thiết kế:** [NS-14 signed in-app updates](superpowers/specs/2026-10-21-ns14-signed-in-app-updates-design.md).
-- **Kế hoạch:** [NS-14 implementation](superpowers/plans/2026-10-21-ns14-signed-in-app-updates.md) — chưa bắt đầu code.
-- **Bằng chứng hoàn thành:** Chưa triển khai code; chỉ khảo sát và thiết kế. Bản 0.5.0 công khai vẫn chỉ kiểm tra cập nhật thủ công.
+- **Phụ thuộc:** NS-04; chủ dự án quản lý key production và duyệt phát hành riêng. NS-05 Developer ID/notarization/máy sạch/Intel/quyền OS/VoiceOver vẫn độc lập.
+- **Nội dung:** Kiểm tra theo yêu cầu, xác nhận tải/cài, xác minh feed/archive, shutdown an toàn, thay app và mở lại bằng Sparkle 2.10.0 đã pin. Không tự kiểm tra/tải/cài nền, profiling hay JavaScript.
+- **Tiêu chí nghiệm thu:** Shared About/menu state; cấu hình/architecture fail closed; framework ký đúng và symlink không thoát; actual A→B có xác nhận, giữ dữ liệu; hủy/chữ ký sai/feed bị sửa/mạng lỗi/sai version hoặc kiến trúc không thay app. Không thay app đang dùng hoặc public0.5.0.
+- **Bằng chứng local:** 190 Swift,19 packaging/policy/crypto/harness,144 Usage,32 browser,15 website qua; typecheck qua. Actual test-only A0.6.0→B0.6.1 qua standard UI,53 quan sát giữ A khi maintenance đang chạy;8 tình huống âm giữ nguyên executable/version/log/export. Key test ephemeral; prefs riêng và cache bridge test-ID có phê duyệt, đã dọn. [Báo cáo kiểm chứng và gate còn lại](releases/ns14-local-validation.md). PR #34 chỉ source, chưa có production key/feed hay phát hành0.6.0.
 
 ## P2 — Tính nhất quán và khả năng phân tích
 
@@ -132,15 +130,6 @@ task khi có yêu cầu của người dùng.
 - **Nội dung:** Thêm thao tác xóa cache có xác nhận và hướng dẫn ngắt hooks/context/login.
 - **Tiêu chí nghiệm thu:** Phân biệt dữ liệu dùng chung với plugin, bản sao cấu hình và log gốc. Xóa đúng phạm vi đã xác nhận, xử lý việc đọc/ghi đang diễn ra và lỗi quyền truy cập. Không xóa log Codex/Claude hoặc cấu hình bên thứ ba; hướng dẫn rõ dữ liệu nào còn lại sau khi gỡ app.
 - **Bằng chứng hoàn thành:** Cửa sổ Data management được giữ một instance, xác nhận mặc định Cancel; chỉ xóa file cache đã biết trong thư mục mặc định, từ chối override/symlink/nguồn được bảo vệ/scan đang chạy. Suspend và chờ reader kết thúc trước khi xóa; shutdown chờ maintenance hoàn tất. Guard chung có owner/nonce và kernel flock ổn định cho native; TS chỉ kiểm tra hoặc bỏ qua guard đã bỏ lại sau xác minh, không xóa guard. Giữ file lạ, log gốc, cấu hình và bản sao; hướng dẫn ngắt hooks/context/login và gỡ app, không tự thay cấu hình. Test hồi quy stale-recovery/shutdown/localization có RED trước sửa; 143 Usage (25 maintenance), 32 browser, 181 Swift và 4 đóng gói qua; typecheck/build UI/validation qua. Safety review không còn P1/P2. Chỉ dùng fixture cô lập, không xóa cache thật của người dùng; UI tương tác app đã cài/VoiceOver chưa nghiệm thu.
-
-### NS-14 — Cập nhật trong app có xác nhận và chữ ký
-
-- [x] **Trạng thái:** Source và E2E local đã kiểm chứng (2026-10-21); chưa merge/phát hành/bootstrap hoặc bật feed production.
-- **Ưu tiên:** P2
-- **Phụ thuộc:** NS-04; chủ dự án quản lý key production và duyệt phát hành riêng. NS-05 Developer ID/notarization/máy sạch/Intel/quyền OS/VoiceOver vẫn độc lập.
-- **Nội dung:** Kiểm tra theo yêu cầu, xác nhận tải/cài, xác minh feed/archive, shutdown an toàn, thay app và mở lại bằng Sparkle 2.10.0 đã pin. Không tự kiểm tra/tải/cài nền, profiling hay JavaScript.
-- **Tiêu chí nghiệm thu:** Shared About/menu state; cấu hình/architecture fail closed; framework ký đúng và symlink không thoát; actual A→B có xác nhận, giữ dữ liệu; hủy/chữ ký sai/feed bị sửa/mạng lỗi/sai version hoặc kiến trúc không thay app. Không thay app đang dùng hoặc public0.5.0.
-- **Bằng chứng local:** 189 Swift,19 packaging/policy/crypto/harness,144 Usage,32 browser,15 website qua; typecheck qua. Actual test-only A0.6.0→B0.6.1 qua standard UI,53 quan sát giữ A khi maintenance đang chạy;8 tình huống âm giữ nguyên executable/version/log/export. Key test ephemeral; prefs riêng và cache bridge test-ID có phê duyệt, đã dọn. [Báo cáo kiểm chứng và gate còn lại](releases/ns14-local-validation.md). PR #34 chỉ source, chưa có production key/feed hay phát hành0.6.0.
 
 ## P3 — Phân tích nâng cao
 

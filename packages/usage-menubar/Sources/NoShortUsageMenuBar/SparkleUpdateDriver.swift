@@ -7,6 +7,14 @@ import UsageCore
     private var requested=false, started=false
     private lazy var controller=SPUStandardUpdaterController(startingUpdater:false,updaterDelegate:self,userDriverDelegate:nil)
     var canCheck: Bool { !requested }
+    // Delegate precedence prevents deprecated SUFeedURL defaults overriding the pinned endpoint.
+    func feedURLString(for updater: SPUUpdater) -> String? {
+        #if NO_SHORT_UPDATER_E2E
+        return UpdaterE2ESupport.feedURL
+        #else
+        return UpdateConfiguration.productionFeed
+        #endif
+    }
     func checkForUpdates() throws {
         guard !requested else { return }
         // Explicit user action; old Sparkle preferences cannot turn V1 into a scheduler.

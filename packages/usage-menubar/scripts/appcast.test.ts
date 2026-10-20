@@ -33,8 +33,16 @@ test.skipIf(process.platform!=='darwin')('pinned SDK signs/verifies the real fix
   await writeFile(join(app,'Contents/Info.plist'),JSON.stringify(plist));await exec(['/usr/bin/plutil','-convert','xml1',join(app,'Contents/Info.plist')]);
   await exec(['/usr/bin/codesign','--force','--sign','-',app]);
   const archive=join(root,'NoShortUsage-0.6.1-arm64.zip');await exec(['/usr/bin/ditto','-c','-k','--keepParent',app,archive]);
-  await createSignedAppcast({archive,version:'0.6.1',previousVersion:'0.6.0',publicKey:pub.toString('base64'),tools:sparkleTools,output:join(root,'feed'),signingKeyFile:keyFile});
+  await expect(createSignedAppcast({archive,version:'0.6.1',previousVersion:'0.6.0',publicKey:pub.toString('base64'),tools:sparkleTools,output:join(root,'feed'),signingKeyFile:keyFile})).rejects.toThrow();
+  expect(await Bun.file(join(root,"feed/experimental-arm64.xml")).exists()).toBe(false);
+  // Synthetic crypto fixture is test-only: it cannot pass the production producer.
+  await mkdir(join(root,'feed'));
+  const signature=await runSigningTool([join(sparkleTools,'sign_update'),'--ed-key-file','-','-p',archive],Buffer.from(secret));
+  expect(verifyArchiveSignature(await readFile(archive),signature,pub.toString('base64'))).toBe(true);
+  await writeFile(join(root,'feed/experimental-arm64.xml'),`<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><title>0.6.1</title><item><enclosure url="https://example.invalid/fixture.zip" sparkle:edSignature="${signature}"/></item></channel></rss>`);
+  await runSigningTool([join(sparkleTools,'sign_update'),'--ed-key-file','-',join(root,'feed/experimental-arm64.xml')],Buffer.from(secret));
   const xml=join(root,'feed/experimental-arm64.xml'),feed=await readFile(xml,'utf8');expect(feed).toContain('sparkle:edSignature');
+  await runSigningTool([join(sparkleTools,'sign_update'),'--verify','--ed-key-file','-',xml],Buffer.from(secret));
   await writeFile(xml,feed.replace('0.6.1','0.6.2'));
   await expect(runSigningTool([join(sparkleTools,'sign_update'),'--verify','--ed-key-file','-',xml],Buffer.from(secret))).rejects.toThrow('redacted');
   const {assertUpdateDistribution,updateFlags}=await import('./update-channel');
