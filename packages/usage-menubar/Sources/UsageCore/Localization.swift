@@ -34,6 +34,17 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Sẵn sàng kiểm tra và cài bản cập nhật có xác nhận.": ["Ready to check and install updates with confirmation.", "可检查并在确认后安装更新。"],
+        "Đang tải bản cập nhật đã ký…": ["Downloading the signed update…", "正在下载已签名的更新…"],
+        "Đang chuẩn bị cài đặt và mở lại app…": ["Preparing to install and relaunch…", "正在准备安装并重新启动…"],
+        "Bạn đang dùng phiên bản mới nhất.": ["You are up to date.", "已是最新版本。"],
+        "Bản build này chưa cấu hình cập nhật có chữ ký. Hãy tải ZIP thủ công.": ["Signed updates are not configured in this build. Download the ZIP manually.", "此构建尚未配置签名更新。请手动下载 ZIP。"],
+        "Cập nhật trong app hiện chỉ hỗ trợ Apple Silicon.": ["In-app updates currently support Apple Silicon only.", "应用内更新目前仅支持 Apple Silicon。"],
+        "Không thể xác minh bản cập nhật. App hiện tại không bị thay thế.": ["The update could not be verified. The current app was not replaced.", "无法验证更新。当前应用未被替换。"],
+        "Không thể tải thông tin cập nhật. Hãy thử lại.": ["Could not load update information. Please retry.", "无法加载更新信息。请重试。"],
+        "Cập nhật không hoàn tất. Hãy thử lại hoặc tải ZIP thủ công.": ["The update did not finish. Retry or download the ZIP manually.", "更新未完成。请重试或手动下载 ZIP。"],
+        "Chỉ kiểm tra khi bạn yêu cầu. Cài đặt cần xác nhận và xác minh chữ ký.": ["Checks run only on request. Installation requires confirmation and signature verification.", "仅在请求时检查。安装需要确认和签名验证。"],
+
         "Cache đang được bảo trì. Chờ một lúc rồi thử lại.": ["Cache maintenance is in progress. Wait a moment, then retry.", "缓存正在维护。请稍候再试。"],
         "Quản lý dữ liệu…": ["Data Management…", "数据管理…"],
         "Quản lý dữ liệu": ["Data Management", "数据管理"],

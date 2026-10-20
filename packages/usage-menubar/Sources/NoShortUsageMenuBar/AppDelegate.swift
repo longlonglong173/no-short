@@ -8,7 +8,19 @@ import UsageCore
     private let menu = MenuBuilder(), login = LoginItemManager(), sources = LogSourceStore()
     private let panelModel = UsagePanelModel(defaults:.standard)
     private lazy var panel = UsagePopoverController(model: panelModel)
-    private lazy var aboutModel = AboutModel(language: panelModel.language)
+    private lazy var updateCoordinator: UpdateCoordinator = {
+        let info=Bundle.main.infoDictionary ?? [:]
+        let config=try? UpdateConfiguration(feedURL:info["SUFeedURL"] as? String ?? "",publicKey:info["SUPublicEDKey"] as? String ?? "")
+        #if arch(arm64)
+        let arch="arm64"
+        #else
+        let arch="x86_64"
+        #endif
+        return UpdateCoordinator(configuration:config,architecture:arch,mayCheck:{ [weak self] in
+            guard let self else { return false };return !self.terminating && self.controller != nil && !self.controller.isMaintaining
+        },makeDriver:{ SparkleUpdateDriver() })
+    }()
+    private lazy var aboutModel = AboutModel(language: panelModel.language,native:updateCoordinator)
     private lazy var aboutWindow = AboutWindowController(model: aboutModel)
     private var historyWindow: UsageHistoryWindowController?
     private var controller: RefreshController!
@@ -54,7 +66,8 @@ import UsageCore
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         aboutModel.onChange = { [weak self] in
             guard let self else { return }
-            menu.updateReleaseState(aboutModel.state, language: panelModel.language)
+            if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
+            else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
         }
         panelModel.onSelectionChange = { [weak self] in self?.render() }
         panelModel.onRefresh = { [weak self] in self?.controller.refresh() }
@@ -112,7 +125,8 @@ import UsageCore
         if aboutModel.language != panelModel.language { aboutModel.language = panelModel.language }
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
-        menu.updateReleaseState(aboutModel.state, language: panelModel.language)
+        if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
+        else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
     }
     private func refreshDiagnostics() {
         diagnosticsTask?.cancel()
