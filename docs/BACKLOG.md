@@ -97,12 +97,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-10 — Xuất CSV/JSON
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-21) — chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-09.
 - **Nội dung:** Xuất thống kê theo khoảng ngày và provider, kèm múi giờ và trạng thái giá.
 - **Tiêu chí nghiệm thu:** Dữ liệu xuất khớp bộ lọc và số liệu hiển thị. Mặc định không xuất tên/ID phiên; người dùng có thể bật rõ ràng. Không xuất nội dung hội thoại. Kiểm tra Unicode, ký tự đặc biệt trong CSV và dữ liệu thiếu giá.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** CSV/JSON từ cùng projection ngày/provider của NS-09, kèm múi giờ/generatedAt/pricing status và cost basis; unknown amount là null/blank, không phải 0. Mặc định không có tên/ID hoặc cột identifier. Opt-in chỉ thêm tham chiếu lastActivity trong khoảng/provider, ghi rõ không phân bổ chi phí và không đầy đủ phiên đóng góp. CSV chống formula injection kể cả BOM, quote/newline/Unicode. Native đóng băng payload trước Save dialog; panel dùng SDK host downloadFile, chỉ preview mới Blob download; host cũ báo lỗi rõ. 118 test Usage, 32 test browser, 146 test Swift và 4 test đóng gói qua; typecheck/UI build/validate/diff check qua. Đã thử tải file JSON/CSV thật trong Chrome preview và lỗi host legacy; chưa nghiệm thu Save dialog app cài đặt hoặc host Codex chấp thuận tải thực tế. Chưa phát hành.
 
 ### NS-11 — Ngân sách chi phí ước tính
 

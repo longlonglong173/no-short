@@ -59,7 +59,7 @@ export function UsagePanel() { return <LanguageProvider><UsagePanelContent /></L
 function UsagePanelContent() {
   const { l, language, setLanguage } = useTranslation();
   const costText = (cost: Cost) => formatCost(cost, language);
-  const { data, busy, error, preview, requestVersion, refresh } = useUsage();
+  const { data, busy, error, preview, requestVersion, refresh, downloadFile } = useUsage();
   const [period, setPeriod] = useState<Period>('session');
   const [historyOpened, setHistoryOpened] = useState(false);
   const [selection, setSelection] = useState<Selection>(readSelection);
@@ -122,7 +122,7 @@ function UsagePanelContent() {
     <div className="tabs" role="tablist" aria-label={l("Khoảng thống kê")}>{([['session', l("Phiên")], ['day', l("Hôm nay")], ['month', l("Tháng này")], ['history', l('Lịch sử')]] as const).map(([key, label]) =>
       <button key={key} role="tab" id={`tab-${key}`} aria-selected={period === key} aria-controls="usage-content" onClick={() => { if (key === 'history') setHistoryOpened(true); setPeriod(key); }}>{label}</button>)}</div>
     <section id="usage-content" role="tabpanel" aria-labelledby={`tab-${period}`}>
-      <div hidden={period !== 'history'}>{snapshot && historyOpened ? <HistoryPanel snapshot={snapshot} initialProvider={filter}/> : null}</div>
+      <div hidden={period !== 'history'}>{period === 'history' && error ? <p className="notice" role="alert">{l(error)}</p> : null}{snapshot && historyOpened ? <HistoryPanel snapshot={error ? { ...snapshot, status: 'stale' } : snapshot} initialProvider={filter} downloadFile={downloadFile}/> : null}</div>
       <div hidden={period === 'history'}>
       {period === 'session' && view?.sessions.length ? <div className="session-controls">
         <div className="picker-row"><details className="session-picker" ref={picker}><summary aria-label={l("Chọn phiên")}><span>{selected?.title ?? l("Phiên không còn dữ liệu")}</span><Icon name="chevron"/></summary>

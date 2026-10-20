@@ -313,3 +313,9 @@ Choose **Xem chi tiết… / Usage details…** in the popover or right-click me
 Filter All/Codex/Claude and 7/30 days, this/previous month, or inclusive custom dates in the snapshot timezone. Custom dates use YYYY-MM-DD; start must not follow end and future end dates are rejected. The summary always covers the selected range. Select a day in the chart or its accessible picker to inspect that day's model token/cost breakdown, then choose Entire range to reset. Missing source rows mean no usage in retained local logs, not proof of zero account usage. Unknown/partial prices remain explicit.
 
 History filters do not change the menu-bar session pin, automatic following, context alerts or provider selection. The window shares the existing snapshot/refresh pipeline, not another log reader. Old runtimes without optional history show unavailable rather than guessing historical model/token totals from lifetime sessions. Both UI languages and stale/error status follow the app. No conversation text is shown. Installed-app/VoiceOver and clean-machine acceptance remain separate from synthetic render/model tests.
+
+## CSV / JSON export (NS-10, unreleased source)
+
+Use Export CSV / Export JSON in Usage details to choose a destination with the macOS Save dialog. The export freezes the current range/provider data when clicked; cancellation writes nothing. Export covers the full range, not only the selected day's model table. Costs retain estimated/partial/unknown status and API-equivalent cost basis, timezone and snapshot timestamp; stale data is labeled.
+
+Session titles/IDs are off by default. Explicit opt-in includes only references whose last activity falls in the selected range/provider, labeled as references rather than cost attribution. No lifetime session costs, conversation text or log-source paths are exported. Synthetic serializer and Save-payload tests do not prove an installed-app Save dialog interaction.

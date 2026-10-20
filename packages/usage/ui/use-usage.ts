@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { App, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
 import { decodeResult } from './model';
+import type { DownloadFile } from './export';
 import type { DashboardResult } from '../src/types';
 
 declare global {
@@ -12,6 +13,7 @@ export function useUsage() {
   const [busy, setBusy] = useState(true);
   const [requestVersion, setRequestVersion] = useState(0);
   const refreshRef = useRef<() => Promise<void>>(async () => {});
+  const downloadRef = useRef<DownloadFile>(async () => { throw new Error('DOWNLOAD_UNAVAILABLE'); });
   const preview = import.meta.env.DEV && window.parent === window;
   useEffect(() => {
     let alive = true, tornDown = false, pending = false, received = false;
@@ -57,6 +59,13 @@ export function useUsage() {
     window.addEventListener('pagehide', stop);
     async function start() {
       if (preview) {
+        downloadRef.current = async (filename, mimeType, text) => {
+          if (!alive || tornDown) throw new Error('DOWNLOAD_UNAVAILABLE');
+          const url = URL.createObjectURL(new Blob([text], { type: mimeType }));
+          const link = document.createElement('a'); link.href = url; link.download = filename;
+          document.body.append(link); link.click(); link.remove();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        };
         call = async () => {
           const response = await fetch('/__usage/snapshot', { cache: 'no-store' });
           if (!response.ok) throw new Error('Preview unavailable');
@@ -80,6 +89,11 @@ export function useUsage() {
       try {
         await Promise.race([app.connect(), new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new Error('Host timeout')), 8_000); })]);
         theme(app.getHostContext());
+        downloadRef.current = async (filename, mimeType, text) => {
+          if (!alive || tornDown || !app?.getHostCapabilities()?.downloadFile) throw new Error('DOWNLOAD_UNAVAILABLE');
+          const result = await app.downloadFile({ contents: [{ type: 'resource', resource: { uri: `file:///${encodeURIComponent(filename)}`, mimeType, text } }] });
+          if (result.isError) throw new Error('DOWNLOAD_DENIED');
+        };
         call = () => app!.callServerTool({ name: 'get_usage_dashboard', arguments: {} });
       } catch {
         await app.close().catch(() => {});
@@ -98,5 +112,5 @@ export function useUsage() {
       void app?.close().catch(() => {});
     };
   }, [preview]);
-  return { data, busy, error, preview, requestVersion, refresh: () => refreshRef.current() };
+  return { data, busy, error, preview, requestVersion, refresh: () => refreshRef.current(), downloadFile: ((...args) => downloadRef.current(...args)) as DownloadFile };
 }

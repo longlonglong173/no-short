@@ -160,3 +160,13 @@ The **Lịch sử / History** tab filters retained daily provider/model aggregat
 Click a dated bar for that day's models or Entire range for range models. Token totals and cost summary cover the range, not the lifetime session. Empty periods with a successful source read show zero; missing/invalid history is unavailable and unknown prices are never zero. Charts are sparse (dates present in source rows), not a claim of complete account history. Controls are keyboard accessible with horizontally scrollable tables/charts on narrow panels. Filtering does not fetch logs or call tools again.
 
 Snapshot schema remains v1 with optional `history: {version:1,providers,days:[{date,provider,aggregate}]}`. A new cache-scope revision avoids treating old snapshots as history-capable. History is in widget metadata, not expanded into model-visible structured summaries. Cache retains no conversation content. The native window and panel use the same daily aggregate contract; ccusage20.0.34's documented identical-event collision limitation remains.
+
+## CSV / JSON export (NS-10, unreleased source)
+
+History exports the entire selected range/provider, not only a day selected for model inspection. CSV/JSON contain range, snapshot timezone/generatedAt/status, tokens, model/daily costs and explicit pricing status. Unknown amount remains null/blank with its known subtotal; it is not zero. CSV text is quoted and formula-like cell values are prefixed with an apostrophe.
+
+Names and session IDs are omitted by default, including CSV identifier columns. The opt-in checkbox adds **references with last activity in the chosen range/provider**, not session costs or a complete list of sessions contributing to daily totals. Missing/invalid lastActivity is excluded. Reference scope is labeled `last-activity-in-range-not-cost-attribution`; conversation text and source paths are never included.
+
+Embedded MCP panels request the host's `downloadFile` capability using an inline resource and respect denial/cancellation. Unsupported hosts show an explicit error; use native export instead. Only the standalone development preview uses a browser Blob download. Local Chrome preview downloads and legacy-host error behavior are tested; a real Codex-host download approval remains unverified.
+
+CSV `recordType` distinguishes range aggregate, range model, day, day-model and optional session-reference records. These are alternative breakdowns, not additive rows: do not sum cost/token columns across different record types.

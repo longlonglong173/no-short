@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ExportControls, type DownloadFile } from './export';
 import { historyRange, historyView, type HistoryPreset, type DateRange } from '../src/history';
 import type { UsageSnapshot, Aggregate } from '../src/types';
 import { useTranslation } from './language';
 import { costText, tokenText, type ProviderFilter } from './model';
 const presets: [HistoryPreset, string][] = [['7d', '7 ngày'], ['30d', '30 ngày'], ['month', 'Tháng này'], ['previous', 'Tháng trước'], ['custom', 'Tùy chọn']];
-export function HistoryPanel({ snapshot, initialProvider }: { snapshot: UsageSnapshot; initialProvider: ProviderFilter }) {
+export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snapshot: UsageSnapshot; initialProvider: ProviderFilter; downloadFile: DownloadFile }) {
   const { l, language } = useTranslation();
   const [provider, setProvider] = useState<ProviderFilter>(initialProvider);
   const [preset, setPreset] = useState<HistoryPreset>('30d');
@@ -59,6 +60,7 @@ export function HistoryPanel({ snapshot, initialProvider }: { snapshot: UsageSna
         </table>
       </div> : null}
     </>}
+    <ExportControls snapshot={snapshot} provider={provider} range={active} available={!!view} downloadFile={downloadFile}/>
     <p className="history-scope">{l('Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.')} · {l('Nhận gần nhất')}: {new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</p>
   </div>;
 }

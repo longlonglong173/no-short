@@ -23,7 +23,25 @@ import UsageCore
     }
     @Published var customStart = ""
     @Published var customEnd = ""
+    @Published var includeSessionIdentifiers = false
+    @Published var isExporting = false
+    @Published var exportFailure: UsageHistoryExportFailure?
+    var onExport: ((UsageExportFormat, Bool) -> Void)?
     var onRefresh: (() -> Void)?
+    var exportFailureMessage: String? {
+        guard let exportFailure else { return nil }
+        switch exportFailure {
+        case .unavailable: return l("Không thể chuẩn bị tệp xuất. Làm mới dữ liệu và thử lại.")
+        case .writeFailed: return l("Không thể lưu tệp xuất. Kiểm tra quyền ghi và thử lại.")
+        }
+    }
+    func prepareExport(_ format: UsageExportFormat, includeSessionIdentifiers: Bool) throws -> PreparedUsageExport {
+        guard projection != nil, let snapshot, let range,
+              let document = UsageExport.create(snapshot, provider: provider, start: range.start, end: range.end,
+                  includeSessionIdentifiers: includeSessionIdentifiers, isStale: isStale) else { throw UsageHistoryExportFailure.unavailable }
+        return PreparedUsageExport(data: Data(try document.serialize(format).utf8),
+            filename: "no-short-usage-\(provider)-\(range.start)-\(range.end).\(format.rawValue)")
+    }
     private let now: () -> Date
 
     init(provider: String, language: AppLanguage, now: @escaping () -> Date = { Date() }) {
@@ -63,7 +81,7 @@ import UsageCore
         }
     }
     func update(snapshot: UsageSnapshot?, source: String, isLoading: Bool, isStale: Bool, notice: String?, language: AppLanguage) {
-        if self.source != source { selectedDay = nil }
+        if self.source != source { selectedDay = nil; includeSessionIdentifiers = false }
         self.snapshot = snapshot; self.source = source; self.isLoading = isLoading
         self.isStale = isStale; self.notice = notice; self.language = language
         rebuild()
@@ -109,4 +127,10 @@ struct UsageHistoryChartPoint: Identifiable {
     var amount: Double? { cost.status == "unknown" ? nil : cost.amountUSD ?? cost.knownCostUSD }
     var markerAmount: Double? { cost.status == "estimated" ? nil : cost.knownCostUSD }
     var description: String { date + " · " + UsagePresentation.money(cost) + " · " + pricingLabel }
+}
+
+enum UsageHistoryExportFailure: Error { case unavailable, writeFailed }
+struct PreparedUsageExport: Sendable {
+    let data: Data
+    let filename: String
 }
