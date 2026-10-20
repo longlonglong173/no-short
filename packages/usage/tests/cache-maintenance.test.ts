@@ -222,7 +222,7 @@ test('maintenance arriving during an already running load prevents snapshot comm
   expect(JSON.parse(await readFile(join(guard, 'owner.json'), 'utf8')).token).toBe('native-owner-token');
 });
 
-test('current-source snapshot CLI respects a live Swift-created root guard before returning fresh cache', async () => {
+test.skipIf(process.platform !== 'darwin')('current-source snapshot CLI respects a live Swift-created root guard before returning fresh cache', async () => {
   const { base, root, guard } = await setup(), roots = [join(base, 'codex')];
   const scope = join(root, usageCacheScope(roots, 'UTC')); await mkdir(scope, { recursive: true });
   const original = snapshot(), contents = JSON.stringify(original), path = join(scope, 'snapshot.json');
