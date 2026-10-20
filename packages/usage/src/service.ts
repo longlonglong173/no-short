@@ -20,7 +20,8 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   new Intl.DateTimeFormat('en', { timeZone });
   const scope = usageCacheScope(roots, timeZone, requestedClaudeRoots);
-  const directory = join(options.cacheDir ?? process.env.NO_SHORT_USAGE_CACHE_DIR ?? join(homedir(), 'Library/Caches/no-short/usage'), scope);
+  const cacheRoot = options.cacheDir ?? process.env.NO_SHORT_USAGE_CACHE_DIR ?? join(homedir(), 'Library/Caches/no-short/usage');
+  const directory = join(cacheRoot, scope);
   return new SnapshotStore(directory, async () => {
     const priceMarker = join(directory, 'pricing-check.json');
     let lastOnline = 0;
@@ -34,5 +35,5 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
     const value = buildSnapshot(report, { now: new Date(), timeZone, metadata, providers: requestedClaudeRoots?.length ? ['codex', 'claude'] : ['codex'], pricingSource: offline ? 'cached' : 'online' });
     if (!offline) { await mkdir(directory, { recursive: true, mode: 0o700 }); await writeFile(priceMarker, JSON.stringify({ lastOnline: Date.now() }), { mode: 0o600 }); }
     return value;
-  }, { timeZone, ttlMs: process.env.NO_SHORT_USAGE_FRESH_MS === '1000' ? 1000 : undefined });
+  }, { timeZone, maintenanceRoot: cacheRoot, ttlMs: process.env.NO_SHORT_USAGE_FRESH_MS === '1000' ? 1000 : undefined });
 }

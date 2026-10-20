@@ -18,6 +18,7 @@ export function translate(language: Language, key: string, ...args: string[]): s
   return template.replace(/%@/g, () => args[index++] ?? '%@');
 }
 export const catalog: Record<string, readonly [string, string]> = {
+  "Cache đang được bảo trì. Chờ một lúc rồi thử lại.": ["Cache maintenance is in progress. Wait a moment, then retry.", "缓存正在维护。请稍候再试。"],
   "Không tải được file hoặc host đã từ chối. Thử lại hoặc xuất từ cửa sổ native.": ["File download failed or was denied by the host. Retry or export from the native window.", "文件下载失败或被宿主拒绝。请重试或从原生窗口导出。"],
   "Tham chiếu phiên không phải phân bổ chi phí theo phiên; có thể không đủ các phiên đã đóng góp.": ["Session references do not attribute costs and may not include every contributing session.", "会话引用不代表费用归属，也可能不包含所有贡献会话。"],
   "Kèm tên/ID phiên (hoạt động cuối trong khoảng)": ["Include session names/IDs (last activity in range)", "包含会话名称/ID（范围内最后活动）"],

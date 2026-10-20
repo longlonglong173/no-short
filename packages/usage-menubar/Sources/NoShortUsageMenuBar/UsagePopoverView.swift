@@ -254,6 +254,7 @@ struct UsagePopoverView: View {
                 Button(model.l("Dùng log Claude Code mặc định")) { model.onResetClaudeSource?() }
                 Divider()
                 Button(model.l("Ngân sách…")) { model.onBudgets?() }
+                Button(model.l("Quản lý dữ liệu…")) { model.onDataManagement?() }
                 Button(model.l("Ngưỡng cảnh báo context: %@%…", String(model.contextAlertThreshold))) { model.onConfigureContextAlerts?() }
                 Toggle(model.l("Thông báo macOS khi vượt ngưỡng"),isOn:Binding(get:{ model.contextNotificationsEnabled },set:{ model.setContextNotificationsEnabled($0) }))
                 Divider()
