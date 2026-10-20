@@ -49,12 +49,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-05 — Hoàn tất kiểm chứng phát hành
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [ ] **Trạng thái:** Đang thực hiện — bản Experimental 0.4.3 (2026-10-20)
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không để bắt đầu kiểm chứng bản hiện tại; kiểm chứng lại artifact cuối cùng sau mọi thay đổi được đưa vào bản phát hành.
 - **Nội dung:** Theo dõi riêng notarization, cài đặt trên máy sạch, Intel, hooks/context Claude thực tế, thông báo macOS, sleep/wake, login và VoiceOver.
 - **Tiêu chí nghiệm thu:** Mỗi kiểm tra ghi phiên bản, môi trường, kết quả và bằng chứng. Thiếu thiết bị hoặc chứng chỉ được ghi là bị chặn, không đánh dấu đã đạt. Phân biệt bản build local với artifact phát hành được kiểm chứng. Không tự publish.
-- **Bằng chứng hoàn thành:** Chưa có; khi thực hiện, đối chiếu checklist tại [release 0.4.2](releases/0.4.2.md) với trạng thái thực tế.
+- **Bằng chứng hiện có:** 102 test Swift tích hợp, 4 test đóng gói và 34 test Usage; build/provenance/signature/smoke cùng artifact được ghi tại [release 0.4.3](releases/0.4.3.md) và `release-validation.json`. Notarization, máy sạch, Intel runtime, hooks/context thực tế, thông báo, sleep/wake, login và VoiceOver chưa được đánh dấu đạt. PR riêng theo dõi phần chuẩn bị Experimental; task chưa hoàn tất.
 
 ## P2 — Tính nhất quán và khả năng phân tích
 

@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.4.2/NoShortUsage-0.4.2-arm64.zip';
+const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.4.3/NoShortUsage-0.4.3-arm64.zip';
 for (const page of ['index.html', 'usage.html']) {
-  test(`${page} links directly to the multi-source app download`, () => {
+  test(`${page} links directly to the current experimental app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
     const downloads = [...html.matchAll(/href="([^"]+\.zip)"/g)].map(match => match[1]);
     assert.deepEqual(downloads, page === 'index.html' ? [expected, expected] : [expected]);

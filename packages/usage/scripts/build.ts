@@ -5,7 +5,7 @@ import lock from '../ccusage-lock.json';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
-const version = '0.4.2';
+const version = '0.4.3';
 const output = join(root, '.artifacts/usage/releases');
 const runtimeRoot = join(usage, 'runtime');
 await mkdir(output, { recursive: true });

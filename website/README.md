@@ -167,3 +167,7 @@ NO_SHORT_RENDER_DIR="$PWD/.artifacts/usage-menubar/website-previews" \
 Inspect the six outputs before copying them into `website/images/`. The Node
 preview tests check language selection, persisted preferences, fallback behavior,
 file presence and dimensions; verify all language/theme combinations in a browser.
+
+## Experimental 0.4.3 download (2026-10-20)
+
+Current links target the distinct `v0.4.3/NoShortUsage-0.4.3-arm64.zip` asset. The release records NS-03 setup/diagnostics and NS-04 About/manual updates. It remains ad-hoc signed and not notarized, with Apple Silicon as the only native app download. Companion checksums and validation scope are on the release. Earlier deployment/build notes above describe historical artifacts.
