@@ -14,6 +14,10 @@ public struct UpdateConfiguration: Equatable, Sendable {
     }
 }
 public enum UpdatePolicy {
+    // Sparkle only interprets arm64 requirements; explicitly reject unknown/Intel feeds.
+    public static func permitsArtifact(hardwareRequirements: Set<String>) -> Bool {
+        hardwareRequirements == ["arm64"]
+    }
     public static func permitsUserCheck(architecture: String, configured: Bool, terminating: Bool, maintenanceActive: Bool, sessionActive: Bool) -> Bool {
         architecture == "arm64" && configured && !terminating && !maintenanceActive && !sessionActive
     }

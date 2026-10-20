@@ -22,6 +22,11 @@ import UsageCore
     func updater(_ updater: SPUUpdater, mayPerform updateCheck: SPUUpdateCheck) throws {
         guard requested && updateCheck == .updates else { throw NativeUpdateFailure.unexpected }
     }
+    func updater(_ updater: SPUUpdater, shouldProceedWithUpdate item: SUAppcastItem, updateCheck: SPUUpdateCheck) throws {
+        guard UpdatePolicy.permitsArtifact(hardwareRequirements: item.hardwareRequirements) else {
+            throw NSError(domain: SUSparkleErrorDomain, code: Int(SUError.validationError.rawValue), userInfo: [NSLocalizedDescriptionKey: NativeUpdateState.failed(.verification).localizedDescription(language: AppLanguage.resolve(saved: UserDefaults.standard.string(forKey: "usageLanguage")))])
+        }
+    }
     func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) { onState?(.available(version:item.displayVersionString)) }
     func updater(_ updater: SPUUpdater, willDownloadUpdate item: SUAppcastItem, with request: NSMutableURLRequest) { onState?(.downloading) }
     func updater(_ updater: SPUUpdater, willInstallUpdate item: SUAppcastItem) { onState?(.installing) }

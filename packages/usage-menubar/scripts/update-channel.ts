@@ -26,9 +26,17 @@ export async function readPlist(app:string):Promise<Record<string,any>> {
  const p=Bun.spawn(['/usr/bin/plutil','-convert','json','-o','-',join(app,'Contents/Info.plist')],{stdout:'pipe',stderr:'pipe'});
  const out=await new Response(p.stdout).text();if(await p.exited) throw Error('Invalid app plist');return JSON.parse(out);
 }
+export async function assertAppArchitecture(app:string, expected: string):Promise<void> {
+ const info=await readPlist(app),executable=info.CFBundleExecutable;
+ if(typeof executable!=="string" || !/^[A-Za-z0-9_-]+$/.test(executable))throw Error("Invalid executable identity");
+ const p=Bun.spawn(["/usr/bin/lipo","-archs",join(app,"Contents/MacOS",executable)],{stdout:"pipe",stderr:"ignore"});
+ const arch=(await new Response(p.stdout).text()).trim();
+ if(await p.exited || arch!==expected)throw Error("Update architecture mismatch");
+}
 export async function assertUpdateDistribution(app:string):Promise<void> {
  const info=await readPlist(app);
  for(const [key,value] of Object.entries(updateFlags)) if(info[key]!==value) throw Error(`Unsafe update policy: ${key}`);
+ await assertAppArchitecture(app,info.NoShortUpdateCapability==='unsupported-architecture'?'x86_64':'arm64');
  if(info.NoShortUpdateCapability==='unsupported-architecture') {
   if(info.SUFeedURL || info.SUPublicEDKey) throw Error('Unsupported architecture cannot have an ARM update feed');return;
  }

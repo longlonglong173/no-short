@@ -17,7 +17,8 @@
     "smoke:usage-menubar": "bun packages/usage-menubar/scripts/smoke.ts",
     "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts",
     "release:usage-menubar": "bun packages/usage-menubar/scripts/release.ts",
-    "prepare:usage-menubar:appcast": "bun packages/usage-menubar/scripts/appcast.ts"
+    "prepare:usage-menubar:appcast": "bun packages/usage-menubar/scripts/appcast.ts",
+    "test:usage-menubar:update-e2e": "bun packages/usage-menubar/scripts/update-e2e.ts"
   },
   "repository": {
     "type": "git",

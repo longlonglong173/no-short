@@ -20,6 +20,12 @@ final class UpdatePolicyTests: XCTestCase {
             XCTAssertFalse(UpdatePolicy.permitsUserCheck(architecture: arch, configured: configured, terminating: terminating, maintenanceActive: maintenance, sessionActive: active))
         }
     }
+    func testOnlyARMReleaseArtifactsAreOffered() {
+        XCTAssertTrue(UpdatePolicy.permitsArtifact(hardwareRequirements: ["arm64"]))
+        for requirements: Set<String> in [[], ["x86_64"], ["arm64", "x86_64"], ["unknown"]] {
+            XCTAssertFalse(UpdatePolicy.permitsArtifact(hardwareRequirements: requirements))
+        }
+    }
     func testAllBusyPhasesDisableDuplicateCheck() {
         for state in [NativeUpdateState.checking, .available(version: "0.6.1"), .downloading, .installing] { XCTAssertTrue(state.isBusy) }
         for state in [NativeUpdateState.idle, .current, .failed(.verification)] { XCTAssertFalse(state.isBusy) }

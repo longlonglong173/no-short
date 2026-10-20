@@ -10,7 +10,11 @@ import UsageCore
     private lazy var panel = UsagePopoverController(model: panelModel)
     private lazy var updateCoordinator: UpdateCoordinator = {
         let info=Bundle.main.infoDictionary ?? [:]
+        #if NO_SHORT_UPDATER_E2E
+        let config=UpdaterE2ESupport.configuration
+        #else
         let config=try? UpdateConfiguration(feedURL:info["SUFeedURL"] as? String ?? "",publicKey:info["SUPublicEDKey"] as? String ?? "")
+        #endif
         #if arch(arm64)
         let arch="arm64"
         #else
@@ -66,6 +70,9 @@ import UsageCore
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         aboutModel.onChange = { [weak self] in
             guard let self else { return }
+            #if NO_SHORT_UPDATER_E2E
+            if aboutModel.nativeState == .installing { UpdaterE2ESupport.holdMaintenanceIfRequested(controller) }
+            #endif
             if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
             else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
         }
@@ -98,6 +105,12 @@ import UsageCore
         center.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
         center.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
         startMonitoring(); render(); controller.resume()
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.recordLaunch()
+        if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == "0.6.0" {
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.5) { self.showAbout(check:true) }
+        }
+        #endif
         if CommandLine.arguments.contains("--show-panel") { showPanel() }
     }
     private func render() {

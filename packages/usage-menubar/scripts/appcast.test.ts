@@ -27,7 +27,8 @@ test.skipIf(process.platform!=='darwin')('pinned SDK signs/verifies the real fix
   const secret=pair.privateKey.export({format:'der',type:'pkcs8'}).subarray(-32).toString('base64');
   const keyFile=join(root,'test-key');await writeFile(keyFile,secret,{mode:0o600});
   const app=join(root,'No Short Usage.app');await mkdir(join(app,'Contents/MacOS'),{recursive:true});
-  await copyFile('/usr/bin/true',join(app,'Contents/MacOS/TestExecutable'));
+  await writeFile(join(root,'fixture.c'),'int main(void) { return 0; }');
+  await exec(['/usr/bin/xcrun','clang','-arch','arm64','-mmacosx-version-min=14.0',join(root,'fixture.c'),'-o',join(app,'Contents/MacOS/TestExecutable')]);
   const plist={CFBundleIdentifier:'dev.noshort.usage.menubar',CFBundleExecutable:'TestExecutable',CFBundlePackageType:'APPL',CFBundleShortVersionString:'0.6.1',CFBundleVersion:'0.6.1',LSMinimumSystemVersion:'14.0',SUPublicEDKey:pub.toString('base64')};
   await writeFile(join(app,'Contents/Info.plist'),JSON.stringify(plist));await exec(['/usr/bin/plutil','-convert','xml1',join(app,'Contents/Info.plist')]);
   await exec(['/usr/bin/codesign','--force','--sign','-',app]);
@@ -36,6 +37,16 @@ test.skipIf(process.platform!=='darwin')('pinned SDK signs/verifies the real fix
   const xml=join(root,'feed/experimental-arm64.xml'),feed=await readFile(xml,'utf8');expect(feed).toContain('sparkle:edSignature');
   await writeFile(xml,feed.replace('0.6.1','0.6.2'));
   await expect(runSigningTool([join(sparkleTools,'sign_update'),'--verify','--ed-key-file','-',xml],Buffer.from(secret))).rejects.toThrow('redacted');
+  const {assertUpdateDistribution,updateFlags}=await import('./update-channel');
+  await writeFile(join(app,'Contents/Info.plist'),JSON.stringify({...plist,...updateFlags,NoShortUpdateCapability:'unsupported-architecture',SUPublicEDKey:undefined}));
+  await exec(['/usr/bin/plutil','-convert','xml1',join(app,'Contents/Info.plist')]);
+  await expect(assertUpdateDistribution(app)).rejects.toThrow('architecture');
+  await writeFile(join(app,'Contents/Info.plist'),JSON.stringify(plist));
+  await exec(['/usr/bin/plutil','-convert','xml1',join(app,'Contents/Info.plist')]);
+  await exec(['/usr/bin/xcrun','clang','-arch','x86_64','-mmacosx-version-min=14.0',join(root,'fixture.c'),'-o',join(app,'Contents/MacOS/TestExecutable')]);
+  await exec(['/usr/bin/codesign','--force','--sign','-',app]);
+  await rm(archive);await exec(['/usr/bin/ditto','-c','-k','--keepParent',app,archive]);
+  await expect(createSignedAppcast({archive,version:'0.6.1',publicKey:pub.toString('base64'),tools:sparkleTools,output:join(root,'wrong-arch'),signingKeyFile:keyFile})).rejects.toThrow('architecture');
   await expect(createSignedAppcast({archive,version:'0.6.1',publicKey:Buffer.alloc(32,1).toString('base64'),tools:sparkleTools,output:join(root,'bad'),signingKeyFile:keyFile})).rejects.toThrow('public key');
  }finally{await rm(root,{recursive:true,force:true})}
 });

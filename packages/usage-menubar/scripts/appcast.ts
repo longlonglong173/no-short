@@ -3,7 +3,8 @@ import {readFile,writeFile,mkdir,mkdtemp,rm,open,realpath} from 'node:fs/promise
 import {constants} from 'node:fs';
 import {basename,join,resolve} from 'node:path';
 import {tmpdir} from 'node:os';
-import {readPlist} from './update-channel';
+import {readPlist,assertAppArchitecture} from './update-channel';
+import {assertSafeBundleLinks} from './sparkle-bundle';
 export const sparkleTools=resolve(import.meta.dirname,'../.build/artifacts/sparkle/Sparkle/bin');
 export function verifyArchiveSignature(bytes:Uint8Array,signature:string,publicKey:string):boolean {
  try {
@@ -45,7 +46,9 @@ export async function createSignedAppcast(o:{archive:string;version:string;publi
   const names=(await new Response(listing.stdout).text()).trim().split('\n');
   if(await listing.exited || names.some(n=>(n!=='__MACOSX/'&&!n.startsWith('No Short Usage.app/')&&!n.startsWith('__MACOSX/No Short Usage.app/'))||n.split('/').includes('..')))throw Error('Unexpected archive paths');
   const unzip=Bun.spawn(['/usr/bin/ditto','-x','-k',resolve(o.archive),scratch],{stdout:'ignore',stderr:'ignore'});if(await unzip.exited)throw Error('Cannot inspect app archive');
-  const app=join(scratch,'No Short Usage.app'),info=await readPlist(app);
+  const app=join(scratch,'No Short Usage.app');
+  await assertSafeBundleLinks(app);await assertAppArchitecture(app,'arm64');
+  const info=await readPlist(app);
   validateUpdateArtifact({...o,bundleVersion:info.CFBundleVersion});
   if(info.CFBundleShortVersionString!==o.version||info.CFBundleIdentifier!=='dev.noshort.usage.menubar'||info.SUPublicEDKey!==o.publicKey||info.LSMinimumSystemVersion!=='14.0')throw Error('App metadata does not match update');
   const signed=Bun.spawn(['/usr/bin/codesign','--verify','--deep','--strict',app],{stdout:'ignore',stderr:'ignore'});if(await signed.exited)throw Error('App code signature failed');

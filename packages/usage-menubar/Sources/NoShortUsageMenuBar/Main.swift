@@ -4,6 +4,9 @@ import Darwin
 
 @main @MainActor struct Main {
     static func main() {
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.bootstrap()
+        #endif
         let args = CommandLine.arguments
         if args.contains("--claude-context-statusline") {
             var input=Data(), buffer=[UInt8](repeating:0,count:16_384)
