@@ -18,6 +18,17 @@ export function translate(language: Language, key: string, ...args: string[]): s
   return template.replace(/%@/g, () => args[index++] ?? '%@');
 }
 export const catalog: Record<string, readonly [string, string]> = {
+  "Công cụ": ["Provider", "工具"],
+  "Tất cả": ["All", "全部"],
+  "Codex và Claude Code": ["Codex and Claude Code", "Codex 和 Claude Code"],
+  "Toàn phiên · %@": ["Entire session · %@", "整个会话 · %@"],
+  "Tất cả phiên · %@ · %@": ["All sessions · %@ · %@", "所有会话 · %@ · %@"],
+  "7 ngày · Tất cả phiên · %@": ["7 days · All sessions · %@", "7 天 · 所有会话 · %@"],
+  "Chưa có dữ liệu cho %@": ["No data for %@ yet", "暂无 %@ 数据"],
+  "Chưa có phiên cho công cụ này.": ["No sessions for this provider yet.", "此工具暂无会话。"],
+  "Chưa có tổng theo công cụ cho khoảng thời gian này.": ["Provider totals are unavailable for this period.", "此时间段暂无各工具的总计。"],
+  "Chạy một phiên của công cụ đã chọn trên máy rồi cập nhật lại. Panel đọc log đã cấu hình.": ["Run a session with the selected provider on this computer, then refresh. The panel reads configured logs.", "在本机使用所选工具运行会话后刷新。面板读取已配置的日志。"],
+  "Ngày thiếu giá: cột gạch chéo, không phải chi phí bằng 0.": ["Unpriced days: hatched bars, not zero cost.", "缺少价格的日期：斜线柱并不表示费用为零。"],
   "Model": ["Model", "模型"],
   "%@ phiên": [
     "%@ sessions",

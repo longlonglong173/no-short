@@ -34,6 +34,19 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Chi phí theo model": ["Costs by model", "各模型费用"],
+        "Model": ["Models", "模型"],
+        "Token": ["Tokens", "token"],
+        "Tổng hôm nay · %@": ["Total today · %@", "今天总计 · %@"],
+        "Phiên đã chọn · Toàn phiên · %@": ["Selected session · Lifetime · %@", "所选会话 · 整个会话 · %@"],
+        "Phiên đang theo dõi · Toàn phiên · %@": ["Followed session · Lifetime · %@", "跟踪会话 · 整个会话 · %@"],
+        "Tất cả công cụ": ["All tools", "全部工具"],
+        "Thiếu một phần giá": ["Partial pricing", "部分价格缺失"],
+        "Chưa biết giá": ["Unknown price", "价格未知"],
+        "Chưa có dữ liệu theo model": ["No model breakdown available", "暂无模型明细"],
+        "≥ là phần chi phí đã biết; — là giá chưa biết, không phải $0.": ["≥ shows known costs; — means unknown price, not $0.", "≥ 表示已知费用；— 表示价格未知，并非 $0。"],
+        "7 ngày · Tất cả phiên · %@": ["7 days · All sessions · %@", "7 天 · 所有会话 · %@"],
+        "%@ · %@ · Tổng tất cả phiên · %@ USD": ["%@ · %@ · All sessions total · %@ USD", "%@ · %@ · 所有会话总计 · %@ USD"],
         "Kết nối hooks cho cả hai công cụ…": ["Connect hooks for both tools…", "为两种工具连接 hooks…"],
         "Chưa cấu hình": ["Not configured", "未配置"],
         "Đã cấu hình · Chờ dữ liệu": ["Configured · Waiting for data", "已配置 · 等待数据"],

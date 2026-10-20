@@ -43,6 +43,28 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 - Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
 - Sleep suspends the schedule and cancels reading. Wake requests a fresh snapshot. **Thoát No Short Usage** stops the companion's scans; it does not change the plugin or the login-item preference.
 
+## Costs by model (NS-06 source; not yet in v0.4.3 downloads)
+
+Click **Model** beside the main cost to open a scrollable breakdown with each
+model's tokens, estimated USD cost and pricing status. **Quay lại thống kê**
+returns to the dashboard without changing the pin, followed session or provider.
+The detail view uses the existing popover height rather than extending it.
+
+For **Codex / Claude Code**, the model rows cover the selected or followed
+session's entire retained history. For **All**, they cover today's combined
+usage, not the month or the sum of lifetime sessions. Both the dashboard and
+detail view name the cost's scope; the day/month totals and seven-day chart
+remain provider-scoped across all sessions in the snapshot's time zone.
+The table reads the runtime's existing model aggregates without recomputing
+dates from session timestamps. Old Codex-only schema-v1 snapshots remain valid.
+
+`$0.00` with **Estimated** is a known estimate of zero. `≥$…` with **Partial
+pricing** is only the known-priced portion, including `≥$0.00` when none of
+that portion has positive cost. `—` with **Unknown price** is not free usage.
+Missing/empty model arrays display an explicit empty state, never another
+session's models. UI labels support English, Vietnamese and Simplified Chinese;
+recorded model names are not translated.
+
 ## Log source
 
 By default the source is `~/.codex`. An inherited nonempty `CODEX_HOME` is honored, including the engine's comma-separated roots. Finder/login launches normally do not inherit shell startup configuration.

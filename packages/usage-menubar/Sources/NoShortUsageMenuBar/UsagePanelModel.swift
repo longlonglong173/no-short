@@ -64,6 +64,11 @@ struct DailyCostPoint: Identifiable {
         return l("Nhận gần nhất: %@", f.string(from: date))
     }
     @Published var showsSessions = false
+    @Published var showsModels = false
+    func showModelCosts() {
+        showsSessions = false
+        showsModels = true
+    }
     @Published var search = ""
     var onSelectionChange: (() -> Void)?
     var onRefresh: (() -> Void)?
@@ -179,9 +184,39 @@ struct DailyCostPoint: Identifiable {
     }
     var isAll:Bool { providerFilter == "all" }
     var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }
-    var mainCost: String { isAll ? todayCost : selectedSession.map { UsagePresentation.money($0.cost) } ?? "—" }
+    var mainUsageCost: UsageCost? { isAll ? visibleToday?.cost : selectedSession?.cost }
+    var mainCost: String { mainUsageCost.map(UsagePresentation.money) ?? "—" }
+    // Model arrays already carry the runtime's date/time-zone aggregation.
+    // Older snapshots omit breakdowns; provider metadata still takes precedence
+    // over assuming their combined totals belong to Codex.
+    var totalProviders: [UsageProvider] {
+        guard let snapshot else { return [] }
+        let providers = UsageProvider.allCases.filter { provider in
+            snapshot.providerBreakdowns?.contains { $0.provider == provider } == true
+                || snapshot.sessions.contains { $0.usageProvider == provider }
+        }
+        return providers.isEmpty && hasLegacyCodexTotals ? [.codex] : providers
+    }
+    var aggregateProviderLabel: String {
+        if !isAll { return UsageProvider(rawValue: providerFilter)?.title ?? providerFilter }
+        let providers = totalProviders.map(\.title).joined(separator: " + ")
+        return providers.isEmpty ? l("Tất cả công cụ") : providers
+    }
+    var costScopeLabel: String {
+        if isAll { return l("Tổng hôm nay · %@", aggregateProviderLabel) }
+        let provider = selectedSession?.usageProvider.title ?? aggregateProviderLabel
+        return l(selectedSessionID == nil ? "Phiên đang theo dõi · Toàn phiên · %@" : "Phiên đã chọn · Toàn phiên · %@", provider)
+    }
+    var modelUsages: [ModelUsage] { isAll ? visibleToday?.models ?? [] : selectedSession?.models ?? [] }
+    func pricingLabel(_ cost: UsageCost) -> String {
+        switch cost.status {
+        case "estimated": return l("Ước tính")
+        case "partial": return l("Thiếu một phần giá")
+        default: return l("Chưa biết giá")
+        }
+    }
     var selectionLabel: String {
-        if isAll { return l("Tổng Codex và Claude Code hôm nay") }
+        if isAll { return costScopeLabel }
         if selectionMissing { return l("Phiên đã chọn không còn dữ liệu") }
         if waitingForUsage { return l("Phiên mới · %@ · Chờ dữ liệu", String(followedActivity?.sessionID.prefix(8) ?? "")) }
         return selectedSession.map { UsagePresentation.cleanTitle($0.title) } ?? l("Chưa có phiên chính")
@@ -198,8 +233,16 @@ struct DailyCostPoint: Identifiable {
         return l("Tự động · %@ · %@", String(current.provider.title), String(state))
     }
     var providerBreakdown:ProviderBreakdown? { snapshot?.providerBreakdowns?.first { $0.provider.rawValue == providerFilter } }
-    var visibleToday:UsageAggregate? { isAll ? snapshot?.today : providerBreakdown?.today ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.today : nil) }
-    var visibleMonth:UsageAggregate? { isAll ? snapshot?.month : providerBreakdown?.month ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.month : nil) }
+    private var hasLegacyCodexTotals: Bool {
+        guard let snapshot else { return false }
+        return snapshot.providerBreakdowns == nil && !snapshot.sessions.contains { $0.usageProvider == .claude }
+    }
+    func providerTodayCost(_ provider: UsageProvider) -> UsageCost? {
+        snapshot?.providerBreakdowns?.first { $0.provider == provider }?.today.cost
+            ?? (provider == .codex && hasLegacyCodexTotals ? snapshot?.today.cost : nil)
+    }
+    var visibleToday:UsageAggregate? { isAll ? snapshot?.today : providerBreakdown?.today ?? (providerFilter == "codex" && hasLegacyCodexTotals ? snapshot?.today : nil) }
+    var visibleMonth:UsageAggregate? { isAll ? snapshot?.month : providerBreakdown?.month ?? (providerFilter == "codex" && hasLegacyCodexTotals ? snapshot?.month : nil) }
     private var displayTokens:UsageTokens? { isAll ? visibleToday?.tokens : selectedSession?.tokens }
     @Published private(set) var contextReadings: [UsageProvider:ContextReading] = [:]
     var contextSessionIDs: [UsageProvider:String] {
@@ -247,7 +290,7 @@ struct DailyCostPoint: Identifiable {
     var todayCost: String { visibleToday.map { UsagePresentation.money($0.cost) } ?? "—" }
     var monthCost: String { visibleMonth.map { UsagePresentation.money($0.cost) } ?? "—" }
     var chartPoints: [DailyCostPoint] {
-        (isAll ? snapshot?.chart ?? [] : providerBreakdown?.chart ?? (providerFilter == "codex" && snapshot?.providerBreakdowns == nil ? snapshot?.chart ?? [] : [])).map { point in
+        (isAll ? snapshot?.chart ?? [] : providerBreakdown?.chart ?? (providerFilter == "codex" && hasLegacyCodexTotals ? snapshot?.chart ?? [] : [])).map { point in
             let parts = point.date.split(separator: "-")
             let label = parts.count == 3 ? (language == .english ? "\(parts[1])/\(parts[2])" : language == .simplifiedChinese ? "\(parts[1])月\(parts[2])日" : "\(parts[2])/\(parts[1])") : point.date
             let amount = point.cost.status == "unknown" ? nil : (point.cost.amountUSD ?? point.cost.knownCostUSD)
