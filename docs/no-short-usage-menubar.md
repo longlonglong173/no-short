@@ -305,3 +305,11 @@ About shows the version and build from the running app bundle. Check for Updates
 ## Adaptive popover (NS-07, unreleased source)
 
 The popover clamps to the visible screen area below its menu-bar item. When content does not fit, scroll vertically; Home/End and Page Up/Page Down reach the full content when not editing text. It resizes for warning, language, and screen changes. Existing public downloads are not updated by this source change. Live VoiceOver and multi-display acceptance remain separate checks.
+
+## History window (NS-09, unreleased source)
+
+Choose **Xem chi tiết… / Usage details…** in the popover or right-click menu. The app opens one resizable, retained window; repeated clicks focus it. Closing it (including Cmd-W) does not quit background tracking.
+
+Filter All/Codex/Claude and 7/30 days, this/previous month, or inclusive custom dates in the snapshot timezone. Custom dates use YYYY-MM-DD; start must not follow end and future end dates are rejected. The summary always covers the selected range. Select a day in the chart or its accessible picker to inspect that day's model token/cost breakdown, then choose Entire range to reset. Missing source rows mean no usage in retained local logs, not proof of zero account usage. Unknown/partial prices remain explicit.
+
+History filters do not change the menu-bar session pin, automatic following, context alerts or provider selection. The window shares the existing snapshot/refresh pipeline, not another log reader. Old runtimes without optional history show unavailable rather than guessing historical model/token totals from lifetime sessions. Both UI languages and stale/error status follow the app. No conversation text is shown. Installed-app/VoiceOver and clean-machine acceptance remain separate from synthetic render/model tests.

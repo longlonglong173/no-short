@@ -13,7 +13,7 @@ import UsageCore
     init(model: UsagePanelModel) {
         self.model = model
         popover.behavior = .transient
-        let host = PopoverHostingController(rootView: UsagePopoverView(model: model, onContentHeightChange: { [weak self] height in
+        let host = UsageScrollHostingController(rootView: UsagePopoverView(model: model, onContentHeightChange: { [weak self] height in
             guard let self, self.contentHeight != height else { return }
             self.contentHeight = height
             self.updateSize()
@@ -56,7 +56,7 @@ import UsageCore
 
 /// Supplement SwiftUI control focus with keyboard navigation of the full document.
 /// Tab/Shift-Tab and control activation continue through SwiftUI's normal responder chain.
-private final class PopoverHostingController: NSHostingController<UsagePopoverView> {
+final class UsageScrollHostingController<Content: View>: NSHostingController<Content> {
     override func keyDown(with event: NSEvent) {
         guard event.modifierFlags.intersection([.command, .control, .option]).isEmpty,
               !(view.window?.firstResponder is NSTextView),

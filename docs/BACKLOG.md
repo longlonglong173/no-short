@@ -88,12 +88,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-09 — Mở rộng lịch sử
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-21) — chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-06 để thống nhất bộ lọc provider trên hai giao diện.
 - **Nội dung:** Hỗ trợ 7 ngày, 30 ngày, tháng này, tháng trước và khoảng ngày tùy chọn trên cả hai giao diện.
 - **Tiêu chí nghiệm thu:** Tổng và biểu đồ tuân theo khoảng ngày, provider, múi giờ và trạng thái thiếu giá. Kiểm tra ranh giới ngày/tháng, khoảng không có dữ liệu và khoảng ngày không hợp lệ. Không thay đổi ý nghĩa chi phí toàn phiên hoặc làm hỏng consumer schema v1.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Optional daily/provider/model history từ cùng báo cáo ccusage, cache revision, cửa sổ native duy nhất có resize và tab lịch sử panel độc lập pin/follow. Preset 7/30 ngày, tháng này/trước và ngày tùy chọn; tổng khoảng khác toàn phiên, chọn ngày xem model. 96 test Usage, 28 test browser, 137 test Swift và 4 test đóng gói qua; typecheck, UI build, validation/diff check qua. Fixture chung 375 token/$7; CLI 6 năm 4.400 records/1 lần scan. Review P2 đã tái hiện và sửa: giá partial-zero có marker riêng, custom range giữ qua đổi múi giờ; đối chiếu unknown + aggregate rỗng khớp TS/Swift. Review lại không còn P1/P2. Render EN/VI/zh sáng/tối/màn hình thấp bằng fixture đã kiểm tra; chưa nghiệm thu app cài đặt/host thực/VoiceOver/Intel. Chưa phát hành.
 
 ### NS-10 — Xuất CSV/JSON
 

@@ -7,6 +7,11 @@ export interface Aggregate { tokens: Tokens; cost: Cost; models: ModelUsage[] }
 export interface SessionMetadata { title: string; kind: 'main' | 'subagent' | 'unknown' }
 export interface SessionUsage extends Aggregate, SessionMetadata { id: string; provider?: UsageProvider; sessionKey?: string; lastActivity: string | null }
 export interface ProviderBreakdown { provider: UsageProvider; today: Aggregate; month: Aggregate; chart: { date: string; cost: Cost }[] }
+export interface UsageHistory {
+  version: 1;
+  providers: UsageProvider[];
+  days: { date: string; provider: UsageProvider; aggregate: Aggregate }[];
+}
 export interface UsageSnapshot {
   schemaVersion: 1;
   source: 'ccusage';
@@ -21,5 +26,6 @@ export interface UsageSnapshot {
   month: Aggregate;
   chart: { date: string; cost: Cost }[];
   providerBreakdowns?: ProviderBreakdown[];
+  history?: UsageHistory;
 }
 export interface DashboardResult { snapshot: UsageSnapshot; selectedSession: SessionUsage | null; requestedSessionId: string | null }

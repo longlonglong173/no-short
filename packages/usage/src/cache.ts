@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile, rename, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { buildSnapshot } from './adapter.ts';
+import { decodeHistory } from './history.ts';
 import type { UsageSnapshot } from './types.ts';
 
 const notices: Record<string, string> = {
@@ -18,11 +19,17 @@ function safeNotice(e: unknown): string {
 async function readSnapshot(path: string): Promise<UsageSnapshot | null> {
   try {
     const value = JSON.parse(await readFile(path, 'utf8'));
+    if (value && 'history' in value) {
+      const history = decodeHistory(value.history);
+      if (history) value.history = history;
+      else delete value.history;
+    }
     return value?.schemaVersion === 1 && Number.isFinite(Date.parse(value.generatedAt)) && Array.isArray(value.sessions) && value.today?.cost && value.month?.cost ? value : null;
   } catch { return null; }
 }
 function unavailable(timeZone: string, notice: string): UsageSnapshot {
   const value = buildSnapshot({ session: [], daily: [], totals: {} }, { now: new Date(), timeZone, metadata: new Map() });
+  delete value.history;
   const unknown = { amountUSD: null, knownCostUSD: 0, status: 'unknown' as const };
   return { ...value, status: 'error', notice, today: { ...value.today, cost: unknown }, month: { ...value.month, cost: unknown }, chart: value.chart.map(p => ({ ...p, cost: unknown })) };
 }

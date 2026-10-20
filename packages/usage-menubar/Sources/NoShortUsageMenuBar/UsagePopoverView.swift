@@ -23,9 +23,8 @@ struct UsagePopoverView: View {
         }
         .frame(idealWidth: 400, idealHeight: model.panelHeight)
         .onPreferenceChange(PopoverContentHeight.self) { [onContentHeightChange] height in
-            Task { @MainActor in
-                if height > 0 { onContentHeightChange?(height) }
-            }
+            guard height > 0 else { return }
+            Task { @MainActor in onContentHeightChange?(height) }
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
@@ -156,6 +155,10 @@ struct UsagePopoverView: View {
                 Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
                     .font(.system(size: 9)).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
+            Button { model.onHistory?() } label: {
+                Label(model.l("Xem chi tiết…"), systemImage: "chart.bar.xaxis")
+                    .font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
+            }.buttonStyle(.plain).padding(.bottom, 10)
             footer
         }
     }

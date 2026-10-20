@@ -17,6 +17,7 @@ import UsageCore
     var onOpenSettings: (() -> Void)?
     var onQuit: (() -> Void)?
     var onAbout: (() -> Void)?
+    var onHistory: (() -> Void)?
     var onCheckUpdates: (() -> Void)?
     var onReleaseNotes: (() -> Void)?
     var onConfigureContextAlerts: (() -> Void)?
@@ -39,6 +40,7 @@ import UsageCore
         menu.addItem(.separator())
         updated = line(l("Chưa cập nhật")); sourceItem = line(l("Nguồn: —")); noticeItem = line("")
         menu.addItem(.separator())
+        _ = action(l("Xem chi tiết…"), #selector(history))
         refreshItem = action(l("Làm mới"), #selector(refresh), key: "r")
         _ = action(l("Chọn thư mục log…"), #selector(chooseSource))
         _ = action(l("Dùng nguồn log mặc định"), #selector(resetSource))
@@ -113,6 +115,7 @@ import UsageCore
         checkUpdatesItem.isEnabled = !state.isChecking
         put(state.localizedDescription(language: language), in: updateStatusItem)
     }
+    @objc private func history() { onHistory?() }
     @objc private func about() { onAbout?() }
     @objc private func checkUpdates() { onCheckUpdates?() }
     @objc private func releaseNotes() { onReleaseNotes?() }
