@@ -1,6 +1,6 @@
 # NS-09 — Lịch sử sử dụng và cửa sổ chi tiết
 
-Ngày: 2026-10-20. Trạng thái: **spec chờ người dùng duyệt; chưa triển khai chức năng**.
+Ngày: 2026-10-20. Trạng thái: **đã triển khai local theo yêu cầu làm lần lượt NS-07 đến NS-12; chưa phát hành**.
 Nhánh: `codex/ns09-usage-history-window`, xuất phát từ `origin/main`
 `827dbb63e8412ad8b8639e752408810db7c4c4a2` sau khi PR #25 (NS-06) đã merge.
 

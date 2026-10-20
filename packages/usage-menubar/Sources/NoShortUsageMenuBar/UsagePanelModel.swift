@@ -77,6 +77,7 @@ struct DailyCostPoint: Identifiable {
     var onToggleLogin: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onAbout: (() -> Void)?
+    var onHistory: (() -> Void)?
     var onCheckUpdates: (() -> Void)?
     var onReleaseNotes: (() -> Void)?
     var onQuit: (() -> Void)?

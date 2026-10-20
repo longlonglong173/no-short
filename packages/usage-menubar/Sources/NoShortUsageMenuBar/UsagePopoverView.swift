@@ -4,7 +4,7 @@ import UsageCore
 
 struct UsagePopoverView: View {
     @ObservedObject var model: UsagePanelModel
-    var onContentHeightChange: ((CGFloat) -> Void)?
+    var onContentHeightChange: (@MainActor @Sendable (CGFloat) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     private var accent: Color { colorScheme == .dark ? Color(red: 0.46, green: 0.83, blue: 0.79) : Color(red: 0, green: 0.43, blue: 0.45) }
     var body: some View {
@@ -22,8 +22,9 @@ struct UsagePopoverView: View {
             .focusable()
         }
         .frame(idealWidth: 400, idealHeight: model.panelHeight)
-        .onPreferenceChange(PopoverContentHeight.self) { height in
-            if height > 0 { onContentHeightChange?(height) }
+        .onPreferenceChange(PopoverContentHeight.self) { [onContentHeightChange] height in
+            guard height > 0 else { return }
+            Task { @MainActor in onContentHeightChange?(height) }
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .tint(accent)
@@ -154,6 +155,10 @@ struct UsagePopoverView: View {
                 Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
                     .font(.system(size: 9)).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
+            Button { model.onHistory?() } label: {
+                Label(model.l("Xem chi tiết…"), systemImage: "chart.bar.xaxis")
+                    .font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
+            }.buttonStyle(.plain).padding(.bottom, 10)
             footer
         }
     }

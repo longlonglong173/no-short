@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { HistoryPanel } from './history';
 import { useUsage } from './use-usage';
 import { costText as formatCost, tokenText, providerView, hasClaudeSource, type ProviderFilter } from './model';
 import { LanguageProvider, useTranslation, persistWidgetState } from './language';
 import { languages } from './localization';
 import type { Cost, Aggregate, SessionUsage, UsageSnapshot } from '../src/types';
 
-type Period = 'session' | 'day' | 'month';
+type Period = 'session' | 'day' | 'month' | 'history';
 function Icon({ name }: { name: 'refresh' | 'pin' | 'chevron' | 'chart' }) {
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     {name === 'refresh' ? <><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1"/></>
@@ -60,6 +61,7 @@ function UsagePanelContent() {
   const costText = (cost: Cost) => formatCost(cost, language);
   const { data, busy, error, preview, requestVersion, refresh } = useUsage();
   const [period, setPeriod] = useState<Period>('session');
+  const [historyOpened, setHistoryOpened] = useState(false);
   const [selection, setSelection] = useState<Selection>(readSelection);
   const [search, setSearch] = useState('');
   const picker = useRef<HTMLDetailsElement>(null);
@@ -80,6 +82,7 @@ function UsagePanelContent() {
     const id = data?.requestedSessionId ?? null;
     if (id && (requested.current.id !== id || requested.current.version !== requestVersion)) {
       selectionChosen.current = true;
+      setPeriod('session');
       const session = data?.snapshot.sessions.find(s => s.id === id);
       setSelection({ sessionId: id, providerFilter: session?.provider ?? 'codex' });
     }
@@ -113,12 +116,14 @@ function UsagePanelContent() {
     <div className={`source-status ${error || snapshot?.status === 'stale' || unavailable ? 'warning' : ''}`} role="status"><span className="status-dot"/>
       {busy && !data ? l("Đang đọc log trên máy…") : !snapshot ? l("Chưa kết nối dữ liệu") : l('Log trên máy · %@', snapshot.status === 'stale' || unavailable ? l("Chưa cập nhật") : l("Đã cập nhật"))}
     </div>
-    {hasClaude ? <div className="provider-filter" role="group" aria-label={l('Công cụ')}>
+    {hasClaude && period !== 'history' ? <div className="provider-filter" role="group" aria-label={l('Công cụ')}>
       {(['all', 'codex', 'claude'] as const).map(provider => <button key={provider} aria-pressed={filter === provider} onClick={() => { if (provider !== filter) choose(null, provider); }}>{provider === 'all' ? l('Tất cả') : providerName(provider)}</button>)}
     </div> : null}
-    <div className="tabs" role="tablist" aria-label={l("Khoảng thống kê")}>{([['session', l("Phiên")], ['day', l("Hôm nay")], ['month', l("Tháng này")]] as const).map(([key, label]) =>
-      <button key={key} role="tab" id={`tab-${key}`} aria-selected={period === key} aria-controls="usage-content" onClick={() => setPeriod(key)}>{label}</button>)}</div>
+    <div className="tabs" role="tablist" aria-label={l("Khoảng thống kê")}>{([['session', l("Phiên")], ['day', l("Hôm nay")], ['month', l("Tháng này")], ['history', l('Lịch sử')]] as const).map(([key, label]) =>
+      <button key={key} role="tab" id={`tab-${key}`} aria-selected={period === key} aria-controls="usage-content" onClick={() => { if (key === 'history') setHistoryOpened(true); setPeriod(key); }}>{label}</button>)}</div>
     <section id="usage-content" role="tabpanel" aria-labelledby={`tab-${period}`}>
+      <div hidden={period !== 'history'}>{snapshot && historyOpened ? <HistoryPanel snapshot={snapshot} initialProvider={filter}/> : null}</div>
+      <div hidden={period === 'history'}>
       {period === 'session' && view?.sessions.length ? <div className="session-controls">
         <div className="picker-row"><details className="session-picker" ref={picker}><summary aria-label={l("Chọn phiên")}><span>{selected?.title ?? l("Phiên không còn dữ liệu")}</span><Icon name="chevron"/></summary>
           <div className="picker-popup"><label htmlFor="session-search">{l("Tìm phiên")}</label><input id="session-search" type="search" value={search} placeholder={l("Tên hoặc ID phiên…")} onChange={e => setSearch(e.target.value)}/>
@@ -141,10 +146,11 @@ function UsagePanelContent() {
           <div className="period-totals"><button onClick={() => setPeriod('day')}><span>{l("Hôm nay")}</span><strong>{view?.today ? costText(view.today.cost) : '—'}</strong></button><button onClick={() => setPeriod('month')}><span>{l("Tháng này")}</span><strong>{view?.month ? costText(view.month.cost) : '—'}</strong></button></div>
         </> : snapshot && !unavailable ? <div className="empty-state"><p>{l('Chưa có tổng theo công cụ cho khoảng thời gian này.')}</p></div>
         : !error && !unavailable ? <div className="skeleton" aria-label={l("Đang tải thống kê")}><div/><div/><div/></div> : null}
+      </div>
     </section>
     <footer><p className="disclaimer">{l("Ước tính — không phải hóa đơn hoặc credit ChatGPT đã trừ")}</p>
       <div className="footer-meta"><span>{l("Nguồn: ccusage · Dữ liệu cục bộ")}</span>{snapshot ? <time dateTime={snapshot.generatedAt}>{new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</time> : null}</div>
-      {snapshot ? <p className="footer-detail">{providerName(filter)} · {snapshot.timeZone} · {snapshot.pricingSource === 'cached' ? l("Dùng bảng giá cache") : l("Giá theo ccusage")} · {l('%@ phiên', String(view?.sessions.length ?? 0))}</p> : null}
+      {snapshot && period !== 'history' ? <p className="footer-detail">{providerName(filter)} · {snapshot.timeZone} · {snapshot.pricingSource === 'cached' ? l("Dùng bảng giá cache") : l("Giá theo ccusage")} · {l('%@ phiên', String(view?.sessions.length ?? 0))}</p> : null}
     </footer>
   </main>;
 }

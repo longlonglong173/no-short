@@ -67,6 +67,29 @@ public struct UsageSnapshot: Decodable, Sendable {
     public let today, month: UsageAggregate
     public let chart: [ChartDay]
     public let providerBreakdowns: [ProviderBreakdown]?
+    public let history: UsageHistory?
+    private enum CodingKeys: String, CodingKey {
+        case schemaVersion, source, ccusageVersion, generatedAt, timeZone, status, pricingSource, notice
+        case sessions, today, month, chart, providerBreakdowns, history
+    }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        schemaVersion = try c.decode(Int.self, forKey: .schemaVersion)
+        source = try c.decode(String.self, forKey: .source)
+        ccusageVersion = try c.decode(String.self, forKey: .ccusageVersion)
+        generatedAt = try c.decode(Date.self, forKey: .generatedAt)
+        timeZone = try c.decode(String.self, forKey: .timeZone)
+        status = try c.decode(String.self, forKey: .status)
+        pricingSource = try c.decode(String.self, forKey: .pricingSource)
+        notice = try c.decodeIfPresent(String.self, forKey: .notice)
+        sessions = try c.decode([SessionUsage].self, forKey: .sessions)
+        today = try c.decode(UsageAggregate.self, forKey: .today)
+        month = try c.decode(UsageAggregate.self, forKey: .month)
+        chart = try c.decode([ChartDay].self, forKey: .chart)
+        providerBreakdowns = try c.decodeIfPresent([ProviderBreakdown].self, forKey: .providerBreakdowns)
+        // An unsupported or malformed optional extension must not discard a valid v1 dashboard.
+        history = try? c.decode(UsageHistory.self, forKey: .history)
+    }
     public var latestSession: SessionUsage? {
         sessions.first { $0.kind == "main" } ?? sessions.first { $0.kind != "subagent" }
     }

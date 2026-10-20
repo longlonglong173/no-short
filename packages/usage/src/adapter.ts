@@ -28,14 +28,19 @@ function aggregate(row: UsageRow, unpriced: Set<string>): Aggregate {
 function sumCost(a: Cost, b: Cost): Cost {
   const knownCostUSD = a.knownCostUSD + b.knownCostUSD;
   if (a.amountUSD !== null && b.amountUSD !== null) return knownCost(knownCostUSD);
-  return { amountUSD: null, knownCostUSD, status: knownCostUSD > 0 ? 'partial' : 'unknown' };
+  return { amountUSD: null, knownCostUSD, status: a.status === 'unknown' && b.status === 'unknown' ? 'unknown' : 'partial' };
 }
 export function sumAggregates(rows: Aggregate[]): Aggregate {
   const result = emptyAggregate();
   const models = new Map<string, ModelUsage>();
+  let hasCost = false;
   for (const row of rows) {
     for (const key of Object.keys(result.tokens) as (keyof Tokens)[]) result.tokens[key] += row.tokens[key];
-    result.cost = sumCost(result.cost, row.cost);
+    const neutral = row.cost.status === 'estimated' && row.cost.amountUSD === 0 && row.models.length === 0 && Object.values(row.tokens).every(n => n === 0);
+    if (!neutral) {
+      result.cost = hasCost ? sumCost(result.cost, row.cost) : { ...row.cost };
+      hasCost = true;
+    }
     for (const m of row.models) {
       const existing = models.get(m.name);
       if (!existing) models.set(m.name, structuredClone(m));
@@ -45,14 +50,14 @@ export function sumAggregates(rows: Aggregate[]): Aggregate {
       }
     }
   }
-  result.models = [...models.values()].sort((a, b) => b.cost.knownCostUSD - a.cost.knownCostUSD);
+  result.models = [...models.values()].sort((a, b) => b.cost.knownCostUSD - a.cost.knownCostUSD || a.name.localeCompare(b.name));
   return result;
 }
 
 export function dayKey(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
   const get = (key: string) => parts.find(p => p.type === key)!.value;
-  return `${get('year')}-${get('month')}-${get('day')}`;
+  return `${get('year').padStart(4, '0')}-${get('month')}-${get('day')}`;
 }
 function shortId(id: string): string { return id.match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0].slice(0, 8) ?? id.slice(-12); }
 export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnapshot {
@@ -69,11 +74,19 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
       lastActivity: row.metadata?.lastActivity ?? null, ...aggregate(row, unpriced) };
   }).sort((a, b) => (b.lastActivity ?? '').localeCompare(a.lastActivity ?? '') || a.id.localeCompare(b.id));
   const daily = new Map<string, Aggregate>();
+  const providerDaily = new Map<UsageProvider, Map<string, Aggregate>>(providers.map(provider => [provider, new Map()]));
   for (const row of report.daily) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(row.period)) throw new Error('Invalid daily period');
+    const date = new Date(`${row.period}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(row.period) || row.period.startsWith('0000') || !Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== row.period) throw new Error('Invalid daily period');
     const sources = row.agents ?? (providers.includes(row.agent as UsageProvider) ? [row] : []);
     if (sources.some(a => !providers.includes(a.agent as UsageProvider)) || (!sources.length && row.totalTokens > 0)) throw new Error('Unexpected daily data source');
-    const value = sumAggregates(sources.map(a => aggregate(a, unpriced)));
+    const values = sources.map(source => {
+      const value = aggregate(source, unpriced);
+      const days = providerDaily.get(source.agent as UsageProvider)!;
+      days.set(row.period, days.has(row.period) ? sumAggregates([days.get(row.period)!, value]) : value);
+      return value;
+    });
+    const value = sumAggregates(values);
     daily.set(row.period, daily.has(row.period) ? sumAggregates([daily.get(row.period)!, value]) : value);
   }
   const today = dayKey(options.now, options.timeZone);
@@ -83,17 +96,16 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
     return { date: key, cost: daily.get(key)?.cost ?? knownCost(0) };
   });
   const providerBreakdowns = providers.map(provider => {
-    const filtered = { ...report, session: report.session.filter(r => r.agent === provider), daily: report.daily.map(row => ({ ...row,
-      agents: (row.agents ?? [row]).filter(a => a.agent === provider), totalTokens: 0,
-    })) };
-    // A focused view has identical date/price semantics to the overall report.
-    const view = providers.length > 1 ? buildSnapshot(filtered, { ...options, providers: [provider] }) : null;
-    return { provider, today: view?.today ?? daily.get(today) ?? emptyAggregate(),
-      month: view?.month ?? sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart: view?.chart ?? chart };
+    const days = providerDaily.get(provider)!;
+    return { provider, today: days.get(today) ?? emptyAggregate(),
+      month: sumAggregates([...days].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)),
+      chart: chart.map(point => ({ date: point.date, cost: days.get(point.date)?.cost ?? knownCost(0) })) };
   });
+  const history = { version: 1 as const, providers: [...providers], days: [...providerDaily].flatMap(([provider, days]) =>
+    [...days].map(([date, aggregate]) => ({ date, provider, aggregate }))).sort((a, b) => a.date.localeCompare(b.date) || providers.indexOf(a.provider) - providers.indexOf(b.provider)) };
   return { schemaVersion: 1, source: 'ccusage', ccusageVersion: '20.0.34', generatedAt: options.now.toISOString(), timeZone: options.timeZone,
     status: sessions.length ? 'ready' : 'empty', pricingSource: options.pricingSource ?? 'online', sessions,
-    today: daily.get(today) ?? emptyAggregate(), month: sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart, providerBreakdowns };
+    today: daily.get(today) ?? emptyAggregate(), month: sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart, providerBreakdowns, history };
 }
 export function selectSession(sessions: SessionUsage[], id: string | null): SessionUsage | null {
   if (id !== null) return sessions.find(s => s.id === id) ?? null;

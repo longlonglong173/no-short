@@ -152,3 +152,11 @@ Metadata uses a private, bounded per-file disk cache in the current source/timez
 Run `bun packages/usage/scripts/benchmark-metadata.ts` for a synthetic-only benchmark (240 files, 501 lines each). On the recorded macOS arm64 run, original metadata code took 103.82 ms; new cold-cache 67.06 ms, warm-cache 7.58 ms (240 hits, no content reads). Outputs matched. Filesystem caching affects timing; this is not a whole-ccusage benchmark or a general speed guarantee.
 
 The pinned ccusage 20.0.34 can deduplicate identical timestamp/token events from two distinct Codex sessions. A native CLI characterization test records daily total 110 for two 110-token sessions with identical event times, and 220 when event times differ. NS-08 does not alter logs or patch that upstream behavior; estimates can undercount this case.
+
+## History (NS-09, unreleased source)
+
+The **Lịch sử / History** tab filters retained daily provider/model aggregates by 7/30 days, this/previous month or an inclusive custom range in the snapshot timezone. The initial provider is copied when History first opens; later history filters are independent of the pinned session/dashboard. Switching tabs keeps in-memory history state; it is not persisted to host/browser storage. A new explicit tool session request returns to the session view.
+
+Click a dated bar for that day's models or Entire range for range models. Token totals and cost summary cover the range, not the lifetime session. Empty periods with a successful source read show zero; missing/invalid history is unavailable and unknown prices are never zero. Charts are sparse (dates present in source rows), not a claim of complete account history. Controls are keyboard accessible with horizontally scrollable tables/charts on narrow panels. Filtering does not fetch logs or call tools again.
+
+Snapshot schema remains v1 with optional `history: {version:1,providers,days:[{date,provider,aggregate}]}`. A new cache-scope revision avoids treating old snapshots as history-capable. History is in widget metadata, not expanded into model-visible structured summaries. Cache retains no conversation content. The native window and panel use the same daily aggregate contract; ccusage20.0.34's documented identical-event collision limitation remains.

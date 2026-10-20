@@ -10,6 +10,7 @@ import UsageCore
     private lazy var panel = UsagePopoverController(model: panelModel)
     private lazy var aboutModel = AboutModel(language: panelModel.language)
     private lazy var aboutWindow = AboutWindowController(model: aboutModel)
+    private var historyWindow: UsageHistoryWindowController?
     private var controller: RefreshController!
     private var terminating = false
     private var contextSuspended = false
@@ -42,6 +43,7 @@ import UsageCore
         menu.onConfigureContextAlerts = { [weak self] in self?.configureContextAlertThreshold() }
         menu.onQuit = { NSApp.terminate(nil) }
         menu.onAbout = { [weak self] in self?.showAbout() }
+        menu.onHistory = { [weak self] in self?.showHistory() }
         menu.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         aboutModel.onChange = { [weak self] in
@@ -58,6 +60,7 @@ import UsageCore
         panelModel.onOpenSettings = { [weak self] in self?.login.openSettings() }
         panelModel.onQuit = { NSApp.terminate(nil) }
         panelModel.onAbout = { [weak self] in self?.showAbout() }
+        panelModel.onHistory = { [weak self] in self?.showHistory() }
         panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         panelModel.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         panelModel.onChooseClaudeSource = { [weak self] in self?.chooseSource(claude:true) }
@@ -80,6 +83,8 @@ import UsageCore
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
+        historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
+            isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
         refreshDiagnostics()
         refreshContexts()
         deliverContextAlerts()
@@ -145,6 +150,20 @@ import UsageCore
                 panelModel.connectionNotice = ("Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống.")
                 if panel.popover.isShown { panel.updateSize() }
             }
+        }
+    }
+    private func showHistory() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !terminating else { return }
+            if historyWindow == nil {
+                let model = UsageHistoryModel(provider: panelModel.providerFilter, language: panelModel.language)
+                model.onRefresh = { [weak self] in self?.controller.refresh() }
+                historyWindow = UsageHistoryWindowController(model: model)
+            }
+            historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
+                isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
+            historyWindow?.present()
         }
     }
     private func showAbout(check: Bool = false) {
