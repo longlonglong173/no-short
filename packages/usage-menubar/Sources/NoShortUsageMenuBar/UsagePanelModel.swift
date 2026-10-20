@@ -39,6 +39,7 @@ struct DailyCostPoint: Identifiable {
     init(defaults: UserDefaults? = nil, preferredLanguages: [String] = Locale.preferredLanguages) {
         language = AppLanguage.resolve(saved: defaults?.string(forKey: "usageLanguage"), preferred: preferredLanguages)
         self.defaults = defaults
+        showsSetup = defaults.map { !$0.bool(forKey: "usageSetupSeen") } ?? false
         let threshold = defaults?.integer(forKey:"usageContextAlertThreshold") ?? 0
         if (1...100).contains(threshold) { contextAlertThreshold = threshold }
         if let enabled = defaults?.object(forKey:"usageContextNotificationsEnabled") as? Bool { contextNotificationsEnabled = enabled }
@@ -49,6 +50,18 @@ struct DailyCostPoint: Identifiable {
         if let time = defaults?.object(forKey:"usageLastSubmissionAt") as? Double, time.isFinite {
             lastSubmissionAt = Date(timeIntervalSince1970:time)
         }
+    }
+    @Published var showsSetup = false
+    @Published private(set) var connectionDiagnostics: [ConnectionDiagnostic] = []
+    func dismissSetup() {
+        showsSetup = false
+        defaults?.set(true, forKey: "usageSetupSeen")
+    }
+    func updateDiagnostics(_ values: [ConnectionDiagnostic]) { connectionDiagnostics = values }
+    func receivedLabel(_ date: Date?) -> String {
+        guard let date else { return l("Chưa nhận dữ liệu") }
+        let f = DateFormatter(); f.locale = language.locale; f.dateStyle = .short; f.timeStyle = .medium
+        return l("Nhận gần nhất: %@", f.string(from: date))
     }
     @Published var showsSessions = false
     @Published var search = ""

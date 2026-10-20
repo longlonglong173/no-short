@@ -46,12 +46,12 @@ public struct ActivityStore: Sendable {
             for old in sorted.prefix(paths.count - 512) { try? FileManager.default.removeItem(at:old) }
         }
     }
-    public func events(now: Date = Date()) -> [SessionActivity] {
+    public func events(now: Date = Date(), maximumAge: TimeInterval? = 86_400) -> [SessionActivity] {
         let paths = (try? FileManager.default.contentsOfDirectory(at:directory,includingPropertiesForKeys:[.fileSizeKey])) ?? []
         return paths.filter { $0.pathExtension == "json" }.compactMap { path in
             guard let size = try? path.resourceValues(forKeys:[.fileSizeKey]).fileSize, size <= 4096,
                   let data = try? Data(contentsOf:path), let event = try? JSONDecoder().decode(SessionActivity.self,from:data),
-                  now.timeIntervalSince(event.recordedAt) >= -5, now.timeIntervalSince(event.recordedAt) <= 86_400 else { return nil }
+                  now.timeIntervalSince(event.recordedAt) >= -5, (maximumAge.map { now.timeIntervalSince(event.recordedAt) <= $0 } ?? true) else { return nil }
             return event
         }.sorted { $0.recordedAt < $1.recordedAt }
     }

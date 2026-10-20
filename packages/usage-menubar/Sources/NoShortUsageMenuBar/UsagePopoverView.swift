@@ -9,6 +9,9 @@ struct UsagePopoverView: View {
     var body: some View {
         VStack(spacing: 0) {
             header.padding(.bottom, 12)
+            if model.showsSetup {
+                ConnectionSetupView(model: model)
+            } else {
             Picker(model.l("Công cụ"),selection:Binding(get:{ model.providerFilter },set:{ model.setProviderFilter($0) })) {
                 Text(model.l("Tất cả")).tag("all")
                 Text("Codex").tag("codex")
@@ -17,6 +20,7 @@ struct UsagePopoverView: View {
             Text(model.activityLabel).font(.system(size:10)).foregroundStyle(.secondary)
                 .frame(maxWidth:.infinity,alignment:.leading).lineLimit(1).padding(.bottom,12)
             if model.showsSessions { sessions } else { dashboard }
+            }
         }
         .padding(22)
         .frame(width: 400, height: model.panelHeight, alignment: .top)
@@ -188,6 +192,8 @@ struct UsagePopoverView: View {
             }.buttonStyle(FooterButtonStyle())
             Button { model.onRefresh?() } label: { Image(systemName: "arrow.clockwise").frame(width: 14, height: 14) }
                 .buttonStyle(FooterButtonStyle()).disabled(model.isLoading).help(model.l("Làm mới")).accessibilityLabel(model.l("Làm mới"))
+            Button { model.showsSetup = true } label: { Image(systemName: "stethoscope").frame(width: 14, height: 14) }
+                .buttonStyle(FooterButtonStyle()).help(model.l("Hướng dẫn và kết nối")).accessibilityLabel(model.l("Hướng dẫn và kết nối"))
             Menu {
                 Menu(model.l("Ngôn ngữ")) {
                     ForEach(AppLanguage.allCases) { language in
@@ -198,6 +204,7 @@ struct UsagePopoverView: View {
                     }
                 }
                 Divider()
+                Button(model.l("Hướng dẫn và kết nối")) { model.showsSetup = true }
                 Text(model.l("Nguồn: %@", String(model.source)))
                 Button(model.l("Chọn thư mục log Codex…")) { model.onChooseSource?() }
                 Button(model.l("Dùng log Codex mặc định")) { model.onResetSource?() }

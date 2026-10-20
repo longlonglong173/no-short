@@ -36,6 +36,11 @@ public struct LogSource: Sendable, Equatable {
     public init(defaults: UserDefaults = .standard, environment: [String: String] = ProcessInfo.processInfo.environment, home: URL = FileManager.default.homeDirectoryForCurrentUser) {
         self.defaults = defaults; self.environment = environment; self.home = home
     }
+    public func hasSelection(provider: UsageProvider) -> Bool {
+        let array = provider == .codex ? "selectedCodexHomes" : "selectedClaudeHomes"
+        let single = provider == .codex ? key : "selectedClaudeHome"
+        return !(defaults.stringArray(forKey: array) ?? []).isEmpty || !(defaults.string(forKey: single) ?? "").isEmpty
+    }
     public var current: LogSource {
         if let saved = defaults.stringArray(forKey: "selectedCodexHomes"), !saved.isEmpty {
             return LogSource(rootsEnvironment: saved.joined(separator: ","), claudeRootsEnvironment: claudeRoots)

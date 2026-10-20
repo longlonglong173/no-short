@@ -34,6 +34,23 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Kết nối hooks cho cả hai công cụ…": ["Connect hooks for both tools…", "为两种工具连接 hooks…"],
+        "Chưa cấu hình": ["Not configured", "未配置"],
+        "Đã cấu hình · Chờ dữ liệu": ["Configured · Waiting for data", "已配置 · 等待数据"],
+        "Đang hoạt động": ["Active", "运行中"],
+        "Cần kiểm tra kết nối": ["Connection needs attention", "请检查连接"],
+        "Chưa nhận dữ liệu": ["No data received yet", "尚未收到数据"],
+        "Nhận gần nhất: %@": ["Last received: %@", "最近接收：%@"],
+        "Hướng dẫn và kết nối": ["Setup and connections", "设置指南与连接"],
+        "Usage đọc log trên máy. Hooks và context Claude Code là tùy chọn; chỉ bật khi bạn chọn Kết nối. Đã cấu hình chưa có nghĩa là đã nhận dữ liệu.": ["Usage reads local logs. Hooks and Claude Code context are optional; enable them by choosing Connect. A configured connection has not necessarily received data.", "Usage 读取本地日志。Hooks 和 Claude Code 上下文为可选功能，选择连接后才会启用。配置完成并不代表已收到数据。"],
+        "Đang kiểm tra kết nối…": ["Checking connections…", "正在检查连接…"],
+        "Xem hướng dẫn cài đặt": ["Open setup guide", "查看安装指南"],
+        "Hooks Codex": ["Codex hooks", "Codex hooks"],
+        "Hooks Claude Code": ["Claude Code hooks", "Claude Code hooks"],
+        "Context Claude Code": ["Claude Code context", "Claude Code 上下文"],
+        "Log được đọc tự động. Chọn thư mục chứa sessions (Codex) hoặc projects (Claude Code); gửi một tin nhắn rồi làm mới. Khi có lỗi, kiểm tra đường dẫn và quyền đọc.": ["Logs are read automatically. Choose the folder containing sessions (Codex) or projects (Claude Code), send a message and refresh. If there is an error, check the paths and read permissions.", "日志自动读取。请选择包含 sessions（Codex）或 projects（Claude Code）的文件夹，发送消息后刷新。如有错误，请检查路径和读取权限。"],
+        "Hooks là tùy chọn. Sau khi kết nối, Codex: mở /hooks để tin cậy; Claude Code: mở lại phiên. Gửi tin nhắn để kiểm tra. Nếu lỗi, kiểm tra cấu hình và kết nối lại từ app hiện tại.": ["Hooks are optional. After connecting, open /hooks in Codex to trust them; reopen Claude Code sessions. Send a message to test. If there is an error, check the configuration and reconnect from this app.", "Hooks 为可选功能。连接后，在 Codex 中打开 /hooks 以信任它们；Claude Code 需重新打开会话。发送消息以测试。如有错误，请检查配置并从当前应用重新连接。"],
+        "Context Claude Code là tùy chọn và độc lập với hooks. Kết nối rồi mở lại phiên và gửi tin nhắn để status line gửi số liệu. Nếu đã có status line riêng, app giữ nguyên; xem hướng dẫn để tích hợp.": ["Claude Code context is optional and independent of hooks. Connect, reopen a session and send a message so the status line can report readings. Existing custom status lines are preserved; see the guide to integrate yours.", "Claude Code 上下文为可选功能，与 hooks 独立。连接后重新打开会话并发送消息，状态栏才会报告数据。现有自定义状态栏保持原样；请查看指南进行集成。"],
         "Thêm ít nhất một thư mục hoặc dùng nguồn log mặc định trong Cài đặt.": ["Add at least one folder, or use the default log source in Settings.", "请至少添加一个文件夹，或在设置中使用默认日志来源。"],
         "Quản lý danh sách thư mục. Chỉ lưu khi tất cả nguồn hợp lệ; hủy để giữ cấu hình cũ.": ["Manage the folder list. Save only when every source is valid; cancel to keep your previous settings.", "管理文件夹列表。所有来源有效后才能保存；取消将保留原有设置。"],
         "Nguồn log Codex": ["Codex log sources", "Codex 日志来源"],

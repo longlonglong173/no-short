@@ -24,18 +24,18 @@ task khi có yêu cầu của người dùng.
 - **Phụ thuộc:** Không.
 - **Nội dung:** Xác nhận cấu trúc `sessions` của Codex hoặc `projects` của Claude và quyền đọc trước khi lưu lựa chọn.
 - **Tiêu chí nghiệm thu:** Khi nguồn không hợp lệ hoặc không đọc được, giữ nguồn hiện tại và giải thích cách chọn đúng. Kiểm tra thư mục hợp lệ, sai cấu trúc và thiếu quyền đọc cho cả hai provider.
-- **Bằng chứng hoàn thành:** `LogSourceStore` kiểm tra thư mục home và thư mục con `sessions`/`projects` đúng provider, quyền đọc/truy cập và khả năng liệt kê trước khi ghi lựa chọn. Chọn sai giữ nguyên nguồn; app hiển thị hướng dẫn bằng ba ngôn ngữ và không khởi động lại bộ đọc khi bị từ chối. Thư mục log rỗng hợp lệ; reset và nguồn kế thừa không thay đổi. Test hồi quy đã tái hiện việc nguồn không hợp lệ bị lưu trước bản sửa, rồi qua sau bản sửa. `npm run test:usage-menubar`: 75 test Swift (gồm 6 test nguồn log, kiểm tra quyền POSIX thực tế, không skip) và 4 test đóng gói qua. `npm test`: 33 test usage qua; `npm run validate` và `git diff --check` qua. Chưa kiểm chứng hộp chọn thư mục trên app đang chạy, chưa cài lại app hoặc phát hành. NS-03 trở đi chưa bắt đầu.
+- **Bằng chứng hoàn thành:** `LogSourceStore` kiểm tra thư mục home và thư mục con `sessions`/`projects` đúng provider, quyền đọc/truy cập và khả năng liệt kê trước khi ghi lựa chọn. Chọn sai giữ nguyên nguồn; app hiển thị hướng dẫn bằng ba ngôn ngữ và không khởi động lại bộ đọc khi bị từ chối. Thư mục log rỗng hợp lệ; reset và nguồn kế thừa không thay đổi. Test hồi quy đã tái hiện việc nguồn không hợp lệ bị lưu trước bản sửa, rồi qua sau bản sửa. `npm run test:usage-menubar`: 75 test Swift (gồm 6 test nguồn log, kiểm tra quyền POSIX thực tế, không skip) và 4 test đóng gói qua. `npm test`: 33 test usage qua; `npm run validate` và `git diff --check` qua. Chưa kiểm chứng hộp chọn thư mục trên app đang chạy, chưa cài lại app hoặc phát hành. Các task tiếp theo theo trạng thái riêng bên dưới.
 
 - [x] **Mở rộng NS-02 — Nhiều thư mục mỗi provider (2026-10-19):** Cửa sổ danh sách cho phép thêm nhiều thư mục, bỏ từng nguồn, hiển thị lỗi từng dòng và chỉ lưu toàn bộ danh sách hợp lệ. Hủy không ghi cấu hình. Lưu danh sách riêng Codex/Claude, đọc cấu hình một nguồn cũ, loại đường dẫn trùng và symlink cùng nguồn; reset chỉ tác động provider tương ứng. `npm run test:usage-menubar`: 79 test Swift và 4 test đóng gói qua. `npm test`: 34 test usage qua, gồm test chạy ccusage thật với phiên riêng và bản sao Codex/Claude trên hai nguồn. Typecheck, validation và diff check qua. Đã render vùng danh sách bằng dữ liệu mẫu ở ba ngôn ngữ; chưa kiểm chứng thao tác cửa sổ modal trên app đang chạy hoặc cài lại app.
 
 ### NS-03 — Hướng dẫn lần đầu và chẩn đoán kết nối
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-20)
 - **Ưu tiên:** P1
 - **Phụ thuộc:** NS-01, NS-02.
 - **Nội dung:** Hiển thị trạng thái riêng cho nguồn log, hooks và context Claude; bổ sung hướng dẫn lần đầu.
 - **Tiêu chí nghiệm thu:** Phân biệt chưa cấu hình, đã cấu hình nhưng chưa nhận dữ liệu, đang hoạt động và có lỗi. Có thời điểm nhận gần nhất khi có dữ liệu và hướng dẫn xử lý. Không coi việc cấu hình thành công là bằng chứng đã nhận sự kiện. Mọi kết nối vẫn do người dùng chủ động bật.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Trang hướng dẫn lần đầu và chẩn đoán riêng nguồn log/hooks theo provider cùng context Claude Code, có thời điểm dữ liệu thực tế và hướng dẫn xử lý. Kiểm tra cấu hình chỉ đọc, đối chiếu đúng lệnh app hiện tại và đủ các hook; cấu hình thành công chỉ là chờ dữ liệu. Đọc context Claude độc lập bộ lọc phiên, không lấy thời điểm render làm thời điểm nhận. Giữ các thao tác kết nối do người dùng chọn và giữ status line riêng. `npm run test:usage-menubar`: 89 test Swift và 4 test đóng gói qua; 34 test Usage qua. Render EN/VI/简体中文 sáng/tối bằng dữ liệu mẫu. Validation cấu hình nguồn và diff check qua; checksum runtime được kiểm tra lại khi build release. Chưa kiểm chứng thao tác trên app cài đặt, nhận sự kiện Claude thực tế hoặc máy sạch.
 
 ### NS-04 — Thông tin phiên bản và cập nhật thủ công
 

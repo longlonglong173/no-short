@@ -97,6 +97,28 @@ import SwiftUI
             }
         }
     }
+    func testSetupRendersInAllLanguagesAndThemesWithWaitingAndErrorStates() throws {
+        _ = NSApplication.shared
+        for language in AppLanguage.allCases {
+            let model = UsagePanelModel(preferredLanguages: [language.rawValue])
+            model.setLanguage(language); model.showsSetup = true
+            model.updateDiagnostics([
+                ConnectionDiagnostic(id: "logs-codex", title: "Nguồn log Codex", guidance: "Chưa nhận dữ liệu", status: .configuredNoData, lastReceived: nil, paths: ["/tmp/example/sessions"]),
+                ConnectionDiagnostic(id: "hooks-codex", title: "Hooks Codex", guidance: "Chưa nhận dữ liệu", status: .error, lastReceived: Date(timeIntervalSince1970: 1_000), paths: ["/tmp/example/hooks.json"])
+            ])
+            for (name, scheme) in [("light", ColorScheme.light), ("dark", .dark)] {
+                let host = NSHostingView(rootView: UsagePopoverView(model: model).environment(\.colorScheme, scheme))
+                host.frame = NSRect(x: 0, y: 0, width: 400, height: model.panelHeight)
+                host.layoutSubtreeIfNeeded()
+                let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
+                host.cacheDisplay(in: host.bounds, to: bitmap)
+                XCTAssertGreaterThanOrEqual(bitmap.pixelsHigh, Int(model.panelHeight))
+                if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+                    try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: URL(fileURLWithPath: directory).appendingPathComponent("setup-\(language.rawValue)-\(name).png"))
+                }
+            }
+        }
+    }
     func testTransientPopoverHostsTheActualPanel() {
         let presenter = UsagePopoverController(model:UsagePanelModel(preferredLanguages: ["vi"]))
         XCTAssertEqual(presenter.popover.behavior,.transient)
