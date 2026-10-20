@@ -9,6 +9,7 @@ struct UsageHistoryView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text(model.l("Chi tiết sử dụng")).font(.title2.bold())
                 controls
+                exportControls
                 if model.preset == .custom { customDates }
                 VStack(alignment: .leading, spacing: 5) {
                     Text(model.scopeLabel).fontWeight(.medium)
@@ -17,6 +18,7 @@ struct UsageHistoryView: View {
                     Text(model.l("Chỉ log hiện còn trên máy · Không phải toàn bộ lịch sử tài khoản."))
                     Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
                 }.font(.system(size: 11)).foregroundStyle(.secondary)
+                if let failure = model.exportFailureMessage { warning(failure) }
                 if let validation = model.validationMessage { warning(validation) }
                 if let notice = model.notice { warning(model.l(notice)) }
                 if model.isStale { warning(model.l("Dữ liệu cũ · đang chờ cập nhật")) }
@@ -51,6 +53,21 @@ struct UsageHistoryView: View {
             }.accessibilityIdentifier("history-range")
             Button(model.l("Làm mới")) { model.onRefresh?() }
                 .keyboardShortcut("r").disabled(model.isLoading)
+        }
+    }
+    private var exportControls: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Button(model.l("Lưu CSV…")) { model.onExport?(.csv, model.includeSessionIdentifiers) }
+                    .accessibilityIdentifier("history-export-csv")
+                Button(model.l("Lưu JSON…")) { model.onExport?(.json, model.includeSessionIdentifiers) }
+                    .accessibilityIdentifier("history-export-json")
+            }.disabled(model.projection == nil || model.isExporting)
+            Toggle(isOn: $model.includeSessionIdentifiers) {
+                Text(model.l("Kèm ID và tên phiên có hoạt động cuối trong khoảng; chỉ tham chiếu, không phân bổ chi phí hoặc token."))
+                    .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)
+            }.toggleStyle(.checkbox).disabled(model.isExporting)
+                .accessibilityIdentifier("history-export-references")
         }
     }
     private var customDates: some View {

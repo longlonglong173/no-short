@@ -18,6 +18,13 @@ export function translate(language: Language, key: string, ...args: string[]): s
   return template.replace(/%@/g, () => args[index++] ?? '%@');
 }
 export const catalog: Record<string, readonly [string, string]> = {
+  "Không tải được file hoặc host đã từ chối. Thử lại hoặc xuất từ cửa sổ native.": ["File download failed or was denied by the host. Retry or export from the native window.", "文件下载失败或被宿主拒绝。请重试或从原生窗口导出。"],
+  "Tham chiếu phiên không phải phân bổ chi phí theo phiên; có thể không đủ các phiên đã đóng góp.": ["Session references do not attribute costs and may not include every contributing session.", "会话引用不代表费用归属，也可能不包含所有贡献会话。"],
+  "Kèm tên/ID phiên (hoạt động cuối trong khoảng)": ["Include session names/IDs (last activity in range)", "包含会话名称/ID（范围内最后活动）"],
+  "Xuất toàn khoảng đã chọn, không chỉ ngày đang xem model.": ["Export the entire selected range, not only the day shown in the model table.", "导出整个所选范围，而非仅模型表中显示的日期。"],
+  "Xuất JSON": ["Export JSON", "导出 JSON"],
+  "Xuất CSV": ["Export CSV", "导出 CSV"],
+  "Xuất thống kê": ["Export usage", "导出用量"],
   "Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.": ["Only retained local logs are counted, not the full account history.", "仅统计本机保留的日志，而非完整账户历史。"],
   "Phần đã biết: $%@ · Giá chưa đầy đủ, không phải $0.": ["Known subtotal: $%@ · Pricing is incomplete, not zero.", "已知小计：$%@ · 价格不完整，并非零费用。"],
   "Chưa có lịch sử tương thích. Cập nhật dữ liệu hoặc runtime; không suy ra lịch sử từ toàn phiên.": ["Compatible history is unavailable. Refresh or update the runtime; history is not inferred from lifetime sessions.", "暂无兼容的历史数据。请刷新或更新运行时；历史数据不会从整个会话推算。"],

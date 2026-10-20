@@ -1,10 +1,18 @@
 import Foundation
 
 public enum SnapshotError: Error { case incompatible, invalid }
-public struct UsageCost: Decodable, Sendable {
+public struct UsageCost: Codable, Sendable {
     public let amountUSD: Double?
     public let knownCostUSD: Double
     public let status: String
+    private enum CodingKeys: String, CodingKey { case amountUSD, knownCostUSD, status }
+    public func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        if let amountUSD { try c.encode(amountUSD, forKey: .amountUSD) }
+        else { try c.encodeNil(forKey: .amountUSD) }
+        try c.encode(knownCostUSD, forKey: .knownCostUSD)
+        try c.encode(status, forKey: .status)
+    }
     func validate() throws {
         guard knownCostUSD.isFinite, knownCostUSD >= 0, ["estimated", "partial", "unknown"].contains(status),
               amountUSD.map({ $0.isFinite && $0 >= 0 }) ?? true,
@@ -12,18 +20,18 @@ public struct UsageCost: Decodable, Sendable {
               status == "estimated" || amountUSD == nil else { throw SnapshotError.invalid }
     }
 }
-public struct UsageTokens: Decodable, Sendable {
+public struct UsageTokens: Codable, Sendable {
     public let input, output, cacheRead, cacheWrite, total: Double
     func validate() throws {
         guard [input, output, cacheRead, cacheWrite, total].allSatisfy({ $0.isFinite && $0 >= 0 }) else { throw SnapshotError.invalid }
     }
 }
-public struct ModelUsage: Decodable, Sendable {
+public struct ModelUsage: Codable, Sendable {
     public let name: String
     public let tokens: UsageTokens
     public let cost: UsageCost
 }
-public struct UsageAggregate: Decodable, Sendable {
+public struct UsageAggregate: Codable, Sendable {
     public let tokens: UsageTokens
     public let cost: UsageCost
     public let models: [ModelUsage]
@@ -61,6 +69,7 @@ public struct UsageSnapshot: Decodable, Sendable {
     public let schemaVersion: Int
     public let source, ccusageVersion: String
     public let generatedAt: Date
+    public let generatedAtText: String
     public let timeZone, status, pricingSource: String
     public let notice: String?
     public let sessions: [SessionUsage]
@@ -78,6 +87,7 @@ public struct UsageSnapshot: Decodable, Sendable {
         source = try c.decode(String.self, forKey: .source)
         ccusageVersion = try c.decode(String.self, forKey: .ccusageVersion)
         generatedAt = try c.decode(Date.self, forKey: .generatedAt)
+        generatedAtText = try c.decode(String.self, forKey: .generatedAt)
         timeZone = try c.decode(String.self, forKey: .timeZone)
         status = try c.decode(String.self, forKey: .status)
         pricingSource = try c.decode(String.self, forKey: .pricingSource)

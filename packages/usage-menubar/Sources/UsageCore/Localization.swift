@@ -34,6 +34,11 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Lưu CSV…": ["Save CSV…", "保存 CSV…"],
+        "Lưu JSON…": ["Save JSON…", "保存 JSON…"],
+        "Kèm ID và tên phiên có hoạt động cuối trong khoảng; chỉ tham chiếu, không phân bổ chi phí hoặc token.": ["Include IDs and titles of sessions whose last activity falls in the range; references only, not cost or token attribution.", "包含最后活动在所选范围内的会话 ID 和标题；仅供参考，不代表费用或 token 归属。"],
+        "Không thể chuẩn bị tệp xuất. Làm mới dữ liệu và thử lại.": ["Could not prepare the export. Refresh the data and try again.", "无法准备导出文件。请刷新数据后重试。"],
+        "Không thể lưu tệp xuất. Kiểm tra quyền ghi và thử lại.": ["Could not save the export. Check write permissions and try again.", "无法保存导出文件。请检查写入权限后重试。"],
         "Xem chi tiết…": ["View Details…", "查看详情…"],
         "Chi tiết sử dụng": ["Usage Details", "使用明细"],
         "Khoảng ngày": ["Date range", "日期范围"],
