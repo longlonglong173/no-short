@@ -9,6 +9,9 @@ import { runReport } from './runner.ts';
 import { SnapshotStore } from './cache.ts';
 
 export interface ServiceOptions { binary: string; roots?: string[]; claudeRoots?: string[]; cacheDir?: string; timeZone?: string }
+export function usageCacheScope(roots: string[], timeZone: string, requestedClaudeRoots?: string[]): string {
+  return createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', schema: 1, history: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
+}
 export function createUsageService(options: ServiceOptions): SnapshotStore {
   const roots = (options.roots ?? (process.env.CODEX_HOME ?? join(homedir(), '.codex')).split(',')).map(p => p.trim()).filter(Boolean).map(p => resolve(p));
   if (!roots.length) roots.push(join(homedir(), '.codex'));
@@ -16,7 +19,7 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
   const claudeRoots = requestedClaudeRoots?.filter(root => existsSync(join(root,'projects')));
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   new Intl.DateTimeFormat('en', { timeZone });
-  const scope = createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', schema: 1, history: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
+  const scope = usageCacheScope(roots, timeZone, requestedClaudeRoots);
   const directory = join(options.cacheDir ?? process.env.NO_SHORT_USAGE_CACHE_DIR ?? join(homedir(), 'Library/Caches/no-short/usage'), scope);
   return new SnapshotStore(directory, async () => {
     const priceMarker = join(directory, 'pricing-check.json');
