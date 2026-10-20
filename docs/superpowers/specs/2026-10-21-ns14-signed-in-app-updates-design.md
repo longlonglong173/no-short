@@ -1,6 +1,6 @@
 # NS-14 — Cập nhật trong app có xác nhận và chữ ký
 
-Ngày: 2026-10-21. **Trạng thái: người dùng đã duyệt thiết kế ngày 2026-10-21; chưa triển khai updater.**
+Ngày: 2026-10-21. **Trạng thái: thiết kế và kế hoạch đã duyệt; source/local E2E đã triển khai trên PR #34. Production key/feed/bootstrap chưa cấu hình/phát hành.**
 
 ## 1. Mục tiêu và ranh giới
 
