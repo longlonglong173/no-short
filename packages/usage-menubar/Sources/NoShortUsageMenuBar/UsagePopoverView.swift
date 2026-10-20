@@ -18,6 +18,7 @@ struct UsagePopoverView: View {
                         Color.clear.preference(key: PopoverContentHeight.self, value: content.size.height)
                     })
             }
+            .id(model.showsSetup ? "setup" : model.showsModels ? "models" : model.showsSessions ? "sessions" : "dashboard")
             .focusable()
         }
         .frame(idealWidth: 400, idealHeight: model.panelHeight)

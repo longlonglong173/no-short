@@ -74,7 +74,7 @@ task khi có yêu cầu của người dùng.
 - **Phụ thuộc:** Không.
 - **Nội dung:** Giới hạn chiều cao theo vùng hiển thị và cho phép cuộn khi cần.
 - **Tiêu chí nghiệm thu:** Kiểm tra màn hình thấp, ba ngôn ngữ và nhiều cảnh báo. Nội dung và mọi nút vẫn truy cập được bằng chuột lẫn bàn phím; bố cục thích ứng khi cảnh báo xuất hiện hoặc biến mất.
-- **Bằng chứng hoàn thành:** Viewport giới hạn theo vùng màn hình dưới status item, nội dung cuộn theo chiều cao tự nhiên; resize theo thay đổi cảnh báo/ngôn ngữ và màn hình. Home/End/Page Up/Page Down đi tới toàn nội dung. Test hồi quy đã thất bại vì dashboard không có viewport cuộn trước bản sửa. 119 test Swift, 4 test đóng gói, 38 test Usage và validation qua. Render giả lập các trạng thái hiện có qua; chưa nghiệm thu click/VoiceOver trên app cài đặt hoặc màn hình vật lý phụ. Không phát hành.
+- **Bằng chứng hoàn thành:** Viewport giới hạn theo vùng màn hình dưới status item, nội dung cuộn theo chiều cao tự nhiên; resize theo thay đổi cảnh báo/ngôn ngữ và màn hình. Home/End/Page Up/Page Down đi tới toàn nội dung. Test hồi quy đã thất bại vì dashboard không có viewport cuộn trước bản sửa. 120 test Swift, 4 test đóng gói, 38 test Usage và validation qua. Render giả lập các trạng thái hiện có qua; chưa nghiệm thu click/VoiceOver trên app cài đặt hoặc màn hình vật lý phụ. Không phát hành.
 
 ### NS-08 — Đo và tối ưu quét metadata
 

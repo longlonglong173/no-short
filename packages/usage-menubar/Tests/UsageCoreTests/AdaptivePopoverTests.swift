@@ -45,6 +45,26 @@ import SwiftUI
         }
     }
 
+    func testChangingFromDashboardToSessionsResetsScrollToTop() async throws {
+        _ = NSApplication.shared
+        let model = UsagePanelModel(preferredLanguages: ["en"])
+        model.update(snapshot: try fixture(), source: "synthetic", isLoading: false,
+                     isStale: false, notice: nil, loginState: .notRegistered)
+        let host = NSHostingView(rootView: UsagePopoverView(model: model))
+        host.frame = NSRect(x: 0, y: 0, width: 400, height: 250)
+        let window = NSWindow(contentRect: host.frame, styleMask: [.borderless], backing: .buffered, defer: false)
+        window.contentView = host; host.layoutSubtreeIfNeeded(); await settle()
+        let scroll = try XCTUnwrap(descendants(host).compactMap { $0 as? NSScrollView }.first)
+        let document = try XCTUnwrap(scroll.documentView)
+        scroll.contentView.scroll(to: NSPoint(x: 0, y: document.bounds.maxY - scroll.contentView.bounds.height))
+        scroll.reflectScrolledClipView(scroll.contentView)
+        XCTAssertGreaterThan(scroll.contentView.bounds.minY, 0)
+        model.showsSessions = true
+        await settle(); host.layoutSubtreeIfNeeded(); await settle()
+        let changed = try XCTUnwrap(descendants(host).compactMap { $0 as? NSScrollView }.first)
+        XCTAssertEqual(changed.contentView.bounds.minY, 0, accuracy: 1)
+    }
+
     func testViewportClampsBelowAnchorAndKeepsUsualWidth() {
         XCTAssertEqual(PopoverLayout.viewport(contentHeight: 812,
             visibleFrame: NSRect(x: 0, y: 0, width: 1440, height: 878),
