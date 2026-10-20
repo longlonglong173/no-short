@@ -1,3 +1,4 @@
+import { assertUpdateDistribution } from './update-channel';
 import { sparkleCode } from './sparkle-bundle';
 // Explicit maintainer action. Never called by a normal build or pull-request CI.
 import { mkdir, mkdtemp, rm, readFile, writeFile } from 'node:fs/promises';
@@ -17,6 +18,7 @@ await readFile(join(root, 'LICENSE'));
 const platforms = ['darwin-arm64', 'darwin-x64'];
 async function checkSigned(app: string, platform: string) {
   await verifyBundle(app, platform, runtime);
+  await assertUpdateDistribution(app);
   for (const relative of ['', 'Contents/Resources/runtime/no-short-usage', 'Contents/Resources/runtime/ccusage', ...(await sparkleCode(app)).map(p => p.slice(app.length + 1))]) {
     const p = Bun.spawn(['/usr/bin/codesign', '-d', '--verbose=4', join(app, relative)], {
       stdout: 'pipe', stderr: 'pipe', env: { ...process.env, LC_ALL: 'C' },

@@ -16,7 +16,8 @@
     "build:usage-menubar": "bun packages/usage-menubar/scripts/build.ts",
     "smoke:usage-menubar": "bun packages/usage-menubar/scripts/smoke.ts",
     "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts",
-    "release:usage-menubar": "bun packages/usage-menubar/scripts/release.ts"
+    "release:usage-menubar": "bun packages/usage-menubar/scripts/release.ts",
+    "prepare:usage-menubar:appcast": "bun packages/usage-menubar/scripts/appcast.ts"
   },
   "repository": {
     "type": "git",

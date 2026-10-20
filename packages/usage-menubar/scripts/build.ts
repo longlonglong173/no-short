@@ -1,3 +1,4 @@
+import { loadUpdateChannel } from './update-channel';
 import { embedSparkle } from './sparkle-bundle';
 import { readFile, writeFile, mkdir, rm, cp, chmod } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -9,6 +10,7 @@ const { version } = JSON.parse(await readFile(join(root, 'package.json'), 'utf8'
 if (version !== runtime.version) throw new Error('Runtime/root version mismatch; build Usage first');
 const sdk = await run(['/usr/bin/xcrun', '--sdk', 'macosx', '--show-sdk-path'], { capture: true });
 const identity = process.env.NO_SHORT_SIGN_IDENTITY;
+const channel=await loadUpdateChannel(process.env.NO_SHORT_UPDATE_CONFIGURATION,process.argv.includes('--distribution')?'distribution':'development');
 const icons = join(output, 'AppIcon.iconset'); await mkdir(icons, { recursive: true });
 for (const size of [16,32,128,256,512]) {
   for (const scale of [1,2]) await run(['/usr/bin/sips', '-z', String(size*scale), String(size*scale), join(root,'assets/long-mini.png'), '--out', join(icons,`icon_${size}x${size}${scale === 2 ? '@2x' : ''}.png`)], { capture: true });
@@ -28,6 +30,13 @@ for (const platform of ['darwin-arm64', 'darwin-x64']) {
   await mkdir(join(contents, 'MacOS'), { recursive: true }); await mkdir(helpers, { recursive: true });
   const executable = join(contents, 'MacOS/NoShortUsageMenuBar'); await cp(join(bin, 'NoShortUsageMenuBar'), executable); await chmod(executable, 0o755);
   await writeFile(join(contents, 'Info.plist'), (await readFile(join(usage,'Resources/Info.plist'), 'utf8')).replaceAll('__VERSION__', version));
+  const plistPath=join(contents,'Info.plist');
+  const capability=platform==='darwin-x64'?'unsupported-architecture':channel?'configured':'unconfigured';
+  await run(['/usr/bin/plutil','-insert','NoShortUpdateCapability','-string',capability,plistPath]);
+  if(channel && platform==='darwin-arm64') {
+    await run(['/usr/bin/plutil','-insert','SUFeedURL','-string',channel.feedURL,plistPath]);
+    await run(['/usr/bin/plutil','-insert','SUPublicEDKey','-string',channel.publicKey,plistPath]);
+  }
   await cp(icon, join(resources,'AppIcon.icns'));
   for (const name of ['LICENSE', 'NOTICE.md']) await cp(join(root, name), join(resources, name));
   await cp(join(usage, 'Resources/PROVIDER_ICONS.md'), join(resources, 'PROVIDER_ICONS.md'));
