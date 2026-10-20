@@ -16,11 +16,15 @@ import UsageCore
     var onToggleLogin: (() -> Void)?
     var onOpenSettings: (() -> Void)?
     var onQuit: (() -> Void)?
+    var onAbout: (() -> Void)?
+    var onCheckUpdates: (() -> Void)?
+    var onReleaseNotes: (() -> Void)?
     var onConfigureContextAlerts: (() -> Void)?
     private var today: [NSMenuItem] = []
     private var month: [NSMenuItem] = []
     private var session: [NSMenuItem] = []
     private var updated = NSMenuItem(), sourceItem = NSMenuItem(), noticeItem = NSMenuItem()
+    private var checkUpdatesItem = NSMenuItem(), updateStatusItem = NSMenuItem()
     private var contextAlertItem = NSMenuItem()
     private var refreshItem = NSMenuItem(), loginItem = NSMenuItem(), settingsItem = NSMenuItem()
     override init() {
@@ -41,6 +45,11 @@ import UsageCore
         contextAlertItem = action(l("Ngưỡng cảnh báo context…"), #selector(configureContextAlerts))
         loginItem = action(l("Mở cùng macOS"), #selector(toggleLogin))
         settingsItem = action(l("Mở cài đặt Login Items…"), #selector(openSettings))
+        menu.addItem(.separator())
+        _ = action(l("Giới thiệu No Short Usage…"), #selector(about))
+        checkUpdatesItem = action(l("Kiểm tra bản cập nhật…"), #selector(checkUpdates))
+        _ = action(l("Ghi chú phát hành…"), #selector(releaseNotes))
+        updateStatusItem = line(l("Chưa kiểm tra bản cập nhật."))
         menu.addItem(.separator()); _ = action(l("Thoát No Short Usage"), #selector(quit), key: "q")
         localizedItems = menu.items.compactMap { AppLocalization.catalog[$0.title] == nil ? nil : ($0, $0.title) }
         let languages = NSMenuItem(title: "Ngôn ngữ", action: nil, keyEquivalent: "")
@@ -97,6 +106,16 @@ import UsageCore
         threshold = value
         contextAlertItem.title = l("Ngưỡng cảnh báo context: %@%…", String(value))
     }
+    func updateReleaseState(_ state: ManualUpdateState, language: AppLanguage) {
+        // This path never touches usage loading or its warning row.
+        let localization = AppLocalization(language: language)
+        checkUpdatesItem.title = localization.text(state.isChecking ? "Đang kiểm tra bản cập nhật…" : "Kiểm tra bản cập nhật…")
+        checkUpdatesItem.isEnabled = !state.isChecking
+        put(state.localizedDescription(language: language), in: updateStatusItem)
+    }
+    @objc private func about() { onAbout?() }
+    @objc private func checkUpdates() { onCheckUpdates?() }
+    @objc private func releaseNotes() { onReleaseNotes?() }
     @objc private func configureContextAlerts() { onConfigureContextAlerts?() }
     func menuWillOpen(_ menu: NSMenu) { onOpen?() }
     @objc private func refresh() { onRefresh?() }

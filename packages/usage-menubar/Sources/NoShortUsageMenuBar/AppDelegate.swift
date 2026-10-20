@@ -8,6 +8,8 @@ import UsageCore
     private let menu = MenuBuilder(), login = LoginItemManager(), sources = LogSourceStore()
     private let panelModel = UsagePanelModel(defaults:.standard)
     private lazy var panel = UsagePopoverController(model: panelModel)
+    private lazy var aboutModel = AboutModel(language: panelModel.language)
+    private lazy var aboutWindow = AboutWindowController(model: aboutModel)
     private var controller: RefreshController!
     private var terminating = false
     private var contextSuspended = false
@@ -39,6 +41,13 @@ import UsageCore
         menu.onOpenSettings = { [weak self] in self?.login.openSettings() }
         menu.onConfigureContextAlerts = { [weak self] in self?.configureContextAlertThreshold() }
         menu.onQuit = { NSApp.terminate(nil) }
+        menu.onAbout = { [weak self] in self?.showAbout() }
+        menu.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
+        menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
+        aboutModel.onChange = { [weak self] in
+            guard let self else { return }
+            menu.updateReleaseState(aboutModel.state, language: panelModel.language)
+        }
         panelModel.onSelectionChange = { [weak self] in self?.render() }
         panelModel.onRefresh = { [weak self] in self?.controller.refresh() }
         panelModel.onChooseSource = { [weak self] in self?.chooseSource() }
@@ -48,6 +57,9 @@ import UsageCore
         panelModel.onToggleLogin = { [weak self] in self?.toggleLogin() }
         panelModel.onOpenSettings = { [weak self] in self?.login.openSettings() }
         panelModel.onQuit = { NSApp.terminate(nil) }
+        panelModel.onAbout = { [weak self] in self?.showAbout() }
+        panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
+        panelModel.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         panelModel.onChooseClaudeSource = { [weak self] in self?.chooseSource(claude:true) }
         panelModel.onResetClaudeSource = { [weak self] in
             guard let self else { return }; self.sources.resetClaude(); self.controller.setSource(self.sources.current); self.startMonitoring()
@@ -74,8 +86,10 @@ import UsageCore
         if panel.popover.isShown { panel.updateSize() }
         if let button = statusItem?.button { StatusItemRenderer.apply(to:button,model:panelModel) }
         statusItem?.button?.toolTip = l("%@\n%@\n%@ USD · Ước tính API\n%@\n%@\nHôm nay: %@ · Tháng này: %@", String(panelModel.selectionLabel), String(panelModel.activityLabel), String(panelModel.mainCost), String(panelModel.tokenTooltip), String(panelModel.contextTooltip), String(panelModel.todayCost), String(panelModel.monthCost))
+        if aboutModel.language != panelModel.language { aboutModel.language = panelModel.language }
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
+        menu.updateReleaseState(aboutModel.state, language: panelModel.language)
     }
     private func refreshDiagnostics() {
         diagnosticsTask?.cancel()
@@ -131,6 +145,24 @@ import UsageCore
                 panelModel.connectionNotice = ("Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống.")
                 if panel.popover.isShown { panel.updateSize() }
             }
+        }
+    }
+    private func showAbout(check: Bool = false) {
+        panel.close()
+        // Let the SwiftUI/NSMenu action and transient popover finish dismissing.
+        // AppDelegate retains both the window and update state throughout.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !terminating else { return }
+            aboutModel.language = panelModel.language
+            aboutWindow.present()
+            if check { Task { await self.aboutModel.check() } }
+        }
+    }
+    private func openReleaseNotes() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !terminating else { return }
+            NSWorkspace.shared.open(aboutModel.releaseNotesURL)
         }
     }
     private func configureContextAlertThreshold() {

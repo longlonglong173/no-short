@@ -39,12 +39,13 @@ task khi có yêu cầu của người dùng.
 
 ### NS-04 — Thông tin phiên bản và cập nhật thủ công
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-20)
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không.
 - **Nội dung:** Thêm About, phiên bản/build, liên kết release notes và thao tác kiểm tra bản mới.
 - **Tiêu chí nghiệm thu:** Hiển thị đúng phiên bản/build đang chạy; kiểm tra được trạng thái có bản mới, đã mới nhất và lỗi mạng. Không tự tải hoặc thay thế app; lỗi mạng không ảnh hưởng theo dõi usage.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** About đọc `CFBundleShortVersionString`/`CFBundleVersion` từ bundle đang chạy, không dùng hằng số phiên bản phát hành; có liên kết trang tag release notes. Menu trong popover và menu chuột phải đều có About, kiểm tra bản mới và release notes. AppDelegate giữ cửa sổ About riêng và mở sau khi đóng popover. Chỉ thao tác kiểm tra chủ động mới gọi GitHub latest release qua `URLSession` ephemeral, không auth/cookie/cache/credential storage; không có tải hoặc thay thế app. Trạng thái riêng gồm chưa kiểm tra, đang kiểm tra, có bản mới, không có bản mới hơn và lỗi; không dùng hoặc ghi đè `isLoading`/`notice`/`connectionNotice` của usage. Ba ngôn ngữ EN/VI/简体中文 đầy đủ. Test SemVer bao gồm mới hơn, bằng, cũ hơn, không hợp lệ, prerelease/build metadata và số lớn; stub tại ranh giới URLSession kiểm tra HTTP 503/403, JSON/tag/link không hợp lệ, draft và offline; kiểm tra retry, chống request trùng, mở About/đổi ngôn ngữ không gọi mạng và giữ nguyên cảnh báo usage. `swift test --package-path /Users/long/.codex/worktrees/ns04-release-ready/no-short/packages/usage-menubar` đã kết thúc exit 0: **92 test, 0 lỗi** (Swift 6.4, macOS arm64); 4 test đóng gói, `npm run validate` và `git diff --check` qua. Đã render 8 trạng thái About bằng dữ liệu mẫu ở 3 ngôn ngữ và kiểm tra ảnh; đây không phải nghiệm thu thao tác trên app đã cài. Probe local dùng client URLSession thật trả `v0.4.2`, đúng trang tag và trạng thái không có bản mới hơn cho app `0.4.2`.
+- **Giới hạn / tích hợp:** Chỉ so sánh phiên bản latest release; không phát hiện asset thử nghiệm được thay mới dưới cùng `v0.4.2`. Không cần release manifest. Parent sẽ cherry-pick NS-04 cùng NS-03, tự bump/build/phát hành `v0.4.3` và runtime MCP tương ứng nếu cần; nhánh này không đổi version, không push/PR/upload/phát hành. Chưa kiểm chứng cài đặt app, thao tác dismiss/focus/VoiceOver trên artifact tích hợp, Intel, signing hoặc notarization. Khi GitHub latest đã trỏ tới `v0.4.3`, app `0.4.2` sẽ báo bản mới; app `0.4.3` sẽ báo không có bản mới hơn.
 
 ### NS-05 — Hoàn tất kiểm chứng phát hành
 
