@@ -19,6 +19,8 @@ struct DailyCostPoint: Identifiable {
     @Published private(set) var providerFilter = "codex"
     @Published private(set) var followedActivity: SessionActivity?
     @Published var connectionNotice: String?
+    @Published var budgetReadings: [UsageBudgetReading] = []
+    @Published var budgetNotificationNotice: String?
     @Published private(set) var contextAlertThreshold = 70
     @Published private(set) var contextNotificationsEnabled = true
     private var contextAlertTracker = ContextAlertTracker()
@@ -78,6 +80,7 @@ struct DailyCostPoint: Identifiable {
     var onOpenSettings: (() -> Void)?
     var onAbout: (() -> Void)?
     var onHistory: (() -> Void)?
+    var onBudgets: (() -> Void)?
     var onCheckUpdates: (() -> Void)?
     var onReleaseNotes: (() -> Void)?
     var onQuit: (() -> Void)?

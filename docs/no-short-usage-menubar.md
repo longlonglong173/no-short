@@ -319,3 +319,11 @@ History filters do not change the menu-bar session pin, automatic following, con
 Use Export CSV / Export JSON in Usage details to choose a destination with the macOS Save dialog. The export freezes the current range/provider data when clicked; cancellation writes nothing. Export covers the full range, not only the selected day's model table. Costs retain estimated/partial/unknown status and API-equivalent cost basis, timezone and snapshot timestamp; stale data is labeled.
 
 Session titles/IDs are off by default. Explicit opt-in includes only references whose last activity falls in the selected range/provider, labeled as references rather than cost attribution. No lifetime session costs, conversation text or log-source paths are exported. Synthetic serializer and Save-payload tests do not prove an installed-app Save dialog interaction.
+
+## Opt-in budgets (NS-11, unreleased source)
+
+Budgets are disabled by default. Open **Budgets… / Ngân sách…** from settings and enter finite positive USD limits per day/month for All, Codex or Claude Code; leave a field empty to disable it. Save applies validated changes, Cancel does not. These limits compare **API-equivalent estimates, not subscription bills, credits or quota**. They do not stop the source tools or enforce spending.
+
+Status uses today/month source aggregates regardless of the pinned session or history filter. Partial pricing is a lower bound: an alert is justified only when the known subtotal already crosses the threshold; otherwise the budget state is uncertain, not a precise remaining balance. Unknown, stale, wrong-day and unavailable-provider data cannot generate a budget crossing.
+
+In-app budget status works without system notification permission. macOS banners have a separate explicit opt-in, off by default; permission requests occur only when the user saves that opt-in. Background refresh checks existing authorization without prompting. Notification events are persisted once per source/timezone/provider/calendar day or month, so refreshes, relaunch and threshold edits do not spam the same period. Source keys are hashed; notifications contain no session names or conversation text. Missing data does not rearm prior alerts. Permission denial/delivery errors remain visible without hiding usage read failures.

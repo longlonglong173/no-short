@@ -34,6 +34,22 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Ngân sách…": ["Budgets…", "预算…"],
+        "Ngân sách API ước tính": ["Estimated API Budgets", "API 估算预算"],
+        "Ngân sách theo log trên máy, không phải hóa đơn hoặc hạn mức tài khoản. USD dùng dấu chấm, ví dụ 10.50; để trống để tắt.": ["Budgets use local logs, not bills or account quotas. Enter USD using a decimal point, e.g. 10.50; leave blank to disable.", "预算基于本地日志，并非账单或账户限额。美元金额使用小数点，例如 10.50；留空表示关闭。"],
+        "Ngân sách ngày (USD)": ["Daily budget (USD)", "每日预算（美元）"],
+        "Ngân sách tháng (USD)": ["Monthly budget (USD)", "每月预算（美元）"],
+        "Bật thông báo ngân sách macOS (tùy chọn)": ["Enable macOS budget notifications (optional)", "启用 macOS 预算通知（可选）"],
+        "Chỉ yêu cầu quyền khi Lưu để bật thông báo. Cảnh báo trong app vẫn hoạt động khi không có quyền.": ["Permission is requested only when saving to enable notifications. In-app warnings work without permission.", "仅在保存并启用通知时请求权限。即使没有权限，应用内警告仍然有效。"],
+        "Nhập ngân sách USD hữu hạn lớn hơn 0, hoặc để trống để tắt.": ["Enter a finite USD budget greater than 0, or leave blank to disable.", "请输入大于 0 的有限美元金额，或留空以关闭。"],
+        "Thông báo ngân sách chưa được cho phép. Cảnh báo trong app vẫn hoạt động.": ["Budget notifications are not allowed. In-app warnings remain available.", "预算通知尚未获准。应用内警告仍然有效。"],
+        "Không gửi được thông báo ngân sách. Cảnh báo trong app vẫn hoạt động.": ["Could not send the budget notification. In-app warnings remain available.", "无法发送预算通知。应用内警告仍然有效。"],
+        "Cảnh báo ngân sách · %@": ["Budget alert · %@", "预算提醒 · %@"],
+        "Dữ liệu ngân sách chưa khả dụng": ["Budget data unavailable", "预算数据不可用"],
+        "Đạt/vượt ngân sách · Ước tính": ["Budget reached/exceeded · Estimate", "已达或超出预算 · 估算"],
+        "Thiếu giá · Chưa xác định trạng thái ngân sách": ["Missing prices · Budget status uncertain", "价格缺失 · 预算状态不确定"],
+        "Dưới ngân sách · Ước tính": ["Below budget · Estimate", "低于预算 · 估算"],
+        "%@ · %@: %@ / %@ USD · %@": ["%@ · %@: %@ / %@ USD · %@", "%@ · %@：%@ / %@ 美元 · %@"],
         "Lưu CSV…": ["Save CSV…", "保存 CSV…"],
         "Lưu JSON…": ["Save JSON…", "保存 JSON…"],
         "Kèm ID và tên phiên có hoạt động cuối trong khoảng; chỉ tham chiếu, không phân bổ chi phí hoặc token.": ["Include IDs and titles of sessions whose last activity falls in the range; references only, not cost or token attribution.", "包含最后活动在所选范围内的会话 ID 和标题；仅供参考，不代表费用或 token 归属。"],
