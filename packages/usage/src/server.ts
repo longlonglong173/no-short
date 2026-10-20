@@ -12,7 +12,7 @@ const id = z.string().min(1).max(300).regex(/^[a-zA-Z0-9_:/.-]+$/)
   .refine(value => !value.startsWith('/') && !value.split('/').some(part => part === '.' || part === '..'));
 const display = { preferredDisplayMode: 'inline', availableDisplayModes: ['inline', 'fullscreen'] } satisfies OpenAIUiResourceMetadata;
 export function createServer(store: { get(): Promise<UsageSnapshot> }, html: string): McpServer {
-  const server = new McpServer({ name: 'no-short-usage', version: '0.4.2' });
+  const server = new McpServer({ name: 'no-short-usage', version: '0.4.3' });
   new OpenAIExtensions(server);
   const ui = { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: false };
   registerAppResource(server, 'No Short Usage', panelUri, { _meta: { ui } }, async () => ({ contents: [{

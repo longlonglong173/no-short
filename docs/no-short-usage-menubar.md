@@ -26,7 +26,7 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**An experimental Apple Silicon app is now available in [v0.4.2](https://github.com/longlonglong173/no-short/releases/tag/v0.4.2).** The latest multilingual ZIP has been verified locally and supports English, Vietnamese and Simplified Chinese. It is ad-hoc signed and **not notarized**, so macOS may block first launch. Download `no-short-usage-menubar-0.4.2-darwin-arm64-multilingual-experimental.zip`, `SHA256SUMS-multilingual-experimental.txt` and `INSTALL-multilingual-experimental.txt`; verify the checksum before extracting. No Intel app download is provided. Developer ID/notarization and the [remaining checks](releases/0.4.2.md) are still pending for a future notarized release. See [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**An experimental Apple Silicon app is available in [v0.4.3](https://github.com/longlonglong173/no-short/releases/tag/v0.4.3).** Download `NoShortUsage-0.4.3-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with first-run setup guidance, connection diagnostics, About and manual update checks. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.4.3.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -273,3 +273,9 @@ Native rendering checks cover light/dark warnings and mixed-provider icons. Unit
 tests cover the exact threshold, rearming, unknown data, independent sources and
 providers, persisted state, settings and stale suppression. These checks do not
 prove a macOS notification banner was delivered on a user's machine.
+
+## Setup, diagnostics and manual updates — 0.4.3
+
+The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
+
+About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The app does not download or replace itself.

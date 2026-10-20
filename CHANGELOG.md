@@ -13,6 +13,13 @@
   the host/model, distinguish the standalone app, and document cache retention
   and deletion limits in the privacy policy and bilingual website.
 
+## 0.4.3 — experimental setup and manual updates (2026-10-20)
+
+- Add first-run setup guidance and separate diagnostics for provider logs, hooks and Claude context, with recorded receipt times and recovery steps (NS-03).
+- Add runtime About/version/build, release notes and explicit manual checks against GitHub releases, independent of usage refreshes (NS-04).
+- Publish an ad-hoc-signed Apple Silicon download. Developer ID/notarization, clean-machine and other NS-05 device checks remain outstanding.
+- Keep runtime schema v1, ccusage 20.0.34 and the documented NS-08 identical-event daily-total limitation.
+
 ## 0.4.2 — source release and experimental Apple Silicon app
 
 ### Native No Short Usage
