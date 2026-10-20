@@ -171,3 +171,10 @@ file presence and dimensions; verify all language/theme combinations in a browse
 ## Experimental 0.4.3 download (2026-10-20)
 
 Current links target the distinct `v0.4.3/NoShortUsage-0.4.3-arm64.zip` asset. The release records NS-03 setup/diagnostics and NS-04 About/manual updates. It remains ad-hoc signed and not notarized, with Apple Silicon as the only native app download. Companion checksums and validation scope are on the release. Earlier deployment/build notes above describe historical artifacts.
+
+
+## Experimental 0.5.0 download (2026-10-21)
+
+Current homepage/guide links target `v0.5.0/NoShortUsage-0.5.0-arm64.zip`. The native app includes NS-06–NS-12: provider parity, adaptive popover, metadata cache, history window, exports, optional budgets and bounded shared-cache maintenance. EN/VI/zh-CN labels and tagged privacy/technical-guide links follow this version. `app.js?v=22` invalidates the previous translation script.
+
+The public native ZIP is still Apple Silicon only, ad-hoc signed and not notarized. Cross-built Intel helpers are not an Intel app installer or device proof. Keep historical assets immutable. Verify the exact released bytes against release `SHA256SUMS`/`release-validation.json` before rollout; published assets precede the production website update.

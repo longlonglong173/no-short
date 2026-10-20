@@ -26,11 +26,11 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**An experimental Apple Silicon app is available in [v0.4.3](https://github.com/longlonglong173/no-short/releases/tag/v0.4.3).** Download `NoShortUsage-0.4.3-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with first-run setup guidance, connection diagnostics, About and manual update checks. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.4.3.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**An experimental Apple Silicon app is available in [v0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0).** Download `NoShortUsage-0.5.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.5.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
-Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
+For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
-Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
+Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Local `darwin-x64` builds are not an available or device-verified Intel download. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
 
 The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an API key, cookies, or account tokens. Installing the Codex plugin alone does not install this companion app.
 
@@ -43,7 +43,7 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 - Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
 - Sleep suspends the schedule and cancels reading. Wake requests a fresh snapshot. **Thoát No Short Usage** stops the companion's scans; it does not change the plugin or the login-item preference.
 
-## Costs by model (NS-06 source; not yet in v0.4.3 downloads)
+## Costs by model (NS-06, 0.5.0)
 
 Click **Model** beside the main cost to open a scrollable breakdown with each
 model's tokens, estimated USD cost and pricing status. **Quay lại thống kê**
@@ -296,17 +296,17 @@ tests cover the exact threshold, rearming, unknown data, independent sources and
 providers, persisted state, settings and stale suppression. These checks do not
 prove a macOS notification banner was delivered on a user's machine.
 
-## Setup, diagnostics and manual updates — 0.4.3
+## Setup, diagnostics and manual updates — since 0.4.3
 
 The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
 
 About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The app does not download or replace itself.
 
-## Adaptive popover (NS-07, unreleased source)
+## Adaptive popover (NS-07, 0.5.0)
 
-The popover clamps to the visible screen area below its menu-bar item. When content does not fit, scroll vertically; Home/End and Page Up/Page Down reach the full content when not editing text. It resizes for warning, language, and screen changes. Existing public downloads are not updated by this source change. Live VoiceOver and multi-display acceptance remain separate checks.
+The popover clamps to the visible screen area below its menu-bar item. When content does not fit, scroll vertically; Home/End and Page Up/Page Down reach the full content when not editing text. It resizes for warning, language, and screen changes. Included in 0.5.0; older release assets remain unchanged. Live VoiceOver and multi-display acceptance remain separate checks.
 
-## History window (NS-09, unreleased source)
+## History window (NS-09, 0.5.0)
 
 Choose **Xem chi tiết… / Usage details…** in the popover or right-click menu. The app opens one resizable, retained window; repeated clicks focus it. Closing it (including Cmd-W) does not quit background tracking.
 
@@ -314,13 +314,13 @@ Filter All/Codex/Claude and 7/30 days, this/previous month, or inclusive custom 
 
 History filters do not change the menu-bar session pin, automatic following, context alerts or provider selection. The window shares the existing snapshot/refresh pipeline, not another log reader. Old runtimes without optional history show unavailable rather than guessing historical model/token totals from lifetime sessions. Both UI languages and stale/error status follow the app. No conversation text is shown. Installed-app/VoiceOver and clean-machine acceptance remain separate from synthetic render/model tests.
 
-## CSV / JSON export (NS-10, unreleased source)
+## CSV / JSON export (NS-10, 0.5.0)
 
 Use Export CSV / Export JSON in Usage details to choose a destination with the macOS Save dialog. The export freezes the current range/provider data when clicked; cancellation writes nothing. Export covers the full range, not only the selected day's model table. Costs retain estimated/partial/unknown status and API-equivalent cost basis, timezone and snapshot timestamp; stale data is labeled.
 
 Session titles/IDs are off by default. Explicit opt-in includes only references whose last activity falls in the selected range/provider, labeled as references rather than cost attribution. No lifetime session costs, conversation text or log-source paths are exported. Synthetic serializer and Save-payload tests do not prove an installed-app Save dialog interaction.
 
-## Opt-in budgets (NS-11, unreleased source)
+## Opt-in budgets (NS-11, 0.5.0)
 
 Budgets are disabled by default. Open **Budgets… / Ngân sách…** from settings and enter finite positive USD limits per day/month for All, Codex or Claude Code; leave a field empty to disable it. Save applies validated changes, Cancel does not. These limits compare **API-equivalent estimates, not subscription bills, credits or quota**. They do not stop the source tools or enforce spending.
 
@@ -328,7 +328,7 @@ Status uses today/month source aggregates regardless of the pinned session or hi
 
 In-app budget status works without system notification permission. macOS banners have a separate explicit opt-in, off by default; permission requests occur only when the user saves that opt-in. Background refresh checks existing authorization without prompting. Notification events are persisted once per source/timezone/provider/calendar day or month, so refreshes, relaunch and threshold edits do not spam the same period. Source keys are hashed; notifications contain no session names or conversation text. Missing data does not rearm prior alerts. Permission denial/delivery errors remain visible without hiding usage read failures.
 
-## Data management (NS-12, unreleased source)
+## Data management (NS-12, 0.5.0)
 
 Open Data management / Quản lý dữ liệu… from settings. Clear generated cache opens a confirmation whose default action is Cancel. It clears recognized snapshot, metadata and marker/scratch files shared with the MCP plugin; it does **not** reset usage or bills. Totals rebuild from retained source logs after refresh. Original Codex/Claude logs, preferences, activity, hooks/context configuration, backups and exported files remain. Downloaded runtimes and third-party global pricing caches are separate.
 
