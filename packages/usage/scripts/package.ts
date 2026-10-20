@@ -15,7 +15,7 @@ for (const [platform, value] of Object.entries(manifest.platforms) as [string, a
 }
 await rm(staging, { recursive: true, force: true }); await mkdir(destination, { recursive: true }); await mkdir(out, { recursive: true });
 for (const path of ['plugin.json', 'mcp.json', 'package.json', 'README.md', 'PRIVACY.md', 'CONTRIBUTING.md', 'LICENSE', 'NOTICE.md', '.agents', 'assets',
-  'scripts/launch-usage-mcp.sh', 'scripts/validate.mjs', 'packages/usage/runtime-manifest.json', 'packages/usage/runtime', 'docs/no-short-usage.md',
+  'scripts/launch-usage-mcp.sh', 'scripts/validate.mjs', 'packages/usage/package.json', 'packages/usage/runtime-manifest.json', 'packages/usage/runtime', 'docs/no-short-usage.md',
   'docs/no-short-usage-menubar.md', 'docs/migration-to-no-short-skills.md', `docs/releases/${manifest.version}.md`, 'CHANGELOG.md']) {
   await cp(join(root, path), join(destination, path), { recursive: true });
 }

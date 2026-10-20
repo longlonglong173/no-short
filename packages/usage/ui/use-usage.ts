@@ -1,3 +1,4 @@
+import { usageVersion } from '../src/version';
 import { useEffect, useRef, useState } from 'react';
 import { App, applyDocumentTheme, applyHostStyleVariables } from '@modelcontextprotocol/ext-apps';
 import { decodeResult } from './model';
@@ -76,7 +77,7 @@ export function useUsage() {
       if (window.parent === window) {
         setError('Mở No Short Usage từ plugin no-short trong Codex Desktop để đọc thống kê.'); setBusy(false); return;
       }
-      app = new App({ name: 'No Short Usage', version: '0.4.2' }, {});
+      app = new App({ name: 'No Short Usage', version: usageVersion }, {});
       app.ontoolresult = result => accept(result, true);
       const theme = (context: any) => {
         if (context?.theme) { applyDocumentTheme(context.theme); document.documentElement.dataset.theme = context.theme; }

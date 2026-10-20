@@ -1,3 +1,4 @@
+import { usageVersion, ccusageVersion } from './version';
 import { dirname, join } from 'node:path';
 import { writeSync } from 'node:fs';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';
@@ -9,7 +10,7 @@ const binary = process.env.NO_SHORT_USAGE_CCUSAGE ?? join(dirname(process.execPa
 const html: unknown = embeddedHtml;
 if (typeof html !== 'string') throw new Error('Invalid embedded usage panel');
 const store = createUsageService({ binary });
-if (process.argv.includes('--version')) console.log('no-short-usage 0.4.3 (ccusage 20.0.34)');
+if (process.argv.includes('--version')) console.log(`no-short-usage ${usageVersion} (ccusage ${ccusageVersion})`);
 else if (process.argv.includes('--snapshot')) {
   // Drain the actual stdout FD before exiting. console.log can truncate a large
   // report, and Bun 1.3.13's async stdout writer can stall on a macOS POSIX pipe.

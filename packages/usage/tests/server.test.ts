@@ -5,6 +5,7 @@ import { buildSnapshot } from '../src/adapter';
 import { createServer } from '../src/server';
 import fixture from './fixtures/unified.json';
 import { mixedDashboard } from './fixtures/mixed';
+import usagePackage from '../package.json';
 
 test('MCP exposes exactly two read-only tools and a self-contained thread panel', async () => {
   const snapshot = buildSnapshot(fixture, { now: new Date('2026-10-17T05:00:00Z'), timeZone: 'UTC', metadata: new Map() });
@@ -13,6 +14,7 @@ test('MCP exposes exactly two read-only tools and a self-contained thread panel'
   const client = new Client({ name: 'usage-test', version: '1.0.0' });
   await server.connect(a); await client.connect(b);
   try {
+    expect(client.getServerVersion()?.version).toBe(usagePackage.version);
     const tools = await client.listTools();
     expect(tools.tools.map(t => t.name).sort()).toEqual(['get_session_usage', 'get_usage_dashboard']);
     expect(tools.tools.every(t => t.annotations?.readOnlyHint === true)).toBe(true);

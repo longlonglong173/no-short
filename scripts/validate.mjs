@@ -32,6 +32,7 @@ const codexMarketplace = readJson(".agents/plugins/marketplace.json");
 const packageJson = readJson("package.json");
 const mcp = readJson("mcp.json");
 const usagePackage = readJson("packages/usage/runtime-manifest.json");
+const usageSourcePackage = readJson("packages/usage/package.json");
 
 const manifests = [
   ["plugin.json", portable],
@@ -71,6 +72,7 @@ const usageServer = mcp?.mcpServers?.["no-short-usage"];
 expect(usageServer?.type === "stdio" && usageServer?.command === "sh", "mcp.json: usage must use a portable bare shell command for the local launcher");
 expect(usageServer?.args?.[0] === "${PLUGIN_ROOT}/scripts/launch-usage-mcp.sh", "mcp.json: launcher must be relative to PLUGIN_ROOT");
 expect(portable?.extensions?.["com.openai"]?.requires_local_executor === true, "usage: Desktop local execution must be declared");
+expect(usageSourcePackage?.version === packageJson?.version, "usage: source package/root versions must match");
 expect(usagePackage?.version === portable?.version && usagePackage?.ccusageVersion === "20.0.34", "usage: plugin/runtime versions and pinned ccusage must match");
 for (const target of ["darwin-arm64", "darwin-x64"]) {
   const item = usagePackage?.platforms?.[target];
