@@ -1,3 +1,4 @@
+import { assertSafeBundleLinks, verifySparkleBundle } from './sparkle-bundle';
 import { readFile, readdir, lstat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
@@ -15,14 +16,7 @@ export async function run(args: string[], options: { capture?: boolean; env?: Re
 export interface RuntimeManifest { version: string; ccusageVersion: string; platforms: Record<string, { binaries: Record<string, string> }> }
 export async function manifest(): Promise<RuntimeManifest> { return JSON.parse(await readFile(join(root, 'packages/usage/runtime-manifest.json'), 'utf8')); }
 export async function verifyLayout(app: string, platform: string, runtime: RuntimeManifest) {
-  async function walk(directory: string): Promise<void> {
-    for (const name of await readdir(directory)) {
-      const path = join(directory, name), info = await lstat(path);
-      if (info.isSymbolicLink()) throw new Error('App must not contain symlinks');
-      if (info.isDirectory()) await walk(path);
-    }
-  }
-  await walk(app);
+  await assertSafeBundleLinks(app);
   const plist = JSON.parse(await run(['/usr/bin/plutil', '-convert', 'json', '-o', '-', join(app, 'Contents/Info.plist')], { capture: true }));
   const expected = { CFBundleIdentifier: 'dev.noshort.usage.menubar', CFBundleExecutable: 'NoShortUsageMenuBar', LSUIElement: true, LSMinimumSystemVersion: '14.0' };
   for (const [key, value] of Object.entries(expected)) if (plist[key] !== value) throw new Error(`Invalid app plist ${key}`);
@@ -46,6 +40,7 @@ export async function verifyLayout(app: string, platform: string, runtime: Runti
 }
 export async function verifyBundle(app: string, platform: string, runtime: RuntimeManifest) {
   await verifyLayout(app, platform, runtime);
+  await verifySparkleBundle(app, platform);
   const architecture = platform === 'darwin-arm64' ? 'arm64' : 'x86_64';
   for (const path of ['Contents/MacOS/NoShortUsageMenuBar', 'Contents/Resources/runtime/no-short-usage', 'Contents/Resources/runtime/ccusage']) {
     const file = join(app, path);

@@ -1,3 +1,4 @@
+import { embedSparkle } from './sparkle-bundle';
 import { readFile, writeFile, mkdir, rm, cp, chmod } from 'node:fs/promises';
 import { join } from 'node:path';
 import { root, usage, output, sha, run, manifest, verifyBundle } from './bundle.ts';
@@ -41,6 +42,7 @@ for (const platform of ['darwin-arm64', 'darwin-x64']) {
   }
   await cp(join(source,'THIRD_PARTY_NOTICES.txt'),join(helpers,'THIRD_PARTY_NOTICES.txt'));
   await writeFile(join(resources,'runtime-checksums.json'), JSON.stringify({version, platform, binaries, sourceBinaries:runtime.platforms[platform].binaries},null,2)+'\n');
+  await embedSparkle(app, undefined, identity);
   const sign = ['/usr/bin/codesign','--force','--sign',identity ?? '-'];
   if (identity) sign.push('--options','runtime','--timestamp');
   await run([...sign,app]); await verifyBundle(app,platform,runtime);
