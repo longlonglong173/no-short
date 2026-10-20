@@ -78,13 +78,13 @@ task khi có yêu cầu của người dùng.
 
 ### NS-08 — Đo và tối ưu quét metadata
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-21) — chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** Không.
 - **Nội dung:** Đo thời gian quét với lịch sử lớn, bổ sung cache theo file thay đổi.
 - **Phát hiện cần khảo sát:** Trong fixture nhiều nguồn, ccusage 20.0.34 có thể gộp sự kiện của hai phiên Codex khác nhau nếu timestamp và số token hoàn toàn giống nhau: hai phiên đều có 110 token nhưng tổng ngày chỉ 110. Fixture với thời điểm riêng cho mỗi phiên và bản sao giữ nguyên timestamp trả đúng tổng 220. Đây là giới hạn quan sát được của bộ đọc hiện tại, chưa được sửa trong phần chọn nhiều nguồn; cần giữ thành ca điều tra riêng khi đánh giá độ tin cậy tổng ngày.
 - **Tiêu chí nghiệm thu:** Ghi số đo trước/sau trên cùng bộ dữ liệu và môi trường. Kiểm tra đổi tên, ghi thêm, xóa và chuyển nguồn; kết quả metadata sau tối ưu phải giữ nguyên, không trả dữ liệu cũ hoặc lẫn nguồn.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Cache metadata riêng mỗi file bằng device/inode/size/mtime/ctime; liệt kê/stat lại, đọc lại title index, bỏ file xóa/đổi nguồn, ghi atomic và giới hạn cache. Test append/rename/delete/nguồn mới/cache hỏng/symlink qua. Benchmark synthetic cùng 240 file × 501 dòng trên macOS arm64: bản trước 103.82 ms; cache lạnh 67.06 ms, cache ấm 7.58 ms, 240 hit/0 đọc nội dung, kết quả không đổi. Đây là số đo metadata, không phải tốc độ toàn bộ ccusage. 43 test Usage và 23 test browser qua, typecheck/validate/diff check qua. Test CLI thật tái hiện va chạm timestamp/token (110 thay vì 220), thay timestamp trả 220; giới hạn upstream vẫn còn, không được ghi là đã sửa. Xem hướng dẫn benchmark trong docs.
 
 ### NS-09 — Mở rộng lịch sử
 
