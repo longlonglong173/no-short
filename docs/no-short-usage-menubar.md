@@ -319,3 +319,21 @@ History filters do not change the menu-bar session pin, automatic following, con
 Use Export CSV / Export JSON in Usage details to choose a destination with the macOS Save dialog. The export freezes the current range/provider data when clicked; cancellation writes nothing. Export covers the full range, not only the selected day's model table. Costs retain estimated/partial/unknown status and API-equivalent cost basis, timezone and snapshot timestamp; stale data is labeled.
 
 Session titles/IDs are off by default. Explicit opt-in includes only references whose last activity falls in the selected range/provider, labeled as references rather than cost attribution. No lifetime session costs, conversation text or log-source paths are exported. Synthetic serializer and Save-payload tests do not prove an installed-app Save dialog interaction.
+
+## Opt-in budgets (NS-11, unreleased source)
+
+Budgets are disabled by default. Open **Budgets… / Ngân sách…** from settings and enter finite positive USD limits per day/month for All, Codex or Claude Code; leave a field empty to disable it. Save applies validated changes, Cancel does not. These limits compare **API-equivalent estimates, not subscription bills, credits or quota**. They do not stop the source tools or enforce spending.
+
+Status uses today/month source aggregates regardless of the pinned session or history filter. Partial pricing is a lower bound: an alert is justified only when the known subtotal already crosses the threshold; otherwise the budget state is uncertain, not a precise remaining balance. Unknown, stale, wrong-day and unavailable-provider data cannot generate a budget crossing.
+
+In-app budget status works without system notification permission. macOS banners have a separate explicit opt-in, off by default; permission requests occur only when the user saves that opt-in. Background refresh checks existing authorization without prompting. Notification events are persisted once per source/timezone/provider/calendar day or month, so refreshes, relaunch and threshold edits do not spam the same period. Source keys are hashed; notifications contain no session names or conversation text. Missing data does not rearm prior alerts. Permission denial/delivery errors remain visible without hiding usage read failures.
+
+## Data management (NS-12, unreleased source)
+
+Open Data management / Quản lý dữ liệu… from settings. Clear generated cache opens a confirmation whose default action is Cancel. It clears recognized snapshot, metadata and marker/scratch files shared with the MCP plugin; it does **not** reset usage or bills. Totals rebuild from retained source logs after refresh. Original Codex/Claude logs, preferences, activity, hooks/context configuration, backups and exported files remain. Downloaded runtimes and third-party global pricing caches are separate.
+
+Close older plugin runtimes first. New readers honor a shared maintenance guard; the native app cancels and drains its reader before clearing, then refreshes if awake. Any scope scan lock refuses deletion rather than being force-unlocked. If busy, wait for readers to finish/recover and retry. Only recognized files in hash-named cache scopes are unlinked; unknown data remains and only empty generated directories are removed. Symlinks, overlaps with protected source roots and custom `NO_SHORT_USAGE_CACHE_DIR` paths are refused. Cancellation/permission errors do not authorize deleting source data. Quit waits for an owned maintenance operation to finish.
+
+The same window explains disconnecting existing hooks/context, disabling Open at login, quitting/removing the app, and which data remains. These instructions do not automatically edit settings or uninstall anything. Fixture/model tests use isolated files and never invoke clearing the user's real cache; installed-app confirmation and simultaneous older-plugin behavior remain manual checks.
+
+Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.

@@ -106,21 +106,21 @@ task khi có yêu cầu của người dùng.
 
 ### NS-11 — Ngân sách chi phí ước tính
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-21) — chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-01, NS-06.
 - **Nội dung:** Cho đặt ngưỡng ngày/tháng theo tổng hoặc provider, mặc định tắt.
 - **Tiêu chí nghiệm thu:** Cảnh báo khi vượt ngưỡng, tránh gửi lặp và ghi rõ đây là chi phí API quy đổi. Thiếu giá không được hiển thị như ngân sách còn chính xác. Kiểm tra đổi ngày/tháng, đổi ngưỡng, khởi động lại, dữ liệu cũ và quyền thông báo bị từ chối.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Native settings với ngưỡng ngày/tháng All/Codex/Claude, mặc định tắt và thông báo budget mặc định tắt. Save kiểm tra số hữu hạn dương, Cancel không ghi; lưu local. Evaluator dùng đúng period/provider, chặn stale/error/sai ngày/thiếu breakdown; partial chỉ cảnh báo khi phần đã biết vượt ngưỡng, không hiển thị số còn lại chính xác. Tracker hash source/timezone/provider/kỳ, lưu qua restart và giới hạn 512 khóa, không báo lặp do sửa ngưỡng/refresh. Budget chỉ xin quyền OS khi Save bật rõ ràng; refresh kiểm tra quyền không prompt. Cảnh báo trong app không phụ thuộc OS và không che lỗi đọc usage. Test hồi quy vòng lặp render/delivery đã thất bại trước sửa callback rồi qua. 118 test Usage, 32 browser, 162 Swift và 4 test đóng gói qua; typecheck/validation/diff check qua. Render ba ngôn ngữ sáng/tối dùng fixture; quyền/banners macOS thực tế chưa nghiệm thu. Không thay workflow context hiện có, chưa phát hành.
 
 ### NS-12 — Quản lý dữ liệu và gỡ app
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local, chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** Không.
 - **Nội dung:** Thêm thao tác xóa cache có xác nhận và hướng dẫn ngắt hooks/context/login.
 - **Tiêu chí nghiệm thu:** Phân biệt dữ liệu dùng chung với plugin, bản sao cấu hình và log gốc. Xóa đúng phạm vi đã xác nhận, xử lý việc đọc/ghi đang diễn ra và lỗi quyền truy cập. Không xóa log Codex/Claude hoặc cấu hình bên thứ ba; hướng dẫn rõ dữ liệu nào còn lại sau khi gỡ app.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** Cửa sổ Data management được giữ một instance, xác nhận mặc định Cancel; chỉ xóa file cache đã biết trong thư mục mặc định, từ chối override/symlink/nguồn được bảo vệ/scan đang chạy. Suspend và chờ reader kết thúc trước khi xóa; shutdown chờ maintenance hoàn tất. Guard chung có owner/nonce và kernel flock ổn định cho native; TS chỉ kiểm tra hoặc bỏ qua guard đã bỏ lại sau xác minh, không xóa guard. Giữ file lạ, log gốc, cấu hình và bản sao; hướng dẫn ngắt hooks/context/login và gỡ app, không tự thay cấu hình. Test hồi quy stale-recovery/shutdown/localization có RED trước sửa; 143 Usage (25 maintenance), 32 browser, 181 Swift và 4 đóng gói qua; typecheck/build UI/validation qua. Safety review không còn P1/P2. Chỉ dùng fixture cô lập, không xóa cache thật của người dùng; UI tương tác app đã cài/VoiceOver chưa nghiệm thu.
 
 ## P3 — Phân tích nâng cao
 

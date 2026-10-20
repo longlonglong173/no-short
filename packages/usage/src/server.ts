@@ -1,3 +1,4 @@
+import { usageVersion } from './version';
 import { McpServer } from '@modelcontextprotocol/server';
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
 import type { OpenAIUiResourceMetadata } from '@openai/mcp-extensions';
@@ -12,7 +13,7 @@ const id = z.string().min(1).max(300).regex(/^[a-zA-Z0-9_:/.-]+$/)
   .refine(value => !value.startsWith('/') && !value.split('/').some(part => part === '.' || part === '..'));
 const display = { preferredDisplayMode: 'inline', availableDisplayModes: ['inline', 'fullscreen'] } satisfies OpenAIUiResourceMetadata;
 export function createServer(store: { get(): Promise<UsageSnapshot> }, html: string): McpServer {
-  const server = new McpServer({ name: 'no-short-usage', version: '0.4.3' });
+  const server = new McpServer({ name: 'no-short-usage', version: usageVersion });
   new OpenAIExtensions(server);
   const ui = { csp: { connectDomains: [], resourceDomains: [] }, prefersBorder: false };
   registerAppResource(server, 'No Short Usage', panelUri, { _meta: { ui } }, async () => ({ contents: [{

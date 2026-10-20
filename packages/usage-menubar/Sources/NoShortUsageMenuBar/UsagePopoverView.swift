@@ -97,6 +97,7 @@ struct UsagePopoverView: View {
                     .fixedSize(horizontal: false, vertical: true).help(warning)
                     .padding(.bottom, 10)
             }
+            budgetStatus
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center, spacing: 10) {
                     Text(model.mainCost).font(.system(size: 49, weight: .semibold)).tracking(-1.8)
@@ -160,6 +161,18 @@ struct UsagePopoverView: View {
                     .font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
             }.buttonStyle(.plain).padding(.bottom, 10)
             footer
+        }
+    }
+    @ViewBuilder private var budgetStatus: some View {
+        if !model.budgetReadings.isEmpty || model.budgetNotificationNotice != nil {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(model.budgetReadings, id: \.rule.id) { reading in
+                    Text(budgetReadingText(reading, language: model.language))
+                        .foregroundStyle(reading.exceeded ? Color.orange : Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let notice = model.budgetNotificationNotice { Text(model.l(notice)).foregroundStyle(.orange) }
+            }.font(.system(size: 10)).frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
         }
     }
     var warning: String? {
@@ -240,6 +253,8 @@ struct UsagePopoverView: View {
                 Button(model.l("Chọn thư mục log Claude Code…")) { model.onChooseClaudeSource?() }
                 Button(model.l("Dùng log Claude Code mặc định")) { model.onResetClaudeSource?() }
                 Divider()
+                Button(model.l("Ngân sách…")) { model.onBudgets?() }
+                Button(model.l("Quản lý dữ liệu…")) { model.onDataManagement?() }
                 Button(model.l("Ngưỡng cảnh báo context: %@%…", String(model.contextAlertThreshold))) { model.onConfigureContextAlerts?() }
                 Toggle(model.l("Thông báo macOS khi vượt ngưỡng"),isOn:Binding(get:{ model.contextNotificationsEnabled },set:{ model.setContextNotificationsEnabled($0) }))
                 Divider()
@@ -323,6 +338,7 @@ struct UsagePopoverView: View {
                 Label(warning, systemImage: "exclamationmark.circle").font(.system(size: 11))
                     .foregroundStyle(.orange).lineLimit(2).help(warning)
             }
+            budgetStatus
             HStack {
                 Text(model.l("Model")).frame(maxWidth: .infinity, alignment: .leading)
                 Text(model.l("Token")).frame(width: 65, alignment: .trailing)
