@@ -49,7 +49,7 @@ Reusable skills are distributed separately in [no-short-skills](https://github.c
 - Unknown prices display “Chưa xác định”; incomplete totals display “Chưa đầy đủ”. Failed refreshes retain the last success and mark it stale.
 
 
-### Provider filters (NS-06 source; not yet in v0.4.3 downloads)
+### Provider filters (NS-06, 0.5.0)
 
 Codex remains the default. If the helper has explicit Claude roots configured
 through `NO_SHORT_USAGE_CLAUDE_ROOTS` (comma-separated Claude home folders
@@ -145,7 +145,7 @@ Before release, verify a clean no-Node/Bun installation, both CPU architectures,
 
 No script pushes, creates a GitHub release, or submits to OpenAI's public directory.
 
-## Metadata cache (NS-08, unreleased source)
+## Metadata cache (NS-08, 0.5.0)
 
 Metadata uses a private, bounded per-file disk cache in the current source/timezone cache scope. Directory discovery and file stat remain live; size, inode, device, mtime and ctime changes invalidate entries. Codex title indexes are reread. Cache content contains metadata only, not conversation messages. Unstable writes are not cached; a broken/unwritable metadata cache falls back to reading logs.
 
@@ -153,7 +153,7 @@ Run `bun packages/usage/scripts/benchmark-metadata.ts` for a synthetic-only benc
 
 The pinned ccusage 20.0.34 can deduplicate identical timestamp/token events from two distinct Codex sessions. A native CLI characterization test records daily total 110 for two 110-token sessions with identical event times, and 220 when event times differ. NS-08 does not alter logs or patch that upstream behavior; estimates can undercount this case.
 
-## History (NS-09, unreleased source)
+## History (NS-09, 0.5.0)
 
 The **Lịch sử / History** tab filters retained daily provider/model aggregates by 7/30 days, this/previous month or an inclusive custom range in the snapshot timezone. The initial provider is copied when History first opens; later history filters are independent of the pinned session/dashboard. Switching tabs keeps in-memory history state; it is not persisted to host/browser storage. A new explicit tool session request returns to the session view.
 
@@ -161,7 +161,7 @@ Click a dated bar for that day's models or Entire range for range models. Token 
 
 Snapshot schema remains v1 with optional `history: {version:1,providers,days:[{date,provider,aggregate}]}`. A new cache-scope revision avoids treating old snapshots as history-capable. History is in widget metadata, not expanded into model-visible structured summaries. Cache retains no conversation content. The native window and panel use the same daily aggregate contract; ccusage20.0.34's documented identical-event collision limitation remains.
 
-## CSV / JSON export (NS-10, unreleased source)
+## CSV / JSON export (NS-10, 0.5.0)
 
 History exports the entire selected range/provider, not only a day selected for model inspection. CSV/JSON contain range, snapshot timezone/generatedAt/status, tokens, model/daily costs and explicit pricing status. Unknown amount remains null/blank with its known subtotal; it is not zero. CSV text is quoted and formula-like cell values are prefixed with an apostrophe.
 
@@ -171,7 +171,7 @@ Embedded MCP panels request the host's `downloadFile` capability using an inline
 
 CSV `recordType` distinguishes range aggregate, range model, day, day-model and optional session-reference records. These are alternative breakdowns, not additive rows: do not sum cost/token columns across different record types.
 
-## Shared-cache maintenance (NS-12, unreleased source)
+## Shared-cache maintenance (NS-12, 0.5.0)
 
 The native Data management window coordinates clearing generated shared usage-cache files using `.maintenance.lock/owner.json` with process ID, token and millisecond timestamp. Snapshot readers check before fresh-cache return, after scope-lock acquisition and after loading; an active guard returns retained data as stale or first-read unavailable, never a fake zero. Active owners are not evicted merely by age; abandoned guards recover conservatively after a 90-second grace. Unexpected/symlink contents remain protected.
 

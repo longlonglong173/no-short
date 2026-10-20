@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 — Unreleased (release preparation)
+## 0.5.0 — Experimental (2026-10-21)
 
 - NS-06: bring provider filters, per-provider period/model breakdowns and pinned-session behavior into parity between panel and native app.
 - NS-07: adapt the native popover to the visible screen, with full-content scrolling and keyboard navigation.
@@ -9,7 +9,7 @@
 - NS-10: export the active history view as JSON/CSV; omit session references by default, preserve uncertain prices and harden CSV spreadsheet cells. Native Save dialog and capability-checked host downloads.
 - NS-11: optional local day/month API-equivalent budgets with persistent alert deduplication; OS notifications remain off by default.
 - NS-12: confirmed, bounded shared-cache maintenance and disconnect/uninstall guidance; never remove original provider logs or third-party settings.
-- Align package, CLI, MCP server, panel and build identities at 0.5.0. Runtime checksums are regenerated from actual local builds; [release preparation](docs/releases/0.5.0.md) is not a public release. Existing website downloads stay at 0.4.3.
+- Align package, CLI, MCP server, panel and build identities at 0.5.0. Runtime checksums are regenerated from actual builds; the [Experimental release record](docs/releases/0.5.0.md) separates local checks from outstanding device acceptance. The Apple Silicon download remains ad-hoc signed and not notarized.
 
 - Make No Short Usage the primary product; move both unchanged skills and their related Git history to [no-short-skills](https://github.com/longlonglong173/no-short-skills).
 - Give skills independent manifests, installation and validation; remove skills and the Claude skills wrapper from future Usage packages. Keep Usage plugin IDs and historical release assets unchanged.

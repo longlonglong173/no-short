@@ -49,7 +49,7 @@ task khi có yêu cầu của người dùng.
 
 ### NS-05 — Hoàn tất kiểm chứng phát hành
 
-- [ ] **Trạng thái:** Đang thực hiện — bản Experimental 0.4.3 (2026-10-20)
+- [ ] **Trạng thái:** Đang thực hiện — bản Experimental 0.5.0 (2026-10-21)
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không để bắt đầu kiểm chứng bản hiện tại; kiểm chứng lại artifact cuối cùng sau mọi thay đổi được đưa vào bản phát hành.
 - **Nội dung:** Theo dõi riêng notarization, cài đặt trên máy sạch, Intel, hooks/context Claude thực tế, thông báo macOS, sleep/wake, login và VoiceOver.
