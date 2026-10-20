@@ -13,6 +13,7 @@ import UsageCore
     private var contextSuspended = false
     private let contextReader = ContextReader()
     private lazy var contextNotifications = ContextNotificationService()
+    private var diagnosticsTask: Task<Void, Never>?
     private var contextTask:Task<Void,Never>?
     private var contextKey:String?, contextSelection:String?
     private var activityMonitor:ActivityMonitor?
@@ -67,6 +68,7 @@ import UsageCore
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
+        refreshDiagnostics()
         refreshContexts()
         deliverContextAlerts()
         if panel.popover.isShown { panel.updateSize() }
@@ -74,6 +76,22 @@ import UsageCore
         statusItem?.button?.toolTip = l("%@\n%@\n%@ USD · Ước tính API\n%@\n%@\nHôm nay: %@ · Tháng này: %@", String(panelModel.selectionLabel), String(panelModel.activityLabel), String(panelModel.mainCost), String(panelModel.tokenTooltip), String(panelModel.contextTooltip), String(panelModel.todayCost), String(panelModel.monthCost))
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
+    }
+    private func refreshDiagnostics() {
+        diagnosticsTask?.cancel()
+        guard let executable = Bundle.main.executableURL else { return }
+        let source = controller.source, snapshot = controller.snapshot, stale = controller.isStale, notice = controller.notice
+        let custom = Set(UsageProvider.allCases.filter { sources.hasSelection(provider: $0) })
+        let activities = activityStore.events(maximumAge: nil), configurations = HookInstaller.configurationFiles()
+        let contextDirectory = ClaudeContextStore().directory
+        diagnosticsTask = Task { [weak self] in
+            let values = await Task.detached(priority: .utility) {
+                ConnectionDiagnostics.scan(source: source, customSources: custom, configurations: configurations, executable: executable,
+                    snapshot: snapshot, stale: stale, notice: notice, activities: activities, contextDirectory: contextDirectory)
+            }.value
+            guard let self, !Task.isCancelled, !self.terminating else { return }
+            self.panelModel.updateDiagnostics(values)
+        }
     }
     private func refreshContexts() {
         guard !contextSuspended, !terminating else { return }
@@ -217,7 +235,7 @@ import UsageCore
     @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !terminating, let controller else { return terminating ? .terminateLater : .terminateNow }
-        terminating = true; contextTask?.cancel(); panel.close(); activityMonitor?.stop()
+        terminating = true; diagnosticsTask?.cancel(); contextTask?.cancel(); panel.close(); activityMonitor?.stop()
         Task { await controller.shutdown(); sender.reply(toApplicationShouldTerminate: true) }
         return .terminateLater
     }
