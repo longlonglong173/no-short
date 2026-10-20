@@ -56,6 +56,16 @@ task khi có yêu cầu của người dùng.
 - **Tiêu chí nghiệm thu:** Mỗi kiểm tra ghi phiên bản, môi trường, kết quả và bằng chứng. Thiếu thiết bị hoặc chứng chỉ được ghi là bị chặn, không đánh dấu đã đạt. Phân biệt bản build local với artifact phát hành được kiểm chứng. Không tự publish.
 - **Bằng chứng hiện có:** 102 test Swift tích hợp, 4 test đóng gói và 34 test Usage; build/provenance/signature/smoke cùng artifact được ghi tại [release 0.4.3](releases/0.4.3.md) và `release-validation.json`. Notarization, máy sạch, Intel runtime, hooks/context thực tế, thông báo, sleep/wake, login và VoiceOver chưa được đánh dấu đạt. PR riêng theo dõi phần chuẩn bị Experimental; task chưa hoàn tất.
 
+### NS-14 — Cập nhật trong app có xác nhận
+
+- [ ] **Trạng thái:** Đang thiết kế — chờ duyệt spec (2026-10-21).
+- **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
+- **Phụ thuộc:** Chốt thiết kế/key/feed; giữ NS-05 signing và nghiệm thu thiết bị riêng.
+- **Nội dung:** Sparkle kiểm tra/tải/xác minh/cài/relaunch khi người dùng yêu cầu; không cài nền. Cần một lần cài tay bản bootstrap sau 0.5.0.
+- **Tiêu chí nghiệm thu:** Archive/feed được ký; không cài khi xác minh lỗi; cancel/error giữ bản cũ; chờ reader/maintenance trước terminate; dữ liệu/cấu hình không bị xóa. Test A→B trên app copies và test key/feed cô lập, không đụng app thật. Có PR riêng, không tự merge/phát hành.
+- **Thiết kế:** [NS-14 signed in-app updates](superpowers/specs/2026-10-21-ns14-signed-in-app-updates-design.md).
+- **Bằng chứng hoàn thành:** Chưa triển khai code; chỉ khảo sát và thiết kế. Bản 0.5.0 công khai vẫn chỉ kiểm tra cập nhật thủ công.
+
 ## P2 — Tính nhất quán và khả năng phân tích
 
 ### NS-06 — Đồng bộ khả năng giữa panel và app native
