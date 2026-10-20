@@ -17,10 +17,14 @@ struct AppBuildInfo: Sendable {
     @Published private(set) var state: ManualUpdateState = .idle
     @Published var language: AppLanguage
     var onChange: (() -> Void)?
+    let native: UpdateCoordinator?
+    var nativeState: NativeUpdateState? { native?.hasInstallCapability == true ? native?.state : nil }
+    var isCheckingUpdate: Bool { nativeState?.isBusy ?? state.isChecking }
     private let updates: ManualUpdateController
-    init(info: AppBuildInfo = AppBuildInfo(), language: AppLanguage, client: any LatestReleaseLoading = GitHubReleaseClient()) {
-        self.info = info; self.language = language
+    init(info: AppBuildInfo = AppBuildInfo(), language: AppLanguage, client: any LatestReleaseLoading = GitHubReleaseClient(), native: UpdateCoordinator? = nil) {
+        self.info = info; self.language = language; self.native = native
         updates = ManualUpdateController(installedVersion: info.version, client: client)
+        native?.onChange = { [weak self] in self?.objectWillChange.send(); self?.onChange?() }
         updates.onChange = { [weak self] in
             guard let self else { return }
             state = updates.state; onChange?()
@@ -33,14 +37,21 @@ struct AppBuildInfo: Sendable {
     }
     var versionText: String { l("Phiên bản: %@", metadata(info.version)) }
     var buildText: String { l("Build: %@", metadata(info.build)) }
-    var statusText: String { state.localizedDescription(language: language) }
+    var statusText: String { nativeState?.localizedDescription(language: language) ?? state.localizedDescription(language: language) }
     var releaseNotesURL: URL {
+        if let version=native?.releaseVersion { return GitHubReleaseClient.notesURL(for:version) }
+        return manualReleaseNotesURL
+    }
+    private var manualReleaseNotesURL: URL {
         switch state {
         case .available(let release), .current(let release): release.notesURL
         default: GitHubReleaseClient.notesURL(for: info.version)
         }
     }
-    func check() async { await updates.check() }
+    func check() async {
+        if let native, native.hasInstallCapability { native.check() }
+        else { await updates.check() }
+    }
 }
 
 struct AboutView: View {
@@ -56,16 +67,19 @@ struct AboutView: View {
             }.textSelection(.enabled)
             Divider()
             HStack(alignment: .top, spacing: 10) {
-                if state.isChecking { ProgressView().controlSize(.small) }
-                Text(state.localizedDescription(language: model.language))
+                if model.isCheckingUpdate { ProgressView().controlSize(.small) }
+                Text(model.statusText)
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("manualUpdateStatus")
             }
-            Button(model.l(state.isChecking ? "Đang kiểm tra bản cập nhật…" : "Kiểm tra bản cập nhật…"), action: onCheck)
-                .disabled(state.isChecking)
+            Button(model.l(model.isCheckingUpdate ? "Đang kiểm tra bản cập nhật…" : "Kiểm tra bản cập nhật…"), action: onCheck)
+                .disabled(model.isCheckingUpdate || (model.native?.hasInstallCapability == true && model.native?.canCheck != true))
             Link(model.l("Mở ghi chú phát hành"), destination: model.releaseNotesURL)
             Divider()
-            Text(model.l("Chỉ liên hệ GitHub khi bạn bấm kiểm tra. Không tự tải hoặc thay thế app."))
+            Text(model.l(model.nativeState != nil ? "Chỉ kiểm tra khi bạn yêu cầu. Cài đặt cần xác nhận và xác minh chữ ký." : "Chỉ liên hệ GitHub khi bạn bấm kiểm tra. Không tự tải hoặc thay thế app."))
+            if model.native != nil && model.native?.hasInstallCapability == false {
+                Text(NativeUpdateState.failed(.notConfigured).localizedDescription(language: model.language)).foregroundStyle(.secondary)
+            }
             Text(model.l("Chỉ so sánh phiên bản phát hành; không phát hiện tài nguyên thử nghiệm được thay mới dưới cùng phiên bản/tag."))
                 .foregroundStyle(.secondary)
         }

@@ -2,7 +2,7 @@
 
 Effective date: October 20, 2026
 
-`no-short` provides No Short Usage: a native macOS menu bar app and an optional local Codex usage panel. It does not operate a developer-hosted data collection backend, use tracking cookies, or send user data to the developer.
+`no-short` provides No Short Usage: a native macOS menu bar app and an optional local Codex usage panel. It does not operate a developer-hosted usage-data collection backend or use tracking cookies. Explicit update requests expose ordinary network metadata to the update/download hosts, as described below; log contents and usage are not uploaded.
 
 When enabled, the local MCP helper reads retained Codex logs and the session-name index, plus Claude Code logs only when Claude roots are explicitly configured. ccusage computes token usage and estimated API-equivalent cost. A local cache stores session names/IDs, tokens, models, dates and estimates, not prompts or messages. Session titles can still be private. Neither the helper nor the panel modifies source logs.
 
@@ -43,3 +43,11 @@ Native budgets and notification preferences are stored locally, disabled by defa
 The native Data management window can clear recognized generated snapshot/metadata/marker files in the default shared usage-cache scopes after confirmation. It drains the companion reader and coordinates new MCP readers with a root maintenance guard; active scans block deletion. Symlinks, source overlap and custom cache paths are refused; unknown files and original logs/preferences/backups/configuration are retained. Only empty generated directories are removed. Older runtimes should be closed before maintenance. Clearing cache does not reset usage or bills: statistics are rebuilt from retained logs. It does not remove downloaded runtimes, global third-party pricing caches, exports, UserDefaults, activity records or host-held data. Live installed-app confirmation and external-host acceptance are separate from local fixture tests.
 
 Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.
+
+## Unreleased source: confirmed native updates (NS-14)
+
+An updater-configured native build checks its signed HTTPS feed only after an explicit Check for Updates action. It downloads an update only after confirmation, verifies signatures before extraction, then requests confirmation to install/relaunch. No periodic checks, automatic downloads, silent installs or Sparkle system profiling are enabled, even if older updater preferences were present. Opening About or starting the app does not check for updates.
+
+The feed host (`no-short.io.vn`) and GitHub asset delivery infrastructure can see the connecting IP, requested release path and normal HTTP metadata. In the isolated local test the actual requests included Accept, Accept-Encoding, Accept-Language, Connection, Host and `User-Agent: No Short Usage/0.6.0 Sparkle/2.10.0`; production transport may add platform/network headers. No session names/IDs, log paths/contents, prompts, usage totals or profile query parameters are supplied by the updater. Release notes are plain text inside the signed feed; remote JavaScript is disabled.
+
+Sparkle stores update preferences and temporary update downloads locally. Replacing the native app does not deliberately delete usage preferences, provider logs, generated usage caches, hooks, backups or exports. Actual permission/login retention depends on macOS and signing identity and needs separate device acceptance. The native updater does not update the separate MCP plugin. Public 0.5.0 has no installer updater; it requires a one-time manual bootstrap when a separately approved updater release becomes available. This source PR does not configure or publish a production key/feed.
