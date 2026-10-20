@@ -1,6 +1,6 @@
 # NS-14 — Cập nhật trong app có xác nhận và chữ ký
 
-Ngày: 2026-10-21. **Trạng thái: thiết kế đề xuất, chờ duyệt; chưa triển khai updater.**
+Ngày: 2026-10-21. **Trạng thái: người dùng đã duyệt thiết kế ngày 2026-10-21; chưa triển khai updater.**
 
 ## 1. Mục tiêu và ranh giới
 

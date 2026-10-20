@@ -58,12 +58,13 @@ task khi có yêu cầu của người dùng.
 
 ### NS-14 — Cập nhật trong app có xác nhận
 
-- [ ] **Trạng thái:** Đang thiết kế — chờ duyệt spec (2026-10-21).
+- [ ] **Trạng thái:** Thiết kế đã duyệt — chờ duyệt kế hoạch và chọn cách thực thi (2026-10-21).
 - **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
 - **Phụ thuộc:** Chốt thiết kế/key/feed; giữ NS-05 signing và nghiệm thu thiết bị riêng.
 - **Nội dung:** Sparkle kiểm tra/tải/xác minh/cài/relaunch khi người dùng yêu cầu; không cài nền. Cần một lần cài tay bản bootstrap sau 0.5.0.
 - **Tiêu chí nghiệm thu:** Archive/feed được ký; không cài khi xác minh lỗi; cancel/error giữ bản cũ; chờ reader/maintenance trước terminate; dữ liệu/cấu hình không bị xóa. Test A→B trên app copies và test key/feed cô lập, không đụng app thật. Có PR riêng, không tự merge/phát hành.
 - **Thiết kế:** [NS-14 signed in-app updates](superpowers/specs/2026-10-21-ns14-signed-in-app-updates-design.md).
+- **Kế hoạch:** [NS-14 implementation](superpowers/plans/2026-10-21-ns14-signed-in-app-updates.md) — chưa bắt đầu code.
 - **Bằng chứng hoàn thành:** Chưa triển khai code; chỉ khảo sát và thiết kế. Bản 0.5.0 công khai vẫn chỉ kiểm tra cập nhật thủ công.
 
 ## P2 — Tính nhất quán và khả năng phân tích
