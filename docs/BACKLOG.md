@@ -60,12 +60,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-06 — Đồng bộ khả năng giữa panel và app native
 
-- [ ] **Trạng thái:** Chưa bắt đầu
+- [x] **Trạng thái:** Hoàn thành local (2026-10-20) — chưa phát hành
 - **Ưu tiên:** P2
 - **Phụ thuộc:** Không.
 - **Nội dung:** Thêm bộ lọc provider cho panel khi nguồn Claude được cấu hình; thêm bảng chi phí theo model trong app native.
 - **Tiêu chí nghiệm thu:** Ghi rõ nguồn và phạm vi tổng; số liệu theo provider/model khớp dữ liệu nguồn, giữ đúng trạng thái giá thiếu hoặc chưa biết. Giữ tương thích snapshot schema v1 và trường hợp chỉ có Codex.
-- **Bằng chứng hoàn thành:** Chưa có.
+- **Bằng chứng hoàn thành:** 38 test Usage, 23 test Playwright, 114 test Swift và 4 test đóng gói đều đạt; typecheck, validate, build panel, build native arm64/x64 và smoke/provenance/signature đều đạt local. Bộ lọc dùng đúng breakdown provider, giữ ghim/cấu hình host khôi phục muộn, không phát lại tool metadata cũ; bảng model native có cuộn và phân biệt toàn phiên với tổng hôm nay. Đã kiểm tra render giả lập EN/VI/zh, sáng/tối và bảng dài. Schema v1 chỉ Codex và trường hợp thiếu breakdown được kiểm tra riêng. Review không còn P1/P2. Chưa kiểm chứng thao tác trên app cài đặt/host Codex thực tế hoặc Intel runtime; không thay đổi download v0.4.3 và không tự publish. Xem [panel](no-short-usage.md#provider-filters-ns-06-source-not-yet-in-v043-downloads) và [native](no-short-usage-menubar.md#costs-by-model-ns-06-source-not-yet-in-v043-downloads).
 
 ### NS-07 — Popover thích ứng màn hình
 

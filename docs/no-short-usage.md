@@ -1,6 +1,6 @@
 # No Short Usage
 
-No Short Usage provides the optional local Codex usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs using **ccusage 20.0.34**. These amounts are **not** ChatGPT subscription charges, invoices, remaining quota, or credits deducted.
+No Short Usage provides the optional local usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs and explicitly configured Claude Code logs using **ccusage 20.0.34**. These amounts are **not** subscription charges, invoices, remaining quota, or credits deducted.
 
 ## Interface language
 
@@ -44,8 +44,43 @@ Reusable skills are distributed separately in [no-short-skills](https://github.c
 - **Hôm nay / Tháng này**: totals grouped in the machine's local timezone.
 - Seven-day chart, refresh button, price-cache status and timestamp.
 - Refresh every 15 seconds while visible. Closing the panel stops polling; no separate daemon is installed.
+
 - Automatic selection follows the latest known main session's usage, not the focused Desktop tab. Pinning prevents switching. Subagents stay separate rather than being added to parents speculatively.
 - Unknown prices display “Chưa xác định”; incomplete totals display “Chưa đầy đủ”. Failed refreshes retain the last success and mark it stale.
+
+
+### Provider filters (NS-06 source; not yet in v0.4.3 downloads)
+
+Codex remains the default. If the helper has explicit Claude roots configured
+through `NO_SHORT_USAGE_CLAUDE_ROOTS` (comma-separated Claude home folders
+containing `projects`), the panel offers **All / Codex / Claude Code**. The
+native app's source preferences do not configure the plugin. An empty configured
+Claude source still appears; it does not borrow Codex usage.
+
+The filter applies to the session picker, today/month totals, model rows and
+seven-day chart. **Session** covers the selected session's entire retained
+history, not just today. Day/month include all sessions of the chosen provider
+in the snapshot's time zone. The chart always covers seven days across those
+sessions, even while viewing a single session. Scope labels distinguish these
+values. Choosing **All** does not merge sessions or change a session's lifetime
+cost; it combines provider totals only for day/month/chart.
+
+Changing provider clears the pin and search. The pin and provider preference
+are stored together in `no-short-usage-selection-v1`, with host widget-state
+support and a browser-local fallback. Late host restoration is supported, but
+cannot override a manual selection or an explicit tool request. Old pins saved
+before provider controls were added remain readable. Language changes retain them. Filtering
+uses the existing snapshot, without another log scan or network call. An exact
+session requested by a tool result selects its provider; later refreshes of
+that same result do not undo a manually chosen filter.
+
+Old schema-v1 Codex snapshots without provider fields still work and do not
+show Claude controls. A mixed snapshot without provider breakdowns can show
+individual sessions and combined totals, but cannot show provider-only period
+totals; these stay unavailable rather than being inferred from session history.
+Unknown and partial prices remain labeled, with known-priced subtotals where
+available. MCP summaries identify their configured providers; their period
+totals remain combined even when the panel is filtered locally.
 
 The source is `CODEX_HOME`, or `~/.codex` by default. Comma-separated roots are supported. Active and archived logs are processed by ccusage; missing logs cannot be reconstructed. Cache read/write tokens and output are preserved as reported; reasoning is not added twice. Names come from `session_index.jsonl`, with an ID fallback. Date-prefixed ccusage IDs are preserved, with metadata resolved from the rollout basename. Compressed rollouts without readable metadata retain an unknown session kind.
 

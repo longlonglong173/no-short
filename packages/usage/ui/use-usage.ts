@@ -10,6 +10,7 @@ export function useUsage() {
   const [data, setData] = useState<DashboardResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(true);
+  const [requestVersion, setRequestVersion] = useState(0);
   const refreshRef = useRef<() => Promise<void>>(async () => {});
   const preview = import.meta.env.DEV && window.parent === window;
   useEffect(() => {
@@ -18,9 +19,12 @@ export function useUsage() {
     let initial: ReturnType<typeof setTimeout> | undefined;
     let app: App | undefined;
     let call: (() => Promise<unknown>) | undefined;
-    function accept(result: unknown) {
+    function accept(result: unknown, fromTool = false) {
       const next = decodeResult(result);
-      if (next && alive) { received = true; setData(next); setError(null); setBusy(false); }
+      if (next && alive) {
+        received = true; setData(next); setError(null); setBusy(false);
+        if (fromTool && next.requestedSessionId) setRequestVersion(version => version + 1);
+      }
     }
     async function refresh() {
       if (!alive || tornDown || pending || !call) return;
@@ -39,7 +43,15 @@ export function useUsage() {
       if (document.visibilityState === 'visible' && alive && !tornDown && call) interval = setInterval(() => { void refresh(); }, 15_000);
     }
     function stop() { tornDown = true; clearInterval(interval); clearTimeout(initial); }
-    const onLegacyResult = () => accept(window.openai?.toolResponseMetadata);
+    let lastLegacyMetadata: unknown;
+    const onLegacyResult = () => {
+      const metadata = window.openai?.toolResponseMetadata;
+      // Unrelated globals events retain the last tool payload. Reaccepting it
+      // after a poll can roll back both the snapshot and a manual selection.
+      if (metadata === lastLegacyMetadata) return;
+      lastLegacyMetadata = metadata;
+      accept(metadata, true);
+    };
     document.addEventListener('visibilitychange', visibility);
     window.addEventListener('openai:set_globals', onLegacyResult);
     window.addEventListener('pagehide', stop);
@@ -56,7 +68,7 @@ export function useUsage() {
         setError('Mở No Short Usage từ plugin no-short trong Codex Desktop để đọc thống kê.'); setBusy(false); return;
       }
       app = new App({ name: 'No Short Usage', version: '0.4.2' }, {});
-      app.ontoolresult = accept;
+      app.ontoolresult = result => accept(result, true);
       const theme = (context: any) => {
         if (context?.theme) { applyDocumentTheme(context.theme); document.documentElement.dataset.theme = context.theme; }
         if (context?.styles?.variables) applyHostStyleVariables(context.styles.variables);
@@ -86,5 +98,5 @@ export function useUsage() {
       void app?.close().catch(() => {});
     };
   }, [preview]);
-  return { data, busy, error, preview, refresh: () => refreshRef.current() };
+  return { data, busy, error, preview, requestVersion, refresh: () => refreshRef.current() };
 }

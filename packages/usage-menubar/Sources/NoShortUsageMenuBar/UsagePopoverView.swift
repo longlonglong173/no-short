@@ -19,7 +19,7 @@ struct UsagePopoverView: View {
             }.pickerStyle(.segmented).labelsHidden().frame(maxWidth:.infinity).padding(.bottom,7)
             Text(model.activityLabel).font(.system(size:10)).foregroundStyle(.secondary)
                 .frame(maxWidth:.infinity,alignment:.leading).lineLimit(1).padding(.bottom,12)
-            if model.showsSessions { sessions } else { dashboard }
+            if model.showsModels { modelDetails } else if model.showsSessions { sessions } else { dashboard }
             }
         }
         .padding(22)
@@ -45,8 +45,8 @@ struct UsagePopoverView: View {
                 Text(model.isAll ? model.l("Chi phí hôm nay theo công cụ") : model.l("Phiên đang theo dõi")).font(.system(size: 12)).foregroundStyle(.secondary)
                 if model.isAll {
                     HStack {
-                        ForEach(UsageProvider.allCases,id:\.self) { provider in
-                            let cost = model.snapshot?.providerBreakdowns?.first { $0.provider == provider }?.today.cost
+                        ForEach(model.totalProviders,id:\.self) { provider in
+                            let cost = model.providerTodayCost(provider)
                             HStack {
                                 Text(provider.title).font(.system(size:11)).foregroundStyle(.secondary)
                                 Spacer(minLength:4)
@@ -81,12 +81,17 @@ struct UsagePopoverView: View {
                 HStack(alignment: .center, spacing: 10) {
                     Text(model.mainCost).font(.system(size: 49, weight: .semibold)).tracking(-1.8)
                         .monospacedDigit().foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.45)
-                        .accessibilityLabel(model.l("Chi phí phiên %@ đô la Mỹ, ước tính", String(model.mainCost)))
+                        .accessibilityLabel(model.costScopeLabel + ": " + model.mainCost + " USD")
                     Spacer(minLength: 0)
-                    Text(model.l("Ước tính")).font(.system(size: 11, weight: .medium)).foregroundStyle(accent)
-                        .padding(.horizontal, 10).padding(.vertical, 5).background(accent.opacity(0.12), in: Capsule())
+                    Button { model.showModelCosts() } label: {
+                        Label(model.l("Model"), systemImage: "list.bullet.rectangle")
+                            .font(.system(size: 11, weight: .medium))
+                            .padding(.horizontal, 10).padding(.vertical, 5)
+                    }.buttonStyle(.bordered).help(model.l("Chi phí theo model"))
+                        .accessibilityLabel(model.l("Chi phí theo model"))
                 }
-                Text(model.isAll ? model.l("Chi phí API quy đổi · Hôm nay") : model.l("Chi phí API quy đổi · Phiên này")).font(.system(size: 13)).foregroundStyle(.secondary)
+                Text(model.costScopeLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8).help(model.costScopeLabel)
             }.padding(.bottom, 20)
             HStack(spacing: 0) {
                 token(model.l("Input"), model.inputText)
@@ -108,7 +113,7 @@ struct UsagePopoverView: View {
                 HStack {
                     Text(model.l("Chi phí theo ngày")).font(.system(size: 12, weight: .medium))
                     Spacer()
-                    Text(model.l("7 ngày · Tất cả phiên")).font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text(model.l("7 ngày · Tất cả phiên · %@", model.aggregateProviderLabel)).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
                 costChart.frame(height: 124)
                 if model.hasUnpricedDays {
@@ -151,7 +156,7 @@ struct UsagePopoverView: View {
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
             Text(value).font(.system(size: 23, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.leading, title == model.l("Hôm nay") ? 0 : 30)
-        .help(model.l("%@ · Tổng tất cả phiên · %@ USD", String(title), String(value)))
+        .help(model.l("%@ · %@ · Tổng tất cả phiên · %@ USD", title, model.aggregateProviderLabel, value))
     }
     @ViewBuilder private var costChart: some View {
         if model.chartPoints.isEmpty {
@@ -270,6 +275,67 @@ struct UsagePopoverView: View {
             }
             Spacer(minLength: 0)
         }.font(.system(size: 12))
+    }
+
+    private var modelDetails: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button { model.showsModels = false } label: {
+                Label(model.l("Quay lại thống kê"), systemImage: "chevron.left")
+            }.buttonStyle(.plain).foregroundStyle(accent)
+            Text(model.l("Chi phí theo model")).font(.system(size: 17, weight: .semibold))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.costScopeLabel).font(.system(size: 11, weight: .medium))
+                if !model.isAll {
+                    Text(model.selectionLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                        .lineLimit(2).help(model.selectionLabel)
+                }
+                HStack(alignment: .firstTextBaseline) {
+                    Text(model.mainCost).font(.system(size: 24, weight: .semibold)).monospacedDigit()
+                    Text("USD").font(.system(size: 11)).foregroundStyle(.secondary)
+                    if let cost = model.mainUsageCost {
+                        Text(model.pricingLabel(cost)).font(.system(size: 10)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if let warning {
+                Label(warning, systemImage: "exclamationmark.circle").font(.system(size: 11))
+                    .foregroundStyle(.orange).lineLimit(2).help(warning)
+            }
+            HStack {
+                Text(model.l("Model")).frame(maxWidth: .infinity, alignment: .leading)
+                Text(model.l("Token")).frame(width: 65, alignment: .trailing)
+                Text("USD").frame(width: 96, alignment: .trailing)
+            }.font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+            Divider()
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    // Snapshot names need not be unique; keep every source row.
+                    ForEach(Array(model.modelUsages.enumerated()), id: \.offset) { _, row in
+                        HStack(alignment: .top) {
+                            Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
+                                .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).help(row.name)
+                            Text(UsagePresentation.number(row.tokens.total)).font(.system(size: 11)).monospacedDigit()
+                                .frame(width: 65, alignment: .trailing)
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text(UsagePresentation.money(row.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                                Text(model.pricingLabel(row.cost)).font(.system(size: 9)).foregroundStyle(.secondary)
+                            }.frame(width: 96, alignment: .trailing)
+                        }.padding(.vertical, 12).accessibilityElement(children: .combine)
+                        Divider()
+                    }
+                    if model.modelUsages.isEmpty {
+                        Text(model.l("Chưa có dữ liệu theo model")).font(.system(size: 12)).foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity).padding(.vertical, 30)
+                    }
+                }
+            }.frame(maxHeight: .infinity)
+            Text(model.l("≥ là phần chi phí đã biết; — là giá chưa biết, không phải $0."))
+                .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(model.l("Nguồn: ccusage · Log trên máy")).help(model.source)
+                .font(.system(size: 9)).foregroundStyle(.secondary)
+            Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
+                .font(.system(size: 9)).foregroundStyle(.secondary)
+        }.frame(maxHeight: .infinity, alignment: .top)
     }
 }
 
