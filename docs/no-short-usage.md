@@ -144,3 +144,11 @@ Notarization refuses development signatures, submits ZIPs containing signed comm
 Before release, verify a clean no-Node/Bun installation, both CPU architectures, and an actual panel in a new Desktop chat. Intel cross-compilation, Rosetta, browser screenshots, protocol tests and Desktop rendering are separate evidence. A public local-MCP directory submission requires OpenAI eligibility/approval; repository installation is a different path.
 
 No script pushes, creates a GitHub release, or submits to OpenAI's public directory.
+
+## Metadata cache (NS-08, unreleased source)
+
+Metadata uses a private, bounded per-file disk cache in the current source/timezone cache scope. Directory discovery and file stat remain live; size, inode, device, mtime and ctime changes invalidate entries. Codex title indexes are reread. Cache content contains metadata only, not conversation messages. Unstable writes are not cached; a broken/unwritable metadata cache falls back to reading logs.
+
+Run `bun packages/usage/scripts/benchmark-metadata.ts` for a synthetic-only benchmark (240 files, 501 lines each). On the recorded macOS arm64 run, original metadata code took 103.82 ms; new cold-cache 67.06 ms, warm-cache 7.58 ms (240 hits, no content reads). Outputs matched. Filesystem caching affects timing; this is not a whole-ccusage benchmark or a general speed guarantee.
+
+The pinned ccusage 20.0.34 can deduplicate identical timestamp/token events from two distinct Codex sessions. A native CLI characterization test records daily total 110 for two 110-token sessions with identical event times, and 220 when event times differ. NS-08 does not alter logs or patch that upstream behavior; estimates can undercount this case.

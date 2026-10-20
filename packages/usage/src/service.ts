@@ -26,8 +26,8 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
     let report;
     try { report = await runReport({ ...options, roots, claudeRoots, cacheDir: directory, timeZone, offline }); }
     catch (e) { if (offline) throw e; offline = true; report = await runReport({ ...options, roots, claudeRoots, cacheDir: directory, timeZone, offline: true }); }
-    const metadata = await readMetadata(roots);
-    if (claudeRoots?.length) for (const [key, value] of await readClaudeMetadata(claudeRoots)) metadata.set(key, value);
+    const metadata = await readMetadata(roots, { cacheDir: join(directory, 'metadata') });
+    if (claudeRoots?.length) for (const [key, value] of await readClaudeMetadata(claudeRoots, { cacheDir: join(directory, 'metadata') })) metadata.set(key, value);
     const value = buildSnapshot(report, { now: new Date(), timeZone, metadata, providers: requestedClaudeRoots?.length ? ['codex', 'claude'] : ['codex'], pricingSource: offline ? 'cached' : 'online' });
     if (!offline) { await mkdir(directory, { recursive: true, mode: 0o700 }); await writeFile(priceMarker, JSON.stringify({ lastOnline: Date.now() }), { mode: 0o600 }); }
     return value;
