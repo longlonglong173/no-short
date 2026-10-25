@@ -20,6 +20,20 @@ struct AppBuildInfo: Sendable {
     let native: UpdateCoordinator?
     var nativeState: NativeUpdateState? { native?.hasInstallCapability == true ? native?.state : nil }
     var isCheckingUpdate: Bool { nativeState?.isBusy ?? state.isChecking }
+    var updatePresentation: AppUpdatePresentation {
+        let mapped: NativeUpdateState
+        switch state {
+        case .idle: mapped = .idle
+        case .checking: mapped = .checking
+        case .available(let release): mapped = .available(version:release.tag)
+        case .current: mapped = .current
+        case .failed: mapped = .failed(.network)
+        }
+        var latest=native?.releaseVersion
+        if latest == nil { switch state { case .available(let release),.current(let release): latest=release.tag;default:break } }
+        return AppUpdatePresentation(installedVersion:info.version,latestVersion:latest,state:nativeState ?? mapped,lastCheckedAt:native?.lastCheckedAt,canCheck:native?.hasInstallCapability == true ? native?.canCheck == true : !state.isChecking,hasInstallCapability:native?.hasInstallCapability == true,automaticChecksEnabled:native?.automaticChecksEnabled == true)
+    }
+
     private let updates: ManualUpdateController
     init(info: AppBuildInfo = AppBuildInfo(), language: AppLanguage, client: any LatestReleaseLoading = GitHubReleaseClient(), native: UpdateCoordinator? = nil) {
         self.info = info; self.language = language; self.native = native
@@ -76,7 +90,11 @@ struct AboutView: View {
                 .disabled(model.isCheckingUpdate || (model.native?.hasInstallCapability == true && model.native?.canCheck != true))
             Link(model.l("Mở ghi chú phát hành"), destination: model.releaseNotesURL)
             Divider()
-            Text(model.l(model.nativeState != nil ? "Chỉ kiểm tra khi bạn yêu cầu. Cài đặt cần xác nhận và xác minh chữ ký." : "Chỉ liên hệ GitHub khi bạn bấm kiểm tra. Không tự tải hoặc thay thế app."))
+            if let native=model.native,native.hasInstallCapability {
+                Toggle(model.l("Tự kiểm tra cập nhật mỗi ngày"),isOn:Binding(get:{native.automaticChecksEnabled},set:{native.setAutomaticChecksEnabled($0)}))
+                if let checked=model.updatePresentation.checkedText(language:model.language) { Text(checked).foregroundStyle(.secondary) }
+            }
+            Text(model.l(model.nativeState != nil ? (model.native?.automaticChecksEnabled == true ? "Tự kiểm tra mỗi ngày khi app đang chạy. Chỉ tải và cài sau khi bạn xác nhận." : "Chỉ kiểm tra khi bạn yêu cầu. Chỉ tải và cài sau khi bạn xác nhận.") : "Chỉ liên hệ GitHub khi bạn bấm kiểm tra. Không tự tải hoặc thay thế app."))
             if model.native != nil && model.native?.hasInstallCapability == false {
                 Text(NativeUpdateState.failed(.notConfigured).localizedDescription(language: model.language)).foregroundStyle(.secondary)
             }

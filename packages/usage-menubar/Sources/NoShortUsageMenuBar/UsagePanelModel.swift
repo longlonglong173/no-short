@@ -9,6 +9,9 @@ struct DailyCostPoint: Identifiable {
 }
 
 @MainActor final class UsagePanelModel: ObservableObject {
+    @Published private(set) var appUpdate=AppUpdatePresentation(installedVersion:AppBuildInfo().version)
+    func updateAppUpdate(_ value: AppUpdatePresentation) { if appUpdate != value { appUpdate=value } }
+    var onAutomaticUpdateChecksChange: ((Bool) -> Void)?
     @Published private(set) var snapshot: UsageSnapshot?
     @Published private(set) var source = ""
     @Published private(set) var isLoading = false
@@ -185,7 +188,7 @@ struct DailyCostPoint: Identifiable {
     }
     var selectionMissing: Bool { snapshot != nil && selectedSessionID != nil && selectedSession == nil }
     var panelHeight: CGFloat {
-        712 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0) + (contextWarning != nil ? (isAll ? 64 : 44) : 0)
+        796 + ((notice != nil || isStale || selectionMissing || connectionNotice != nil) ? 40 : 0) + (hasUnpricedDays ? 16 : 0) + (contextWarning != nil ? (isAll ? 64 : 44) : 0)
     }
     var isAll:Bool { providerFilter == "all" }
     var waitingForUsage:Bool { !isAll && selectedSessionID == nil && followedActivity?.provider.rawValue == providerFilter && selectedSession == nil }

@@ -28,7 +28,7 @@ export async function runUpdateE2E({root,interactive,scenario="success",language
  const bundleID=`dev.noshort.usage.updater-test.${crypto.randomUUID().replaceAll('-','')}`;
  let feed:Uint8Array=Buffer.from('pending'),archive:Uint8Array=Buffer.from('pending');
  const requests:{url:string;headers:Record<string,string>;at:number}[]=[];
- const server=Bun.serve({hostname:'127.0.0.1',port:0,fetch(req){requests.push({url:req.url,headers:Object.fromEntries(req.headers.entries()),at:Date.now()}); const path=new URL(req.url).pathname;return new Response(path==='/feed.xml'?feed:path==='/update.zip'?archive:'missing',{status:scenario==='network'&&path==='/feed.xml'?503:path==='/feed.xml'||path==='/update.zip'?200:404,headers:{'Content-Type':path==='/feed.xml'?'application/rss+xml':'application/octet-stream'}})}});
+ const server=Bun.serve({hostname:'127.0.0.1',port:0,fetch(req){requests.push({url:req.url,headers:Object.fromEntries(req.headers.entries()),at:Date.now()}); const path=new URL(req.url).pathname;return new Response(path==='/feed.xml'?feed:path==='/update.zip'?archive:'missing',{status:(scenario==='network'||scenario==='probe-network')&&path==='/feed.xml'?503:path==='/feed.xml'||path==='/update.zip'?200:404,headers:{'Content-Type':path==='/feed.xml'?'application/rss+xml':'application/octet-stream'}})}});
  const feedURL=`http://127.0.0.1:${server.port}/feed.xml`,app=join(root,'install/No Short Usage.app');
  await assertIsolatedUpdateHarness({root,bundleID,feedURL,key:publicKey,appPath:app});
  const dirs=['home','codex/sessions','claude/projects','cache','activity','context','install','payload','exports'];for(const d of dirs)await mkdir(join(root,d),{recursive:true,mode:0o700});
@@ -41,15 +41,15 @@ export async function runUpdateE2E({root,interactive,scenario="success",language
   await cp(join(bin,'NoShortUsageMenuBar'),join(dest,'Contents/MacOS/NoShortUsageMenuBar'));
   const file=join(dest,'Contents/Info.plist');
   const p=JSON.parse(await exec(['/usr/bin/plutil','-convert','json','-o','-',file]));
-  Object.assign(p,{CFBundleIdentifier:bundleID,CFBundleVersion:version,CFBundleShortVersionString:version,SUFeedURL:feedURL,SUPublicEDKey:publicKey,NoShortUpdateCapability:'configured',NS14HarnessRoot:root,NS14Language:language,NS14HoldMaintenance:scenario==='maintenance',NSAppTransportSecurity:{NSAllowsArbitraryLoads:true}});
+  Object.assign(p,{CFBundleIdentifier:bundleID,CFBundleVersion:version,CFBundleShortVersionString:version,SUFeedURL:feedURL,SUPublicEDKey:publicKey,NoShortUpdateCapability:'configured',NS14HarnessRoot:root,NS14Language:language,NS14HoldMaintenance:scenario==='maintenance',NS14ProbeOnly:scenario.startsWith('probe-'),NSAppTransportSecurity:{NSAllowsArbitraryLoads:true}});
   await writeFile(file,JSON.stringify(p));await exec(['/usr/bin/plutil','-convert','xml1',file]);await exec(['/usr/bin/codesign','--force','--sign','-',dest]);
  }
  const zip=join(root,'update.zip');await exec(['/usr/bin/ditto','-c','-k','--sequesterRsrc','--keepParent',join(root,'payload/No Short Usage.app'),zip]);archive=await readFile(zip);
  const other=generateKeyPairSync('ed25519');const archiveSecret=scenario==='wrong-key'?Buffer.from(other.privateKey.export({format:'der',type:'pkcs8'}).subarray(-32).toString('base64')):secret;
  const sig=await runSigningTool([join(sparkleTools,'sign_update'),'--ed-key-file','-','-p',zip],archiveSecret);
- const xml=join(root,'feed.xml');await writeFile(xml,`<?xml version="1.0"?><rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><title>NS14 isolated fixture</title><item><title>0.6.1 fixture</title><sparkle:version>${scenario==='equal-version'?'0.6.0':'0.6.1'}</sparkle:version><sparkle:hardwareRequirements>${scenario==='wrong-architecture'?'x86_64':'arm64'}</sparkle:hardwareRequirements><sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion><description>Isolated update acceptance fixture only.</description><enclosure url="http://127.0.0.1:${server.port}/update.zip" sparkle:edSignature="${sig}" length="${archive.length}" type="application/octet-stream"/></item></channel></rss>`);
+ const xml=join(root,'feed.xml');await writeFile(xml,`<?xml version="1.0"?><rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"><channel><title>NS14 isolated fixture</title><item><title>0.6.1 fixture</title><sparkle:version>${(scenario==='equal-version'||scenario==='probe-equal-version')?'0.6.0':'0.6.1'}</sparkle:version><sparkle:hardwareRequirements>${scenario==='wrong-architecture'?'x86_64':'arm64'}</sparkle:hardwareRequirements><sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion><description>Isolated update acceptance fixture only.</description><enclosure url="http://127.0.0.1:${server.port}/update.zip" sparkle:edSignature="${sig}" length="${archive.length}" type="application/octet-stream"/></item></channel></rss>`);
  await runSigningTool([join(sparkleTools,'sign_update'),'--ed-key-file','-',xml],secret);secret.fill(0);archiveSecret.fill(0);feed=await readFile(xml);
- if(scenario==='corrupt-feed')feed=Buffer.from(Buffer.from(feed).toString().replace('Isolated update acceptance fixture only.','TAMPERED release notes'));
+ if(scenario==='corrupt-feed'||scenario==='probe-corrupt-feed')feed=Buffer.from(Buffer.from(feed).toString().replace('Isolated update acceptance fixture only.','TAMPERED release notes'));
  if(scenario==='unsigned-feed')feed=Buffer.from('<?xml version="1.0"?><rss version="2.0"><channel><title>Unsigned fixture</title></channel></rss>');
  if(scenario==='corrupt-archive'){archive=Buffer.from(archive);archive[archive.length-1]^=1;}
  await writeFile(join(root,'harness.json'),JSON.stringify({bundleID,feedURL,publicKey,app,scenario,archiveSHA256:createHash('sha256').update(archive).digest('hex')},null,2));
@@ -64,6 +64,15 @@ export async function runUpdateE2E({root,interactive,scenario="success",language
   for(let n=0;n<6000;n++){
    await Bun.sleep(50);
    await writeFile(join(root,'requests.json'),JSON.stringify(requests,null,2));
+   if(scenario.startsWith('probe-') && await Bun.file(join(root,'probe-result.json')).exists()) {
+    const probe=JSON.parse(await readFile(join(root,'probe-result.json'),'utf8'));
+    await Bun.sleep(300);
+    const failed=['probe-corrupt-feed','probe-network'].includes(scenario),current=scenario==='probe-equal-version';
+    if(probe.version!=='0.6.0'||!probe.canCheck||probe.failed!==failed||probe.checked===failed||probe.outdated!==(!failed&&!current)||(!failed&&probe.latestVersion!==(current?'0.6.0':'0.6.1')))throw Error('Incorrect quiet-probe result');
+    if(requests.length!==1||new URL(requests[0].url).pathname!=='/feed.xml'||!before.equals(await readFile(join(app,'Contents/MacOS/NoShortUsageMenuBar'))))throw Error('Probe downloaded, retried or replaced the app');
+    if(await readFile(log,'utf8')!==preservedLog||await readFile(join(root,'exports/sentinel.csv'),'utf8')!=='NS14-PRESERVE-EXPORT\n')throw Error('Probe changed source/export');
+    await writeFile(join(root,'result.json'),JSON.stringify({passed:true,scenario,probe,requests,bytesUnchanged:true},null,2));console.log('Real signed informational probe passed; exactly1 feed request, no archive/install.');return;
+   }
    if(scenario==='maintenance' && await Bun.file(join(root,'maintenance-start')).exists() && !(await Bun.file(join(root,'maintenance-end')).exists())){
     const info=JSON.parse(await exec(['/usr/bin/plutil','-convert','json','-o','-',join(app,'Contents/Info.plist')]));
     if(info.CFBundleVersion!=='0.6.0')throw Error('App replaced during active maintenance');maintenanceObservations++;

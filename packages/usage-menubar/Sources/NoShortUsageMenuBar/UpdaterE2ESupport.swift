@@ -52,6 +52,19 @@ import ObjectiveC
             }
         }
     }
+    private static var probeRecorded=false
+    static func recordProbeIfComplete(_ model: AboutModel) {
+        guard !probeRecorded,Bundle.main.object(forInfoDictionaryKey:"NS14ProbeOnly") as? Bool == true,
+              let native=model.native,!native.state.isBusy else { return }
+        let failed:Bool
+        if case .failed = native.state { failed=true } else { failed=false }
+        guard native.lastCheckedAt != nil || failed else { return }
+        probeRecorded=true
+        let summary=model.updatePresentation
+        let json:[String:Any] = ["version":model.info.version ?? "", "latestVersion":native.releaseVersion ?? "", "canCheck":native.canCheck,"failed":failed,"checked":native.lastCheckedAt != nil,"outdated":summary.isOutdated,"status":summary.statusText(language:model.language)]
+        do {try JSONSerialization.data(withJSONObject:json).write(to:root.appendingPathComponent("probe-result.json"),options:.atomic)}catch{exit(78)}
+        native.checkIfDue();native.checkIfDue()
+    }
     static func recordLaunch() {
         let preserved=UserDefaults.standard.string(forKey:"NS14Sentinel")=="NS14-KEEP"
         let json:[String:Any] = ["version":Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String ?? "", "bundleID":Bundle.main.bundleIdentifier ?? "", "pid":getpid(), "path":Bundle.main.bundleURL.path,"prefsPreserved":preserved,"prefsPath":root.appendingPathComponent("test-preferences.plist").path,"time":Date().timeIntervalSince1970]

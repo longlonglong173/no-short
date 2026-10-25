@@ -21,13 +21,15 @@ import UsageCore
         let arch="x86_64"
         #endif
         return UpdateCoordinator(configuration:config,architecture:arch,mayCheck:{ [weak self] in
-            guard let self else { return false };return !self.terminating && self.controller != nil && !self.controller.isMaintaining
-        },makeDriver:{ SparkleUpdateDriver() })
+            guard let self else { return false };return !self.terminating && !self.contextSuspended && self.controller != nil && !self.controller.isMaintaining
+        },makeDriver:{ SparkleUpdateDriver() },defaults:.standard)
     }()
     private lazy var aboutModel = AboutModel(language: panelModel.language,native:updateCoordinator)
     private lazy var aboutWindow = AboutWindowController(model: aboutModel)
     private var historyWindow: UsageHistoryWindowController?
     private var controller: RefreshController!
+    private var updateTimer: Timer?
+    private var firstUpdateCheck: Task<Void,Never>?
     private var terminating = false
     private var contextSuspended = false
     private let contextReader = ContextReader()
@@ -53,7 +55,7 @@ import UsageCore
         controller.onChange = { @MainActor @Sendable [weak self] in self?.render() }
         menu.onLanguageChange = { [weak self] in self?.panelModel.setLanguage($0) }
         panelModel.onLanguageChange = { [weak self] in self?.render() }
-        menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh() }
+        menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh(); self?.updateCoordinator.checkIfDue() }
         menu.onRefresh = { [weak self] in self?.controller.refresh() }
         menu.onChooseSource = { [weak self] in self?.chooseSource() }
         menu.onResetSource = { [weak self] in guard let self else { return }; self.sources.reset(); self.controller.setSource(self.sources.current); self.startMonitoring() }
@@ -73,8 +75,7 @@ import UsageCore
             #if NO_SHORT_UPDATER_E2E
             if aboutModel.nativeState == .installing { UpdaterE2ESupport.holdMaintenanceIfRequested(controller) }
             #endif
-            if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
-            else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
+            renderUpdateState()
         }
         panelModel.onSelectionChange = { [weak self] in self?.render() }
         panelModel.onRefresh = { [weak self] in self?.controller.refresh() }
@@ -90,6 +91,7 @@ import UsageCore
         panelModel.onBudgets = { [weak self] in self?.showBudgets() }
         panelModel.onDataManagement = { [weak self] in self?.showDataManagement() }
         panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
+        panelModel.onAutomaticUpdateChecksChange = { [weak self] in self?.updateCoordinator.setAutomaticChecksEnabled($0) }
         panelModel.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         panelModel.onChooseClaudeSource = { [weak self] in self?.chooseSource(claude:true) }
         panelModel.onResetClaudeSource = { [weak self] in
@@ -104,14 +106,34 @@ import UsageCore
         let center = NSWorkspace.shared.notificationCenter
         center.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
         center.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
-        startMonitoring(); render(); controller.resume()
+        startMonitoring(); render(); controller.resume(); scheduleUpdateChecks()
         #if NO_SHORT_UPDATER_E2E
         UpdaterE2ESupport.recordLaunch()
         if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == "0.6.0" {
-            DispatchQueue.main.asyncAfter(deadline:.now()+0.5) { self.showAbout(check:true) }
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.5) {
+                if Bundle.main.object(forInfoDictionaryKey:"NS14ProbeOnly") as? Bool == true { self.showPanel() }
+                else { self.showAbout(check:true) }
+            }
         }
         #endif
         if CommandLine.arguments.contains("--show-panel") { showPanel() }
+    }
+    private func scheduleUpdateChecks() {
+        updateTimer=Timer.scheduledTimer(withTimeInterval:3600,repeats:true) { [weak self] _ in
+            Task { @MainActor in self?.updateCoordinator.checkIfDue() }
+        }
+        firstUpdateCheck=Task { [weak self] in
+            do { try await Task.sleep(for:.seconds(10)) } catch { return }
+            guard !Task.isCancelled else { return };self?.updateCoordinator.checkIfDue()
+        }
+    }
+    private func renderUpdateState() {
+        panelModel.updateAppUpdate(aboutModel.updatePresentation)
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.recordProbeIfComplete(aboutModel)
+        #endif
+        if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
+        else { menu.updateReleaseState(aboutModel.state,language:panelModel.language) }
     }
     private func render() {
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
@@ -140,6 +162,7 @@ import UsageCore
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
         if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
         else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
+        panelModel.updateAppUpdate(aboutModel.updatePresentation)
     }
     private func refreshDiagnostics() {
         diagnosticsTask?.cancel()
@@ -305,7 +328,7 @@ import UsageCore
     }
     private func showPanel() {
         guard let button = statusItem?.button else { return }
-        render(); controller.refresh(); panel.toggle(relativeTo: button)
+        render(); controller.refresh(); panel.toggle(relativeTo: button); updateCoordinator.checkIfDue()
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !panel.popover.isShown { showPanel() }
@@ -363,10 +386,11 @@ import UsageCore
         let alert = NSAlert(); alert.messageText = "No Short Usage"; alert.informativeText = message
         alert.alertStyle = .warning; NSApp.activate(ignoringOtherApps: true); alert.runModal()
     }
-    @objc private func willSleep(_ notification: Notification) { contextSuspended=true; contextTask?.cancel(); contextKey=nil; panel.close(); activityMonitor?.stop(); controller.suspend() }
-    @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume() }
+    @objc private func willSleep(_ notification: Notification) { contextSuspended=true; contextTask?.cancel(); contextKey=nil; firstUpdateCheck?.cancel(); panel.close(); activityMonitor?.stop(); controller.suspend() }
+    @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume(); updateCoordinator.checkIfDue() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !terminating, let controller else { return terminating ? .terminateLater : .terminateNow }
+        updateTimer?.invalidate();firstUpdateCheck?.cancel()
         terminating = true; diagnosticsTask?.cancel(); contextTask?.cancel(); panel.close(); activityMonitor?.stop()
         Task { await controller.shutdown(); sender.reply(toApplicationShouldTerminate: true) }
         return .terminateLater
