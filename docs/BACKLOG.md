@@ -58,12 +58,12 @@ task khi có yêu cầu của người dùng.
 
 ### NS-14 — Cập nhật trong app có xác nhận và chữ ký
 
-- [x] **Trạng thái:** PR #34 đã merge; đang chuẩn bị bootstrap0.6.0 và feed production (2026-10-26).
+- [x] **Trạng thái:** Đã phát hành bootstrap0.6.0 (2026-10-26); triển khai feed/website qua PR #36.
 - **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
 - **Phụ thuộc:** NS-04; chủ dự án quản lý key production và duyệt phát hành riêng. NS-05 Developer ID/notarization/máy sạch/Intel/quyền OS/VoiceOver vẫn độc lập.
 - **Nội dung:** Kiểm tra theo yêu cầu, xác nhận tải/cài, xác minh feed/archive, shutdown an toàn, thay app và mở lại bằng Sparkle 2.10.0 đã pin. Không tự kiểm tra/tải/cài nền, profiling hay JavaScript.
 - **Tiêu chí nghiệm thu:** Shared About/menu state; cấu hình/architecture fail closed; framework ký đúng và symlink không thoát; actual A→B có xác nhận, giữ dữ liệu; hủy/chữ ký sai/feed bị sửa/mạng lỗi/sai version hoặc kiến trúc không thay app. Không thay app đang dùng hoặc public0.5.0.
-- **Bằng chứng local:** 190 Swift,19 packaging/policy/crypto/harness,144 Usage,32 browser,15 website qua; typecheck qua. Actual test-only A0.6.0→B0.6.1 qua standard UI,53 quan sát giữ A khi maintenance đang chạy;8 tình huống âm giữ nguyên executable/version/log/export. Key test ephemeral; prefs riêng và cache bridge test-ID có phê duyệt, đã dọn. [Báo cáo kiểm chứng và gate còn lại](releases/ns14-local-validation.md). PR #34 chỉ source, chưa có production key/feed hay phát hành0.6.0.
+- **Bằng chứng local:** 190 Swift,19 packaging/policy/crypto/harness,144 Usage,32 browser,15 website qua; typecheck qua. Actual test-only A0.6.0→B0.6.1 qua standard UI,53 quan sát giữ A khi maintenance đang chạy;8 tình huống âm giữ nguyên executable/version/log/export. Key test ephemeral; prefs riêng và cache bridge test-ID có phê duyệt, đã dọn. [Báo cáo kiểm chứng và gate còn lại](releases/ns14-local-validation.md). PR #34 triển khai source; PR #35 cấu hình khóa công khai và phiên bản0.6.0. Bootstrap0.6.0 đã phát hành với archive/feed được ký; PR #36 đưa feed và đường tải lên website. Người dùng0.5.0 cài tay một lần. Khóa riêng nằm ngoài Git, mọi asset công khai đã tải lại và đối chiếu hash/chữ ký; NS-05 vẫn riêng.
 
 ## P2 — Tính nhất quán và khả năng phân tích
 

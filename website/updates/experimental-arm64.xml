@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?><!-- sparkle-sign-warning:
+IMPORTANT: This file was signed by Sparkle. Any modifications to this file requires re-signing this file with generate_appcast or sign_update! The signed signature will be embedded at the end of this file.
+--><rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0"><channel><title>No Short Usage Experimental — Apple Silicon</title><item><title>0.6.0</title><sparkle:version>0.6.0</sparkle:version><sparkle:shortVersionString>0.6.0</sparkle:shortVersionString><sparkle:minimumSystemVersion>14.0.0</sparkle:minimumSystemVersion><sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements><description>Signed Experimental update. API-equivalent estimates, not subscription billing.</description><enclosure url="https://github.com/longlonglong173/no-short/releases/download/v0.6.0/NoShortUsage-0.6.0-arm64.zip" sparkle:edSignature="x8dirxv3A+t74IDJatkjs8D0kVIjiBwBRnWmphrBALyKwOtu0yLzLKd7DENFDO+8vosIyeUVn3MttgIjbcWaBw==" length="28083762" type="application/octet-stream"></enclosure></item></channel></rss><!-- sparkle-signatures:
+edSignature: wvzP2SviYjAXDVArdEQGOWwNWsHhXhz3ySDNYbEHtCqJPRsv+RI5mc4B59vC7w256uhsjQaQQ/4wZhH2XR74Ag==
+length: 1125
+-->
