@@ -178,3 +178,7 @@ Current links target the distinct `v0.4.3/NoShortUsage-0.4.3-arm64.zip` asset. T
 Current homepage/guide links target `v0.5.0/NoShortUsage-0.5.0-arm64.zip`. The native app includes NS-06–NS-12: provider parity, adaptive popover, metadata cache, history window, exports, optional budgets and bounded shared-cache maintenance. EN/VI/zh-CN labels and tagged privacy/technical-guide links follow this version. `app.js?v=22` invalidates the previous translation script.
 
 The public native ZIP is still Apple Silicon only, ad-hoc signed and not notarized. Cross-built Intel helpers are not an Intel app installer or device proof. Keep historical assets immutable. Verify the exact released bytes against release `SHA256SUMS`/`release-validation.json` before rollout; published assets precede the production website update.
+
+## Signed-update bootstrap0.6.0 (2026-10-26)
+
+Production download links now targetv0.6.0/NoShortUsage-0.6.0-arm64.zip. Users of0.5.0 manually install this bootstrap once; future releases are checked/downloaded/installed with explicit confirmation in the app. The byte-identical owner-signed feed is served at/updates/experimental-arm64.xml with RSS content type and five-minute cache revalidation. Never edit signed XML without re-signing; publish and verify immutable assets before deploying a feed. Only the public key is included in source. Experimental/ad-hoc signing and separate NS-05 acceptance remain explicit. Translation script version23 updates all three languages.
