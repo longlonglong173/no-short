@@ -8,7 +8,7 @@ Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charg
 
 ## Download the macOS app
 
-[Download for Apple Silicon — experimental v0.5.0](https://github.com/longlonglong173/no-short/releases/download/v0.5.0/NoShortUsage-0.5.0-arm64.zip)
+[Download for Apple Silicon — experimental v0.6.0](https://github.com/longlonglong173/no-short/releases/download/v0.6.0/NoShortUsage-0.6.0-arm64.zip)
 
 Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 
@@ -16,7 +16,9 @@ Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not avail
 2. Quit any older running copy and move **No Short Usage.app** to **Applications**.
 3. Open the app and click its menu bar icon.
 
-This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The package passed local build, signature and runtime checks; installation on other downloaded/quarantined Macs and live source-editor interactions remain unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.5.0.md).
+This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The package passed local build, signature and runtime checks; installation on other downloaded/quarantined Macs and live source-editor interactions remain unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.6.0.md).
+
+Users of0.5.0 install0.6.0 manually once; future signed releases can be installed from Check for Updates with confirmation. [Previous0.5.0 download](https://github.com/longlonglong173/no-short/releases/download/v0.5.0/NoShortUsage-0.5.0-arm64.zip).
 
 ## Features
 
@@ -78,6 +80,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [MCP build/package instructions](docs/no
 
 ## Releases and license
 
-Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks retain their own rights. See [NOTICE.md](NOTICE.md), [CHANGELOG.md](CHANGELOG.md) and the [release checklist](docs/releases/0.5.0.md).
+Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks retain their own rights. See [NOTICE.md](NOTICE.md), [CHANGELOG.md](CHANGELOG.md) and the [release checklist](docs/releases/0.6.0.md).
 
 Usage binaries are distributed through GitHub releases. Apple signing/notarization and OpenAI Plugin Directory review have separate status.

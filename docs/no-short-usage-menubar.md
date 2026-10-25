@@ -26,7 +26,7 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**An experimental Apple Silicon app is available in [v0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0).** Download `NoShortUsage-0.5.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.5.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**The signed-update bootstrap for Apple Silicon is [v0.6.0](https://github.com/longlonglong173/no-short/releases/tag/v0.6.0).** Download `NoShortUsage-0.6.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.6.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -338,12 +338,12 @@ The same window explains disconnecting existing hooks/context, disabling Open at
 
 Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.
 
-## Unreleased: signed in-app updates (NS-14)
+## Signed in-app updates — since0.6.0 (NS-14)
 
 A configured Apple Silicon build uses **Check for Updates → review version/notes → Install Update → Install and Relaunch**. Signed feed/archive verification is mandatory; an error or cancellation keeps the current app. Checking/downloading leaves usage reads independent; installation goes through the normal shutdown drain and waits for maintenance. Startup and opening About do not trigger a check. Background checks, automatic downloads, silent installs, profiling and JavaScript are disabled.
 
 Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
 
-**Public 0.5.0 is unchanged and needs one manual bootstrap installation.** Proposed 0.6.0 is not published by this PR. Without reviewed owner public-key/feed configuration, local builds explicitly offer the manual ZIP fallback, not a working installer updater. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
+**Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install0.6.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
 
 See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#unreleased-source-confirmed-native-updates-ns-14).

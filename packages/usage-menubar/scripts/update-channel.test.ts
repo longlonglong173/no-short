@@ -10,8 +10,8 @@ test('canonical update configuration, no private fields or placeholders',()=>{
 });
 test('dev missing configuration is explicit; test files cannot enter distribution',async()=>{
  expect(await loadUpdateChannel(undefined,'development')).toBeNull();
- await expect(loadUpdateChannel(undefined,'distribution')).rejects.toThrow();
  const dir=await mkdtemp(join(tmpdir(),'ns14-config-'));try {
+  await expect(loadUpdateChannel(join(dir,'missing.json'),'distribution')).rejects.toThrow();
   const p=join(dir,'config.json');await writeFile(p,JSON.stringify({feedURL:'https://no-short.io.vn/updates/experimental-arm64.xml',publicKey:Buffer.alloc(32,1).toString('base64')}));
   expect((await loadUpdateChannel(p,'development'))?.publicKey).toBeTruthy();
   await expect(loadUpdateChannel(p,'distribution')).rejects.toThrow();

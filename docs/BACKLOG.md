@@ -58,7 +58,7 @@ task khi có yêu cầu của người dùng.
 
 ### NS-14 — Cập nhật trong app có xác nhận và chữ ký
 
-- [x] **Trạng thái:** Source và E2E local đã kiểm chứng (2026-10-21); chưa merge/phát hành/bootstrap hoặc bật feed production.
+- [x] **Trạng thái:** PR #34 đã merge; đang chuẩn bị bootstrap0.6.0 và feed production (2026-10-26).
 - **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
 - **Phụ thuộc:** NS-04; chủ dự án quản lý key production và duyệt phát hành riêng. NS-05 Developer ID/notarization/máy sạch/Intel/quyền OS/VoiceOver vẫn độc lập.
 - **Nội dung:** Kiểm tra theo yêu cầu, xác nhận tải/cài, xác minh feed/archive, shutdown an toàn, thay app và mở lại bằng Sparkle 2.10.0 đã pin. Không tự kiểm tra/tải/cài nền, profiling hay JavaScript.
