@@ -133,7 +133,7 @@ task khi có yêu cầu của người dùng.
 
 ### NS-15 — Phiên bản và thông báo cập nhật trong app
 
-- [x] **Trạng thái:** Hoàn thành source/local, chuẩn bị bản0.6.1 (2026-10-26).
+- [x] **Trạng thái:** Đã phát hành0.6.1 (2026-10-26); đưa feed/website mới lên qua PR rollout.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-14 và bootstrap0.6.0; tái sử dụng khóa/kênh đã ký.
 - **Nội dung:** Hiện phiên bản đang chạy, trạng thái cập nhật và thời điểm kiểm tra ở bảng chính. Người dùng đã chọn tự kiểm tra mỗi ngày, chỉ thông báo trong app; tải/cài vẫn xác nhận riêng.

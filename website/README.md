@@ -182,3 +182,7 @@ The public native ZIP is still Apple Silicon only, ad-hoc signed and not notariz
 ## Signed-update bootstrap0.6.0 (2026-10-26)
 
 Production download links now targetv0.6.0/NoShortUsage-0.6.0-arm64.zip. Users of0.5.0 manually install this bootstrap once; future releases are checked/downloaded/installed with explicit confirmation in the app. The byte-identical owner-signed feed is served at/updates/experimental-arm64.xml with RSS content type and five-minute cache revalidation. Never edit signed XML without re-signing; publish and verify immutable assets before deploying a feed. Only the public key is included in source. Experimental/ad-hoc signing and separate NS-05 acceptance remain explicit. Translation script version23 updates all three languages.
+
+## In-app update test0.6.1 (2026-10-26)
+
+Current downloads/feed point to immutablev0.6.1 assets. A user on0.6.0 can choose Check for Updates in the app to install0.6.1; after relaunch the new version/status row and optional quiet daily discovery become available. No dummy0.6.2 is published. The existing owner key is reused and0.6.0 files remain unchanged. Translation scriptv24 updates the EN/VI/zh-CN version and test guidance. Signed XML is copied byte-for-byte after final signing and public-asset verification; feed media/cache policy stays the same.
