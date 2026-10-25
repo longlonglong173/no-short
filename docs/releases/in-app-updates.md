@@ -1,6 +1,6 @@
 # Signed native updates — maintainer release procedure (since0.6.0)
 
-The0.6.0 Apple Silicon release is the updater bootstrap. Installing0.5.0 cannot retrofit an updater; users install0.6.0 manually once. The native updater never updates the separate MCP plugin. No automatic checks/downloads/silent installs or profiling are enabled.
+The0.6.0 Apple Silicon release is the updater bootstrap. Installing0.5.0 cannot retrofit an updater; users install0.6.0 manually once. The native updater never updates the separate MCP plugin. Since0.6.1 the app performs optional quiet daily informational checks; it never automatically downloads or silently installs, and profiling is disabled.
 
 ## Public configuration / keys
 

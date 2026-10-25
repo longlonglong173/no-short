@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1 — Experimental (2026-10-26)
+
+- NS-15: show the running app version, latest verified update status, last check time and update action in the main popover. Share state with About/menu and preserve a known update after cancellation.
+- Add quiet information-only checks at most once per24hours across restarts, with an on/off setting and manual retry. Background discovery never downloads, opens installer dialogs, installs or sends OS notifications.
+- Reuse the existing pinned owner key and signed channel;0.6.0 users can install this release through Check for Updates. Old releases remain immutable.
+
 ## 0.6.0 — Experimental (2026-10-26)
 
 - NS-14: add manual, confirmation-only signed native updates using pinned Sparkle 2.10.0, shared About/menu state and the existing safe shutdown gate. Require signed feeds and archives; disable background checks/downloads, profiling and release-notes JavaScript.
