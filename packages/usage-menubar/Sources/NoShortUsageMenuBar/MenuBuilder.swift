@@ -112,6 +112,11 @@ import UsageCore
         threshold = value
         contextAlertItem.title = l("Ngưỡng cảnh báo context: %@%…", String(value))
     }
+    func updateNativeReleaseState(_ state: NativeUpdateState, language: AppLanguage) {
+        checkUpdatesItem.title=AppLocalization(language:language).text(state.isBusy ? "Đang kiểm tra bản cập nhật…" : "Kiểm tra bản cập nhật…")
+        checkUpdatesItem.isEnabled = !state.isBusy
+        put(state.localizedDescription(language:language),in:updateStatusItem)
+    }
     func updateReleaseState(_ state: ManualUpdateState, language: AppLanguage) {
         // This path never touches usage loading or its warning row.
         let localization = AppLocalization(language: language)

@@ -56,6 +56,15 @@ task khi có yêu cầu của người dùng.
 - **Tiêu chí nghiệm thu:** Mỗi kiểm tra ghi phiên bản, môi trường, kết quả và bằng chứng. Thiếu thiết bị hoặc chứng chỉ được ghi là bị chặn, không đánh dấu đã đạt. Phân biệt bản build local với artifact phát hành được kiểm chứng. Không tự publish.
 - **Bằng chứng hiện có:** 102 test Swift tích hợp, 4 test đóng gói và 34 test Usage; build/provenance/signature/smoke cùng artifact được ghi tại [release 0.4.3](releases/0.4.3.md) và `release-validation.json`. Notarization, máy sạch, Intel runtime, hooks/context thực tế, thông báo, sleep/wake, login và VoiceOver chưa được đánh dấu đạt. PR riêng theo dõi phần chuẩn bị Experimental; task chưa hoàn tất.
 
+### NS-14 — Cập nhật trong app có xác nhận và chữ ký
+
+- [x] **Trạng thái:** Source và E2E local đã kiểm chứng (2026-10-21); chưa merge/phát hành/bootstrap hoặc bật feed production.
+- **Ưu tiên:** P1 — chuỗi tin cậy khi cài executable.
+- **Phụ thuộc:** NS-04; chủ dự án quản lý key production và duyệt phát hành riêng. NS-05 Developer ID/notarization/máy sạch/Intel/quyền OS/VoiceOver vẫn độc lập.
+- **Nội dung:** Kiểm tra theo yêu cầu, xác nhận tải/cài, xác minh feed/archive, shutdown an toàn, thay app và mở lại bằng Sparkle 2.10.0 đã pin. Không tự kiểm tra/tải/cài nền, profiling hay JavaScript.
+- **Tiêu chí nghiệm thu:** Shared About/menu state; cấu hình/architecture fail closed; framework ký đúng và symlink không thoát; actual A→B có xác nhận, giữ dữ liệu; hủy/chữ ký sai/feed bị sửa/mạng lỗi/sai version hoặc kiến trúc không thay app. Không thay app đang dùng hoặc public0.5.0.
+- **Bằng chứng local:** 190 Swift,19 packaging/policy/crypto/harness,144 Usage,32 browser,15 website qua; typecheck qua. Actual test-only A0.6.0→B0.6.1 qua standard UI,53 quan sát giữ A khi maintenance đang chạy;8 tình huống âm giữ nguyên executable/version/log/export. Key test ephemeral; prefs riêng và cache bridge test-ID có phê duyệt, đã dọn. [Báo cáo kiểm chứng và gate còn lại](releases/ns14-local-validation.md). PR #34 chỉ source, chưa có production key/feed hay phát hành0.6.0.
+
 ## P2 — Tính nhất quán và khả năng phân tích
 
 ### NS-06 — Đồng bộ khả năng giữa panel và app native

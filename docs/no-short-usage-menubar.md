@@ -300,7 +300,7 @@ prove a macOS notification banner was delivered on a user's machine.
 
 The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
 
-About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The app does not download or replace itself.
+About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The published 0.5.0 app does not download or replace itself. The unreleased NS-14 implementation below adds that capability only to separately configured future builds.
 
 ## Adaptive popover (NS-07, 0.5.0)
 
@@ -337,3 +337,13 @@ Close older plugin runtimes first. New readers honor a shared maintenance guard;
 The same window explains disconnecting existing hooks/context, disabling Open at login, quitting/removing the app, and which data remains. These instructions do not automatically edit settings or uninstall anything. Fixture/model tests use isolated files and never invoke clearing the user's real cache; installed-app confirmation and simultaneous older-plugin behavior remain manual checks.
 
 Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.
+
+## Unreleased: signed in-app updates (NS-14)
+
+A configured Apple Silicon build uses **Check for Updates → review version/notes → Install Update → Install and Relaunch**. Signed feed/archive verification is mandatory; an error or cancellation keeps the current app. Checking/downloading leaves usage reads independent; installation goes through the normal shutdown drain and waits for maintenance. Startup and opening About do not trigger a check. Background checks, automatic downloads, silent installs, profiling and JavaScript are disabled.
+
+Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
+
+**Public 0.5.0 is unchanged and needs one manual bootstrap installation.** Proposed 0.6.0 is not published by this PR. Without reviewed owner public-key/feed configuration, local builds explicitly offer the manual ZIP fallback, not a working installer updater. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
+
+See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#unreleased-source-confirmed-native-updates-ns-14).
