@@ -1,5 +1,6 @@
 import XCTest
 import CryptoKit
+import AppKit
 @testable import UsageCore
 @testable import NoShortUsageMenuBar
 
@@ -31,6 +32,15 @@ import CryptoKit
         XCTAssertEqual(restored.releaseVersion,"0.6.2");XCTAssertEqual(restored.lastCheckedAt,now)
         let changed=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{true},makeDriver:{driver},defaults:defaults,installedVersion:"0.6.1",now:{now})
         XCTAssertNil(changed.releaseVersion);XCTAssertNil(changed.lastCheckedAt)
+    }
+    func testAboutAndMenuKeepTheSameUpdateNoticeAfterProbeFinishes() throws {
+        let driver=DailyDriver(),c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{true},makeDriver:{driver},installedVersion:"0.6.1")
+        let about=AboutModel(info:.init(version:"0.6.1",build:"0.6.1"),language:.english,native:c)
+        c.checkIfDue();driver.onState?(.available(version:"0.6.2"));driver.onState?(.idle)
+        XCTAssertEqual(about.statusText,"New version available: 0.6.2")
+        let menu=MenuBuilder();menu.updateAppReleaseStatus(about.updatePresentation,language:.english)
+        XCTAssertNotNil(menu.menu.item(withTitle:"New version available: 0.6.2"))
+        XCTAssertEqual(menu.menu.item(withTitle:"Update…")?.isEnabled,true)
     }
     func testFailureNeverClaimsSuccessfulCheckAndFutureClockRecoversWithoutRequestLoop() throws {
         var now=Date(timeIntervalSince1970:1_000_000);let driver=DailyDriver()

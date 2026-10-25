@@ -51,7 +51,7 @@ struct AppBuildInfo: Sendable {
     }
     var versionText: String { l("Phiên bản: %@", metadata(info.version)) }
     var buildText: String { l("Build: %@", metadata(info.build)) }
-    var statusText: String { nativeState?.localizedDescription(language: language) ?? state.localizedDescription(language: language) }
+    var statusText: String { nativeState != nil ? updatePresentation.statusText(language:language) : state.localizedDescription(language:language) }
     var releaseNotesURL: URL {
         if let version=native?.releaseVersion { return GitHubReleaseClient.notesURL(for:version) }
         return manualReleaseNotesURL

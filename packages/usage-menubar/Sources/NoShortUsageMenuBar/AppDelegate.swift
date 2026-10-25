@@ -132,7 +132,7 @@ import UsageCore
         #if NO_SHORT_UPDATER_E2E
         UpdaterE2ESupport.recordProbeIfComplete(aboutModel)
         #endif
-        if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
+        if aboutModel.nativeState != nil { menu.updateAppReleaseStatus(aboutModel.updatePresentation,language:panelModel.language) }
         else { menu.updateReleaseState(aboutModel.state,language:panelModel.language) }
     }
     private func render() {
@@ -160,7 +160,7 @@ import UsageCore
         if aboutModel.language != panelModel.language { aboutModel.language = panelModel.language }
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
-        if let state=aboutModel.nativeState { menu.updateNativeReleaseState(state,language:panelModel.language) }
+        if aboutModel.nativeState != nil { menu.updateAppReleaseStatus(aboutModel.updatePresentation,language:panelModel.language) }
         else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
         panelModel.updateAppUpdate(aboutModel.updatePresentation)
     }

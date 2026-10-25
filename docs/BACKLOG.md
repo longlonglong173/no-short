@@ -138,7 +138,7 @@ task khi có yêu cầu của người dùng.
 - **Phụ thuộc:** NS-14 và bootstrap0.6.0; tái sử dụng khóa/kênh đã ký.
 - **Nội dung:** Hiện phiên bản đang chạy, trạng thái cập nhật và thời điểm kiểm tra ở bảng chính. Người dùng đã chọn tự kiểm tra mỗi ngày, chỉ thông báo trong app; tải/cài vẫn xác nhận riêng.
 - **Tiêu chí nghiệm thu:** Dùng một coordinator cho panel/About/menu; probe tối đa một lần/24h kể cả khởi động lại, có bật/tắt và kiểm tra thủ công. Giữ bản mới đã biết sau khi đóng hộp thoại; lỗi không nhận nhầm là mới nhất. Không tải/cài/mở hộp thoại hoặc thông báo OS từ probe. Giữ chữ ký, ARM, shutdown drain và ba ngôn ngữ.
-- **Bằng chứng local:**197Swift+19script tests; bốn phiên native probe thực với signed newer/equal/tampered feed/HTTP503 đều chỉ gửi1request đọc feed,0archive/install, giữ nguyên app/log/export. Render EN/VI/zh sáng/tối và kiểm tra viewport nhỏ. NS-05 vẫn riêng; người dùng test0.6.0→0.6.1 qua About → Check for Updates sau phát hành.
+- **Bằng chứng local:**198Swift+19script tests; bốn phiên native probe thực với signed newer/equal/tampered feed/HTTP503 đều chỉ gửi1request đọc feed,0archive/install, giữ nguyên app/log/export. Render EN/VI/zh sáng/tối và kiểm tra viewport nhỏ. NS-05 vẫn riêng; người dùng test0.6.0→0.6.1 qua About → Check for Updates sau phát hành.
 
 ## P3 — Phân tích nâng cao
 
