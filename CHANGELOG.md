@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.6.0 — Experimental (2026-10-26)
 
 - NS-14: add manual, confirmation-only signed native updates using pinned Sparkle 2.10.0, shared About/menu state and the existing safe shutdown gate. Require signed feeds and archives; disable background checks/downloads, profiling and release-notes JavaScript.
 - Embed/verify nested framework code for both architectures; gate distribution on reviewed public configuration and ARM payload identity. Prepare signed feeds locally without publishing.
-- Verify actual replacement/relaunch and failure cases on isolated test copies. Production owner key/feed and a separately authorized bootstrap release are still required; public 0.5.0 downloads are unchanged. See [local evidence and remaining gates](docs/releases/ns14-local-validation.md).
+- Verify actual replacement/relaunch and failure cases on isolated test copies. Configure the owner-signed ARM update channel for the 0.6.0 bootstrap. Users of0.5.0 install this release manually once; subsequent updates use confirmation in the app. See [local evidence and remaining gates](docs/releases/ns14-local-validation.md).
 
 ## 0.5.0 — Experimental (2026-10-21)
 

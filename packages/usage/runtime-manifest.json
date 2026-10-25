@@ -1,20 +1,20 @@
 {
-  "version": "0.5.0",
+  "version": "0.6.0",
   "ccusageVersion": "20.0.34",
   "platforms": {
     "darwin-arm64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.5.0/no-short-usage-darwin-arm64.tar.gz",
-      "sha256": "83486cac7b83f2b7a1879dfaf1f8a6fccb010f8e5ee8be06e0a49acfbcd34008",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.6.0/no-short-usage-darwin-arm64.tar.gz",
+      "sha256": "84e04bf33d6fbeb6e3b1f5509d1a8e0cbee4a551a53826dc5ae4b43279b6bc6d",
       "binaries": {
-        "no-short-usage": "d906e2b5b89a439c3143d0bee9a980b85b92059589942361008f454b72e3c4aa",
+        "no-short-usage": "4f0e3f1b475e5ab17d78b542a2de462dd830c078ba9388edace1525ff899bd2c",
         "ccusage": "09f0591a1ba17267373e6490caa838c748224199b4bc196ea79de4ae9a287c90"
       }
     },
     "darwin-x64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.5.0/no-short-usage-darwin-x64.tar.gz",
-      "sha256": "9e0d64636a74db4dbfa19eca7f408a191b031721998796207810ecf665d97185",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.6.0/no-short-usage-darwin-x64.tar.gz",
+      "sha256": "eb8389929c5da5ded82ff6453ebed4d697352e7706bcc54364c8de87be9d4674",
       "binaries": {
-        "no-short-usage": "a474f72e0382b92284db3ac78f5980ac870f2c484799545227d36dca1981b4a0",
+        "no-short-usage": "bb74cbaba430968bb0dcb46bfff53713db2039fdd2c72a885dc33f36acfd02cc",
         "ccusage": "5227130f9194d69d3fa5beafa7dfc6e8ae7ef92e5ed089e1d75ab62ae07a9885"
       }
     }

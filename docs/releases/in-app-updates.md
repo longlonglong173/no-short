@@ -1,10 +1,10 @@
-# Signed native updates — maintainer preparation (NS-14, unreleased)
+# Signed native updates — maintainer release procedure (since0.6.0)
 
-This source work does not change the public 0.5.0 release. Installing 0.5.0 cannot retrofit an updater; a future bootstrap (proposed 0.6.0) requires one manual installation. The native updater never updates the separate MCP plugin. No automatic checks/downloads/silent installs or profiling are enabled.
+The0.6.0 Apple Silicon release is the updater bootstrap. Installing0.5.0 cannot retrofit an updater; users install0.6.0 manually once. The native updater never updates the separate MCP plugin. No automatic checks/downloads/silent installs or profiling are enabled.
 
 ## Public configuration / keys
 
-The owner must separately provide a reviewed, committed `packages/usage-menubar/update-channel.json` containing only `feedURL` and `publicKey`. Feed URL is exactly `https://no-short.io.vn/updates/experimental-arm64.xml`; public key is base64 of the owner's Ed25519 32-byte public key. No production key is created by builds or this PR. Private key backup/storage remains the owner's responsibility; never commit it or put it in app/website/CLI arguments/logs. Follow [Sparkle setup](https://sparkle-project.org/documentation/) to manage owner keys in Keychain or a dedicated secret store. Ad-hoc key loss can require a new manual bootstrap.
+The owner public channel is committed in `packages/usage-menubar/update-channel.json`, containing only `feedURL` and `publicKey`. Feed URL is exactly `https://no-short.io.vn/updates/experimental-arm64.xml`; public key is base64 of the owner's Ed25519 32-byte public key. Builds never generate or rotate production keys. The bootstrap key was created separately during the owner-authorized0.6.0 release; its private file stays outside Git. Private key backup/storage remains the owner's responsibility; never commit it or put it in app/website/CLI arguments/logs. Follow [Sparkle setup](https://sparkle-project.org/documentation/) to manage owner keys in Keychain or a dedicated secret store. Ad-hoc key loss can require a new manual bootstrap.
 
 Development builds without `NO_SHORT_UPDATE_CONFIGURATION` remain explicitly unconfigured and offer manual downloads. Distribution builds require the reviewed canonical production config; temp/test configs cannot pass. Do not publish unconfigured development artifacts as an updater-capable bootstrap. x64 builds retain no ARM feed and are not public native app downloads.
 
