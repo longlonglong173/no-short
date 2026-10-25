@@ -34,6 +34,16 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+        "Chưa kiểm tra cập nhật.": ["Updates not checked yet.", "尚未检查更新。"],
+        "Không có bản cập nhật mới hơn.": ["No newer updates found.", "没有发现更新的版本。"],
+        "Cập nhật…": ["Update…", "更新…"],
+        "Kiểm tra cập nhật…": ["Check for Updates…", "检查更新…"],
+        "Kiểm tra gần nhất: %@": ["Last checked: %@", "上次检查：%@"],
+        "Phiên bản ứng dụng: %@": ["App version: %@", "应用版本：%@"],
+        "Tự kiểm tra cập nhật mỗi ngày": ["Check for updates daily", "每天检查更新"],
+        "Tự kiểm tra mỗi ngày khi app đang chạy. Chỉ tải và cài sau khi bạn xác nhận.": ["Checks daily while the app is running. Download and install only after you confirm.", "应用运行时每天检查。仅在您确认后下载并安装。"],
+        "Chỉ kiểm tra khi bạn yêu cầu. Chỉ tải và cài sau khi bạn xác nhận.": ["Checks only when you ask. Download and install only after you confirm.", "仅在您请求时检查。仅在您确认后下载并安装。"],
+        "Cần làm mới dữ liệu": ["Data needs refresh", "数据需要刷新"],
         "Sẵn sàng kiểm tra và cài bản cập nhật có xác nhận.": ["Ready to check and install updates with confirmation.", "可检查并在确认后安装更新。"],
         "Đang tải bản cập nhật đã ký…": ["Downloading the signed update…", "正在下载已签名的更新…"],
         "Đang chuẩn bị cài đặt và mở lại app…": ["Preparing to install and relaunch…", "正在准备安装并重新启动…"],

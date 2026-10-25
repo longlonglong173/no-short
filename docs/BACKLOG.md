@@ -131,6 +131,15 @@ task khi có yêu cầu của người dùng.
 - **Tiêu chí nghiệm thu:** Phân biệt dữ liệu dùng chung với plugin, bản sao cấu hình và log gốc. Xóa đúng phạm vi đã xác nhận, xử lý việc đọc/ghi đang diễn ra và lỗi quyền truy cập. Không xóa log Codex/Claude hoặc cấu hình bên thứ ba; hướng dẫn rõ dữ liệu nào còn lại sau khi gỡ app.
 - **Bằng chứng hoàn thành:** Cửa sổ Data management được giữ một instance, xác nhận mặc định Cancel; chỉ xóa file cache đã biết trong thư mục mặc định, từ chối override/symlink/nguồn được bảo vệ/scan đang chạy. Suspend và chờ reader kết thúc trước khi xóa; shutdown chờ maintenance hoàn tất. Guard chung có owner/nonce và kernel flock ổn định cho native; TS chỉ kiểm tra hoặc bỏ qua guard đã bỏ lại sau xác minh, không xóa guard. Giữ file lạ, log gốc, cấu hình và bản sao; hướng dẫn ngắt hooks/context/login và gỡ app, không tự thay cấu hình. Test hồi quy stale-recovery/shutdown/localization có RED trước sửa; 143 Usage (25 maintenance), 32 browser, 181 Swift và 4 đóng gói qua; typecheck/build UI/validation qua. Safety review không còn P1/P2. Chỉ dùng fixture cô lập, không xóa cache thật của người dùng; UI tương tác app đã cài/VoiceOver chưa nghiệm thu.
 
+### NS-15 — Phiên bản và thông báo cập nhật trong app
+
+- [x] **Trạng thái:** Hoàn thành source/local, chuẩn bị bản0.6.1 (2026-10-26).
+- **Ưu tiên:** P2
+- **Phụ thuộc:** NS-14 và bootstrap0.6.0; tái sử dụng khóa/kênh đã ký.
+- **Nội dung:** Hiện phiên bản đang chạy, trạng thái cập nhật và thời điểm kiểm tra ở bảng chính. Người dùng đã chọn tự kiểm tra mỗi ngày, chỉ thông báo trong app; tải/cài vẫn xác nhận riêng.
+- **Tiêu chí nghiệm thu:** Dùng một coordinator cho panel/About/menu; probe tối đa một lần/24h kể cả khởi động lại, có bật/tắt và kiểm tra thủ công. Giữ bản mới đã biết sau khi đóng hộp thoại; lỗi không nhận nhầm là mới nhất. Không tải/cài/mở hộp thoại hoặc thông báo OS từ probe. Giữ chữ ký, ARM, shutdown drain và ba ngôn ngữ.
+- **Bằng chứng local:**198Swift+19script tests; bốn phiên native probe thực với signed newer/equal/tampered feed/HTTP503 đều chỉ gửi1request đọc feed,0archive/install, giữ nguyên app/log/export. Render EN/VI/zh sáng/tối và kiểm tra viewport nhỏ. NS-05 vẫn riêng; người dùng test0.6.0→0.6.1 qua About → Check for Updates sau phát hành.
+
 ## P3 — Phân tích nâng cao
 
 ### NS-13 — Thống kê theo dự án và nhóm phiên cha–con

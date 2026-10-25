@@ -26,7 +26,7 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**The signed-update bootstrap for Apple Silicon is [v0.6.0](https://github.com/longlonglong173/no-short/releases/tag/v0.6.0).** Download `NoShortUsage-0.6.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.6.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**The signed-update bootstrap for Apple Silicon is [v0.6.1](https://github.com/longlonglong173/no-short/releases/tag/v0.6.1).** Download `NoShortUsage-0.6.1-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.6.1.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -300,7 +300,7 @@ prove a macOS notification banner was delivered on a user's machine.
 
 The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
 
-About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The published 0.5.0 app does not download or replace itself. The unreleased NS-14 implementation below adds that capability only to separately configured future builds.
+About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The published 0.5.0 app does not download or replace itself. Versions0.6.0 and later include the signed updater;0.6.1 adds quiet daily checks and visible main-panel status.
 
 ## Adaptive popover (NS-07, 0.5.0)
 
@@ -340,10 +340,18 @@ Native guard mutation/recovery is serialized by a kernel lock on the permanent e
 
 ## Signed in-app updates — since0.6.0 (NS-14)
 
-A configured Apple Silicon build uses **Check for Updates → review version/notes → Install Update → Install and Relaunch**. Signed feed/archive verification is mandatory; an error or cancellation keeps the current app. Checking/downloading leaves usage reads independent; installation goes through the normal shutdown drain and waits for maintenance. Startup and opening About do not trigger a check. Background checks, automatic downloads, silent installs, profiling and JavaScript are disabled.
+A configured Apple Silicon build uses **Check for Updates → review version/notes → Install Update → Install and Relaunch**. Signed feed/archive verification is mandatory; an error or cancellation keeps the current app. Checking/downloading leaves usage reads independent; installation goes through the normal shutdown drain and waits for maintenance. Since0.6.1, the app performs a quiet signed informational check at most once per24hours while running; opening About does not add another request. Disable daily checks in About or Settings to use manual checks only. Automatic checks never download archives, present installer dialogs, install updates or send OS notifications. Profiling and JavaScript remain disabled.
 
 Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
 
 **Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install0.6.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
 
-See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#unreleased-source-confirmed-native-updates-ns-14).
+See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#native-app-updates).
+
+## Visible update status — since0.6.1 (NS-15)
+
+The main popover always shows its running version and update status, including in session/model/setup views. A newer verified release shows its version and an Update action; no verified result shows “not checked”, and network/signature failures offer retry without claiming the app is current. The last successful check time stays visible. Closing an update dialog keeps a known newer-version notice; installation always rechecks through Sparkle.
+
+Daily information-only checks are on by default, with an on/off toggle in About and Settings. The app stores the last attempt across restarts and waits24hours between automatic attempts, including failures; manual checks remain available. Checks pause while sleeping, terminating, updating or doing cache maintenance. There is no separate daemon.
+
+To test0.6.0 →0.6.1, open the installed [0.6.0](https://github.com/longlonglong173/no-short/releases/tag/v0.6.0) (`NoShortUsage-0.6.0-arm64.zip`), choose About → Check for Updates, then confirm Install Update and Install and Relaunch. After relaunch the popover should showv0.6.1. Existing0.5.0 users still need one manual bootstrap.

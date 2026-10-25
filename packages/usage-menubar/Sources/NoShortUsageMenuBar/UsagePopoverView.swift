@@ -45,6 +45,9 @@ struct UsagePopoverView: View {
                 .frame(maxWidth:.infinity,alignment:.leading).lineLimit(1).padding(.bottom,12)
             if model.showsModels { modelDetails } else if model.showsSessions { sessions } else { dashboard }
             }
+            Divider().padding(.top,14).padding(.bottom,10)
+            AppUpdateStatusView(presentation:model.appUpdate,language:model.language,onCheck:{model.onCheckUpdates?()})
+
         }
         .padding(22)
     }
@@ -54,7 +57,7 @@ struct UsagePopoverView: View {
             Spacer()
             HStack(spacing: 6) {
                 Circle().fill(model.isStale || model.notice != nil ? Color.orange : model.isLoading ? Color.secondary : accent).frame(width: 7, height: 7)
-                Text(model.isStale || model.notice != nil ? model.l("Cần cập nhật") : model.isLoading ? model.l("Đang cập nhật") : model.snapshot == nil ? model.l("Chưa có dữ liệu") : model.l("Đã cập nhật"))
+                Text(model.isStale || model.notice != nil ? model.l("Cần làm mới dữ liệu") : model.isLoading ? model.l("Đang cập nhật") : model.snapshot == nil ? model.l("Chưa có dữ liệu") : model.l("Đã cập nhật"))
                     .font(.system(size: 10)).foregroundStyle(.secondary)
             }.accessibilityElement(children: .combine)
         }
@@ -270,6 +273,9 @@ struct UsagePopoverView: View {
                 Divider()
                 Button(model.l("Giới thiệu No Short Usage…")) { model.onAbout?() }
                 Button(model.l("Kiểm tra bản cập nhật…")) { model.onCheckUpdates?() }
+                if model.appUpdate.hasInstallCapability {
+                    Toggle(model.l("Tự kiểm tra cập nhật mỗi ngày"),isOn:Binding(get:{model.appUpdate.automaticChecksEnabled},set:{model.onAutomaticUpdateChecksChange?($0)}))
+                }
                 Button(model.l("Ghi chú phát hành…")) { model.onReleaseNotes?() }
                 Divider()
                 Button(model.l("Thoát No Short Usage")) { model.onQuit?() }.keyboardShortcut("q")

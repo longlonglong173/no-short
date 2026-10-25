@@ -51,4 +51,5 @@ import Sparkle
     var canCheck=true;var checks=0
     var onState:(@MainActor (NativeUpdateState)->Void)?
     func checkForUpdates() throws { checks+=1 }
+    func checkForUpdateInformation() throws {}
 }
