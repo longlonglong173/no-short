@@ -1,0 +1,445 @@
+{
+  "schemaVersion": 1,
+  "source": "ccusage",
+  "ccusageVersion": "20.0.34",
+  "generatedAt": "2024-03-02T12:00:00Z",
+  "timeZone": "UTC",
+  "status": "ready",
+  "pricingSource": "cached",
+  "sessions": [],
+  "today": {
+    "tokens": {
+      "input": 100,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 100
+    },
+    "cost": {
+      "amountUSD": 9,
+      "knownCostUSD": 9,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "model-a",
+        "tokens": {
+          "input": 100,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 100
+        },
+        "cost": {
+          "amountUSD": 9,
+          "knownCostUSD": 9,
+          "status": "estimated"
+        },
+        "pricing": {
+          "source": "ccusage",
+          "provider": "codex"
+        }
+      }
+    ]
+  },
+  "month": {
+    "tokens": {
+      "input": 100,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 100
+    },
+    "cost": {
+      "amountUSD": 13,
+      "knownCostUSD": 13,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "model-a",
+        "tokens": {
+          "input": 100,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 100
+        },
+        "cost": {
+          "amountUSD": 13,
+          "knownCostUSD": 13,
+          "status": "estimated"
+        },
+        "pricing": {
+          "source": "ccusage",
+          "provider": "codex"
+        }
+      }
+    ]
+  },
+  "chart": [],
+  "history": {
+    "version": 1,
+    "providers": [
+      "codex",
+      "claude"
+    ],
+    "days": [
+      {
+        "date": "2024-02-15",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 1,
+            "knownCostUSD": 1,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 1,
+                "knownCostUSD": 1,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-20",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-23",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-25",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-27",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 4,
+            "knownCostUSD": 4,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 4,
+                "knownCostUSD": 4,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-28",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 5,
+            "knownCostUSD": 5,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 5,
+                "knownCostUSD": 5,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-02-29",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 6,
+            "knownCostUSD": 6,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 6,
+                "knownCostUSD": 6,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-03-01",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 4,
+            "knownCostUSD": 4,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 4,
+                "knownCostUSD": 4,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2024-03-02",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 100
+          },
+          "cost": {
+            "amountUSD": 9,
+            "knownCostUSD": 9,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "model-a",
+              "tokens": {
+                "input": 100,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 100
+              },
+              "cost": {
+                "amountUSD": 9,
+                "knownCostUSD": 9,
+                "status": "estimated"
+              },
+              "pricing": {
+                "source": "ccusage",
+                "provider": "codex"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "pricing": {
+    "basis": "ccusage-report",
+    "configurationRevision": "fixture-v1"
+  }
+}

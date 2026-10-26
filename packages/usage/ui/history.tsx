@@ -2,15 +2,22 @@ import { groupedUsage } from '../src/grouping';
 import { GroupingPanel, type GroupBy } from './grouping';
 import { PricingOrigin } from './pricing';
 import { useEffect, useMemo, useState } from 'react';
+import { usageInsights } from '../src/insights';
+import { InsightsPanel } from './insights';
 import { ExportControls, type DownloadFile } from './export';
 import { ComparisonPanel } from './comparison';
 import { comparisonIsStale, compareHistory, historyRange, historyView, sessionUsageForRange, type HistoryPreset, type DateRange } from '../src/history';
 import type { UsageSnapshot, Aggregate } from '../src/types';
 import { useTranslation } from './language';
 import { costText, tokenText, type ProviderFilter } from './model';
+function savedOptIn(key: string): boolean { try { return localStorage.getItem(key) === 'true'; } catch { return false; } }
 const presets: [HistoryPreset, string][] = [['7d', '7 ngày'], ['30d', '30 ngày'], ['month', 'Tháng này'], ['previous', 'Tháng trước'], ['custom', 'Tùy chọn']];
 export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snapshot: UsageSnapshot; initialProvider: ProviderFilter; downloadFile: DownloadFile }) {
   const { l, language } = useTranslation();
+  const [anomalyEnabled, setAnomalyEnabled] = useState(() => savedOptIn('no-short-anomaly-v1'));
+  const [scenarioEnabled, setScenarioEnabled] = useState(() => savedOptIn('no-short-scenario-v1'));
+  const insightsEnabled = anomalyEnabled || scenarioEnabled;
+  function optIn(key: string, value: boolean, update: (value: boolean) => void) { update(value); try { localStorage.setItem(key, String(value)); } catch { /* Optional local preference. */ } }
   const [provider, setProvider] = useState<ProviderFilter>(initialProvider);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [groupBy, setGroupBy] = useState<GroupBy>('none');
@@ -22,7 +29,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
   const [comparisonEnabled, setComparisonEnabled] = useState(false);
   const [comparisonNow, setComparisonNow] = useState(() => new Date());
   useEffect(() => {
-    if (!comparisonEnabled) return;
+    if (!comparisonEnabled && !insightsEnabled) return;
     let timer: ReturnType<typeof setInterval> | undefined;
     const syncClock = () => {
       clearInterval(timer);
@@ -32,7 +39,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     syncClock();
     document.addEventListener('visibilitychange', syncClock);
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', syncClock); };
-  }, [comparisonEnabled]);
+  }, [comparisonEnabled, insightsEnabled]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const range = historyRange(preset, now, snapshot.timeZone, custom);
   const active = range ?? lastValid.range;
@@ -65,7 +72,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     </div> : null}
     {!range ? <p role="alert" className="notice">{l('Khoảng ngày không hợp lệ. Chọn ngày bắt đầu không sau ngày kết thúc và không chọn tương lai.')}</p> : null}
     <p className="history-scope">{active.start} — {active.end} · {snapshot.timeZone}</p>
-    {snapshot.status === 'stale' || snapshot.status === 'error' || (comparisonEnabled && comparisonIsStale(snapshot, comparisonNow)) ? <p className="notice" role="alert">{l('Dữ liệu cũ · đang chờ cập nhật')}</p> : null}
+    {snapshot.status === 'stale' || snapshot.status === 'error' || ((comparisonEnabled || insightsEnabled) && comparisonIsStale(snapshot, comparisonNow)) ? <p className="notice" role="alert">{l('Dữ liệu cũ · đang chờ cập nhật')}</p> : null}
     {!view ? <p data-testid="history-unavailable" className="notice">{l('Chưa có lịch sử tương thích. Cập nhật dữ liệu hoặc runtime; không suy ra lịch sử từ toàn phiên.')}</p> : <>
       <div className="history-summary"><strong data-testid="history-cost">{money(view.aggregate)}</strong><span>{l('Tổng trong khoảng đã chọn')}</span><span>{tokenText(view.aggregate.tokens.total)} {l('Token')}</span></div>
       {view.aggregate.cost.status !== 'estimated' ? <p className="history-price-note">{l('Phần đã biết: $%@ · Giá chưa đầy đủ, không phải $0.', view.aggregate.cost.knownCostUSD.toFixed(2))}</p> : null}
@@ -104,6 +111,9 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     </select></label>
     <GroupingPanel value={groups} mode={groupBy}/>
     <label className="comparison-toggle"><input type="checkbox" checked={comparisonEnabled} onChange={e => setComparisonEnabled(e.target.checked)}/>{l('So sánh với kỳ trước cùng độ dài')}</label>
+    <label className="comparison-toggle"><input type="checkbox" checked={anomalyEnabled} onChange={e => optIn('no-short-anomaly-v1',e.target.checked,setAnomalyEnabled)}/>{l('Bật cảnh báo mức dùng bất thường')}</label>
+    <label className="comparison-toggle"><input type="checkbox" checked={scenarioEnabled} onChange={e => optIn('no-short-scenario-v1',e.target.checked,setScenarioEnabled)}/>{l('Bật kịch bản chi phí cuối tháng')}</label>
+    {insightsEnabled ? <InsightsPanel value={usageInsights(snapshot,provider,comparisonNow)} snapshot={snapshot} anomalyEnabled={anomalyEnabled} scenarioEnabled={scenarioEnabled}/> : null}
     {comparisonEnabled ? <ComparisonPanel value={view ? compareHistory(snapshot, provider, active, comparisonNow) : null}/> : null}
     <ExportControls groupBy={groupBy} snapshot={snapshot} provider={provider} range={active} available={!!view && (groupBy==='none' || (!!groups && groups.reconciliationIssue!=='tokens'))} downloadFile={downloadFile}/>
     <p className="history-scope">{l('Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.')} · {l('Nhận gần nhất')}: {new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</p>

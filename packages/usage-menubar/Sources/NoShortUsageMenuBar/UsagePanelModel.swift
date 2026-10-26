@@ -22,6 +22,10 @@ struct DailyCostPoint: Identifiable {
     @Published private(set) var providerFilter = "codex"
     @Published private(set) var followedActivity: SessionActivity?
     @Published var connectionNotice: String?
+    @Published var insightResult: UsageInsightsResult?
+    @Published var insightAnomalyEnabled = false
+    @Published var insightScenarioEnabled = false
+    @Published var insightNotificationNotice: String?
     @Published var budgetReadings: [UsageBudgetReading] = []
     @Published var budgetNotificationNotice: String?
     @Published private(set) var contextAlertThreshold = 70

@@ -101,6 +101,7 @@ struct UsagePopoverView: View {
                     .padding(.bottom, 10)
             }
             budgetStatus
+            insightStatus
             if let pricing = model.snapshot?.pricing {
                 Text(pricing.description(language: model.language)).font(.system(size: 10)).foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 8)
@@ -169,6 +170,12 @@ struct UsagePopoverView: View {
             }.buttonStyle(.plain).padding(.bottom, 10)
             footer
         }
+    }
+    @ViewBuilder private var insightStatus: some View {
+        if let value = model.insightResult {
+            UsageInsightsView(value: value, snapshot: model.snapshot, anomalyEnabled: model.insightAnomalyEnabled, scenarioEnabled: model.insightScenarioEnabled, language: model.language)
+        }
+        if let notice = model.insightNotificationNotice { Text(model.l(notice)).font(.system(size: 11)).foregroundStyle(.orange) }
     }
     @ViewBuilder private var budgetStatus: some View {
         if !model.budgetReadings.isEmpty || model.budgetNotificationNotice != nil {
@@ -350,6 +357,7 @@ struct UsagePopoverView: View {
                     .foregroundStyle(.orange).lineLimit(2).help(warning)
             }
             budgetStatus
+            insightStatus
             HStack {
                 Text(model.l("Model")).frame(maxWidth: .infinity, alignment: .leading)
                 Text(model.l("Token")).frame(width: 65, alignment: .trailing)
