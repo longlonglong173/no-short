@@ -64,3 +64,9 @@ test('conflicting explicit projects across source copies enter unknown bucket wi
  const value=(await readMetadata([root])).get(id)!;
  expect(value.grouping?.project).toBeUndefined();expect(value.grouping?.issues).toContain('conflicting-project');expect(JSON.stringify(value)).not.toContain(root);
 });
+test('parent merge treats UUID letter case as equivalent and preserves case-sensitive opaque identities',async()=>{
+ const {mergeGrouping}=await import('../src/grouping-types');const id='abcdefab-cdef-4abc-8abc-abcdefabcdef';
+ const lineage=(sessionKey:string)=>({parent:{sessionKey,source:'codex-session-meta' as const}});
+ expect(mergeGrouping(lineage(id),lineage(id.toUpperCase()))?.issues).toBeUndefined();
+ expect(mergeGrouping(lineage('OpaqueParent'),lineage('opaqueparent'))?.issues).toContain('conflicting-parent');
+});

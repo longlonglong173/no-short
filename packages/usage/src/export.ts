@@ -95,7 +95,7 @@ export function serializeUsageExport(document: UsageExport, format: 'csv' | 'jso
     for (const model of day.aggregate.models) usage('day-model', 'day', day.date, model, model.name, model.pricing);
   }
   if(document.grouping) for(const group of document.grouping.groups) {
-    const extra={groupBy:document.grouping.by,groupLabel:group.label,groupSource:group.source??'',groupConfidence:group.confidence??'',groupReconciled:String(document.grouping.reconciled),groupReconciliationIssue:document.grouping.reconciliationIssue??''};
+    const extra={provider:group.provider??document.provider,groupBy:document.grouping.by,groupLabel:group.label,groupSource:group.source??'',groupConfidence:group.confidence??'',groupReconciled:String(document.grouping.reconciled),groupReconciliationIssue:document.grouping.reconciliationIssue??''};
     usage('group','selected-range-rollup','',group.aggregate,'',undefined,extra);
     for(const model of group.aggregate.models) usage('group-model','selected-range-rollup','',model,model.name,model.pricing,extra);
     for(const session of group.sessions??[]) {

@@ -33,3 +33,18 @@ test('group CSV uses the existing formula guard for BOM/whitespace project label
   const csv=serializeUsageExport(doc,'csv');expect(csv).toContain('"\''+prefix+'PROJECT"');expect(csv).toContain('"\''+prefix+'PRIVATE"');
  }
 });
+test('all-provider work CSV preserves each known provider without opting into session identifiers',()=>{
+ const doc=createUsageExport(source(),'all','2026-10-27','2026-10-27',{groupBy:'work'})!;
+ const csv=serializeUsageExport(doc,'csv');
+ const rows=csv.split('\r\n').filter(r=>r.startsWith('"group",')||r.startsWith('"group-model",'));
+ expect(rows.length).toBeGreaterThan(0);expect(rows.every(r=>r.split(',')[3]!=='"all"')).toBe(true);
+ expect(rows.some(r=>r.split(',')[3]==='"codex"')).toBe(true);expect(rows.some(r=>r.split(',')[3]==='"claude"')).toBe(true);
+ expect(csv).not.toContain('sessionId');expect(csv).not.toContain('Private');
+});
+test('equivalent duplicate UUID parents retain the full explicit nine-token work',async()=>{
+ const {mergeGrouping}=await import('../src/grouping-types'),key='abcdefab-cdef-4abc-8abc-abcdefabcdef',s=source();
+ s.sessions[0].sessionKey=key;
+ s.sessions[1].grouping=mergeGrouping({...s.sessions[1].grouping,parent:{sessionKey:key,source:'codex-session-meta'}},{parent:{sessionKey:key.toUpperCase(),source:'codex-session-meta'}});
+ const result=groupedUsage(s,'codex','2026-10-27','2026-10-27')!;
+ expect(result.works.find(w=>w.id==='rollout-root')?.aggregate.tokens.total).toBe(9);
+});

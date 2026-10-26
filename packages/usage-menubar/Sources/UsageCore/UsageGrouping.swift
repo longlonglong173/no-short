@@ -17,11 +17,14 @@ public struct SessionGrouping: Codable, Sendable {
     public var parent: Parent?
     public var issues: [String]?
     var valid: Bool { (project?.valid ?? true) && (parent?.valid ?? true) && (issues?.count ?? 0) <= 2 && (issues ?? []).allSatisfy{["conflicting-project","conflicting-parent"].contains($0)} }
+    static func canonicalSessionKey(_ id:String)->String {
+        id.range(of:"^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",options:.regularExpression) == nil ? id : id.lowercased()
+    }
     static func merge(_ a: Self?, _ b: Self?) -> Self? {
         guard let a else { return b };guard let b else { return a }
         var flags=Set((a.issues ?? []) + (b.issues ?? []))
         if let x=a.project, let y=b.project, x.id != y.id { flags.insert("conflicting-project") }
-        if let x=a.parent, let y=b.parent, x.sessionKey != y.sessionKey { flags.insert("conflicting-parent") }
+        if let x=a.parent, let y=b.parent, canonicalSessionKey(x.sessionKey) != canonicalSessionKey(y.sessionKey) { flags.insert("conflicting-parent") }
         return Self(project:flags.contains("conflicting-project") ? nil : a.project ?? b.project,
             parent:flags.contains("conflicting-parent") ? nil : a.parent ?? b.parent,issues:flags.isEmpty ? nil : flags.sorted())
     }
@@ -58,7 +61,7 @@ public enum UsageGrouping {
               let source=UsageHistory.project(snapshot,provider:provider,range:range), let empty=UsageHistory.sum([]) else { return nil }
         if exact.reconciliationIssue == "tokens" { return UsageGroupingProjection(projects:[],works:[],aggregate:exact.aggregate,sourceAggregate:source.aggregate,reconciled:false,reconciliationIssue:"tokens") }
         func key(_ provider:UsageProvider,_ id:String)->String { provider.rawValue + "\0" + id }
-        func canonicalKey(_ id:String)->String { id.range(of:"^[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}$",options:.regularExpression) == nil ? id : id.lowercased() }
+        func canonicalKey(_ id:String)->String { SessionGrouping.canonicalSessionKey(id) }
         var metadata:[String:SessionUsage]=[:], grouping:[String:SessionGrouping]=[:], keyIndex:[String:Set<String>]=[:]
         for session in snapshot.sessions {
             let id=key(session.usageProvider,session.id);metadata[id]=session

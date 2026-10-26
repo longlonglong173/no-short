@@ -72,4 +72,29 @@ final class UsageGroupingTests: XCTestCase {
         XCTAssertEqual(value["provider"] as? String,"claude")
     }
 
+    func testAllProviderWorkCSVPreservesKnownGroupProviderWithoutIdentifiers() throws {
+        let doc=try XCTUnwrap(UsageExport.create(try groupingFixture(),provider:"all",start:"2026-10-27",end:"2026-10-27",groupBy:"work"))
+        let csv=try doc.serialize(.csv)
+        let rows=csv.components(separatedBy:"\r\n").filter{$0.hasPrefix("\"group\",") || $0.hasPrefix("\"group-model\",")}
+        XCTAssertFalse(rows.isEmpty)
+        let providers=rows.map{$0.components(separatedBy:",")[3]}
+        XCTAssertFalse(providers.contains("\"all\""));XCTAssertTrue(providers.contains("\"codex\""));XCTAssertTrue(providers.contains("\"claude\""))
+        XCTAssertFalse(csv.contains("sessionId"));XCTAssertFalse(csv.contains("Private"))
+    }
+    func testMergeEquivalentUUIDParentCasePreservesTreeButOpaqueKeysRemainDistinct() throws {
+        let key="abcdefab-cdef-4abc-8abc-abcdefabcdef"
+        func lineage(_ key:String)->SessionGrouping { .init(project:nil,parent:.init(sessionKey:key,source:"codex-session-meta"),issues:nil) }
+        let merged=try XCTUnwrap(SessionGrouping.merge(lineage(key),lineage(key.uppercased())))
+        XCTAssertNil(merged.issues)
+        XCTAssertEqual(SessionGrouping.merge(lineage("OpaqueParent"),lineage("opaqueparent"))?.issues,["conflicting-parent"])
+        let parent=try XCTUnwrap(merged.parent)
+        let source=try groupingFixture { value in
+            var sessions=value["sessions"] as! [[String:Any]];sessions[0]["sessionKey"]=key
+            var child=sessions[1]["grouping"] as! [String:Any]
+            child["parent"]=["sessionKey":parent.sessionKey,"source":"codex-session-meta"];sessions[1]["grouping"]=child;value["sessions"]=sessions
+        }
+        let view=try XCTUnwrap(UsageGrouping.project(source,provider:"codex",range:.init(start:"2026-10-27",end:"2026-10-27")))
+        XCTAssertEqual(view.works.first{$0.id=="rollout-root"}?.aggregate.tokens.total,9)
+    }
+
 }

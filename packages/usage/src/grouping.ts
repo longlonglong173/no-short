@@ -1,7 +1,7 @@
 import type { Aggregate, SessionUsage, UsageProvider, UsageSnapshot } from './types';
 import { sumAggregates } from './adapter';
 import * as history from './history';
-import { decodeGrouping, mergeGrouping, type SessionGrouping } from './grouping-types';
+import { canonicalSessionKey as canonicalKey, decodeGrouping, mergeGrouping, type SessionGrouping } from './grouping-types';
 export interface GroupMember { id: string; title: string; provider: UsageProvider; kind: string; depth: number; aggregate: Aggregate }
 export interface ProjectGroup { id: string; label: string; source: string; confidence: string; aggregate: Aggregate; sessions: GroupMember[] }
 export interface WorkGroup { id: string; title: string; provider: UsageProvider; aggregate: Aggregate; sessions: GroupMember[]; issues: string[] }
@@ -20,7 +20,6 @@ export function groupSessions(sessions: SessionUsage[], exact: ExactSessionRange
   const metadata = new Map<string, SessionUsage>();
   const grouping = new Map<string, SessionGrouping | undefined>();
   const keyIndex = new Map<string, Set<string>>();
-  const canonicalKey = (id:string) => /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id) ? id.toLowerCase() : id;
   const key = (provider: UsageProvider, id: string) => provider + '\0' + id;
   for (const session of sessions) {
     const id = key(session.provider ?? 'codex', session.id);

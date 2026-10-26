@@ -10,12 +10,15 @@ export type SessionGrouping = z.infer<typeof groupingSchema>;
 export function decodeGrouping(value: unknown): SessionGrouping | undefined {
   const result = groupingSchema.safeParse(value); return result.success ? result.data : undefined;
 }
+export function canonicalSessionKey(id: string): string {
+  return /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id) ? id.toLowerCase() : id;
+}
 export function mergeGrouping(a?: SessionGrouping, b?: SessionGrouping): SessionGrouping | undefined {
   a = decodeGrouping(a); b = decodeGrouping(b);
   if (!a) return b; if (!b) return a;
   const issues = new Set([...(a.issues ?? []), ...(b.issues ?? [])]);
   if (a.project && b.project && a.project.id !== b.project.id) issues.add('conflicting-project');
-  if (a.parent && b.parent && a.parent.sessionKey !== b.parent.sessionKey) issues.add('conflicting-parent');
+  if (a.parent && b.parent && canonicalSessionKey(a.parent.sessionKey) !== canonicalSessionKey(b.parent.sessionKey)) issues.add('conflicting-parent');
   const project = issues.has('conflicting-project') ? undefined : a.project ?? b.project;
   const parent = issues.has('conflicting-parent') ? undefined : a.parent ?? b.parent;
   return { ...(project ? { project } : {}), ...(parent ? { parent } : {}), ...(issues.size ? { issues: [...issues].sort() } : {}) };

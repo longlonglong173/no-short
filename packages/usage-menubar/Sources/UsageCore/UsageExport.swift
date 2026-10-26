@@ -89,7 +89,7 @@ public struct UsageExport: Encodable, Sendable {
         }
         if let grouping {
             for group in grouping.groups {
-                let extra:[String:Cell] = ["groupBy":.text(grouping.by),"groupLabel":.text(group.label),"groupSource":.text(group.source ?? ""),"groupConfidence":.text(group.confidence ?? ""),"groupReconciled":.text(String(grouping.reconciled)),"groupReconciliationIssue":.text(grouping.reconciliationIssue ?? "")]
+                let extra:[String:Cell] = ["provider":.text(group.provider?.rawValue ?? provider),"groupBy":.text(grouping.by),"groupLabel":.text(group.label),"groupSource":.text(group.source ?? ""),"groupConfidence":.text(group.confidence ?? ""),"groupReconciled":.text(String(grouping.reconciled)),"groupReconciliationIssue":.text(grouping.reconciliationIssue ?? "")]
                 usage("group","selected-range-rollup","",group.aggregate.tokens,group.aggregate.cost,"",nil,extra)
                 for model in group.aggregate.models { usage("group-model","selected-range-rollup","",model.tokens,model.cost,model.name,model.pricing,extra) }
                 for session in group.sessions ?? [] {
