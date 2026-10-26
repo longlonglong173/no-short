@@ -3,6 +3,8 @@ import { mkdir, readFile, writeFile, copyFile, chmod, readdir } from 'node:fs/pr
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import lock from '../ccusage-lock.json';
+import sourceLock from '../ccusage-source-lock.json';
+import { prepareCcusageSource, buildPatchedCcusage } from './build-ccusage';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
@@ -38,15 +40,12 @@ for (const [label, url] of [
   }
   notices += `\n\n${label}\n${text}\n`;
 }
+notices += `\nccusage ${sourceLock.version} with No Short Usage ${sourceLock.patchRevision}\nSource: ${sourceLock.source.revision}\nThe bundled reader modifies session-scoped event deduplication; upstream MIT license above applies.\n`;
+const preparedCcusage = await prepareCcusageSource(join(root, '.artifacts/usage/ccusage-source', sourceLock.patchRevision));
 const platforms: Record<string, unknown> = {};
-for (const [platform, entry] of Object.entries(lock.platforms)) {
+for (const platform of Object.keys(lock.platforms)) {
   const directory = join(runtimeRoot, platform); await mkdir(directory, { recursive: true });
-  const response = await fetch(entry.url); if (!response.ok) throw new Error(`Download failed: ${platform}`);
-  const archive = new Uint8Array(await response.arrayBuffer());
-  const integrity = `sha512-${createHash('sha512').update(archive).digest('base64')}`;
-  if (integrity !== entry.integrity) throw new Error('ccusage npm integrity mismatch');
-  const packagePath = join(output, `ccusage-${platform}.tgz`); await writeFile(packagePath, archive);
-  await run(['/usr/bin/tar', '-xzf', packagePath, '-C', directory, '--strip-components=2', 'package/bin/ccusage']);
+  await buildPatchedCcusage(preparedCcusage, platform, join(directory, 'ccusage'));
   const result = await Bun.build({ entrypoints: [join(usage, 'src/main.ts')], minify: true,
     compile: { target: platform === 'darwin-arm64' ? 'bun-darwin-arm64' : 'bun-darwin-x64', outfile: join(directory, 'no-short-usage') } });
   if (!result.success) throw new AggregateError(result.logs, `Compile failed: ${platform}`);
@@ -59,7 +58,7 @@ for (const [platform, entry] of Object.entries(lock.platforms)) {
     if (process.platform !== 'darwin') throw new Error('A macOS build host is required to ad-hoc sign development Mach-O executables.');
     // Bun's appended executable needs a fresh signature; its inherited linker
     // signature is invalid on arm64 and macOS otherwise kills it with SIGKILL.
-    await run(['/usr/bin/codesign', '--force', '--sign', '-', '--entitlements', join(usage, 'signing-entitlements.plist'), join(directory, 'no-short-usage')]);
+    for (const name of ['no-short-usage', 'ccusage']) await run(['/usr/bin/codesign', '--force', '--sign', '-', '--entitlements', join(usage, 'signing-entitlements.plist'), join(directory, name)]);
   }
   for (const name of ['no-short-usage', 'ccusage']) await run(['/usr/bin/codesign', '--verify', '--strict', join(directory, name)]);
   if (platform === `darwin-${process.arch}`) await run([join(directory, 'no-short-usage'), '--version']);
@@ -69,5 +68,5 @@ for (const [platform, entry] of Object.entries(lock.platforms)) {
     sha256: hash(await readFile(join(output, name))), binaries: { 'no-short-usage': hash(await readFile(join(directory, 'no-short-usage'))), ccusage: hash(await readFile(join(directory, 'ccusage'))) } };
   console.log(`Built ${platform}; ${process.env.NO_SHORT_SIGN_IDENTITY ? 'Developer ID signed' : 'development signing only; not notarized'}`);
 }
-await writeFile(join(usage, 'runtime-manifest.json'), JSON.stringify({ version, ccusageVersion: lock.version, platforms }, null, 2) + '\n');
+await writeFile(join(usage, 'runtime-manifest.json'), JSON.stringify({ version, ccusageVersion: lock.version, ccusagePatchRevision: sourceLock.patchRevision, ccusageSourceRevision: sourceLock.source.revision, platforms }, null, 2) + '\n');
 console.log(`Runtime artifacts: ${output}`);

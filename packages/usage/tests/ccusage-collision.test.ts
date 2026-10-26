@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { runReport } from '../src/runner';
 import { buildSnapshot } from '../src/adapter';
 const binary = process.env.NO_SHORT_USAGE_CCUSAGE ?? new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
-test.skipIf(!existsSync(binary))('ccusage 20.0.34 characterization: identical timestamp/token events collide across distinct sessions', async () => {
+test.skipIf(!existsSync(binary))('patched ccusage preserves distinct-session totals even when timestamps and token counters match', async () => {
   const root = await mkdtemp(join(tmpdir(), 'ns08-collision-'));
   try {
     await mkdir(join(root, 'sessions'));
@@ -22,7 +22,7 @@ test.skipIf(!existsSync(binary))('ccusage 20.0.34 characterization: identical ti
     };
     const collision = await write('2026-10-17T03:00:00Z');
     expect(collision.sessions).toHaveLength(2);
-    expect(collision.today.tokens.total).toBe(110);
+    expect(collision.today.tokens.total).toBe(220);
     const distinct = await write('2026-10-17T04:00:00Z');
     expect(distinct.today.tokens.total).toBe(220);
   } finally { await rm(root, { recursive: true, force: true }); }

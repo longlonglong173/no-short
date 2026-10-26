@@ -7,10 +7,11 @@ import { buildSnapshot } from './adapter.ts';
 import { readMetadata, readClaudeMetadata } from './metadata.ts';
 import { runReport } from './runner.ts';
 import { SnapshotStore } from './cache.ts';
+import { ccusagePatchRevision } from './version.ts';
 
 export interface ServiceOptions { binary: string; roots?: string[]; claudeRoots?: string[]; cacheDir?: string; timeZone?: string }
 export function usageCacheScope(roots: string[], timeZone: string, requestedClaudeRoots?: string[]): string {
-  return createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', schema: 1, history: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
+  return createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', reader: ccusagePatchRevision, schema: 1, history: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
 }
 export function createUsageService(options: ServiceOptions): SnapshotStore {
   const roots = (options.roots ?? (process.env.CODEX_HOME ?? join(homedir(), '.codex')).split(',')).map(p => p.trim()).filter(Boolean).map(p => resolve(p));

@@ -1,0 +1,68 @@
+--- a/rust/adapters/codex/src/aggregate.rs
++++ b/rust/adapters/codex/src/aggregate.rs
+@@ -754,16 +754,16 @@
+     event: &CodexTokenUsageEvent,
+     timestamp: crate::TimestampMs,
+     model: &str,
+-    kind: AgentReportKind,
++    _kind: AgentReportKind,
+ ) -> CodexEventKey {
+     if let Some(response_id) = &event.response_id {
+         return CodexEventKey::Response(CompactString::new(response_id));
+     }
+-    let (session_hash, session_len) = if kind == AgentReportKind::Session {
+-        (hash_text(&event.session_id), event.session_id.len())
+-    } else {
+-        (0, 0)
+-    };
++    // NS-20: normal requests dedupe within a logical session, not globally.
++    // Preserve presentation/report IDs while recognizing UUID rollouts moved
++    // between source folders. Response IDs above remain globally authoritative.
++    let identity = crate::types::codex_session_identity(&event.session_id);
++    let (session_hash, session_len) = (hash_text(&identity), identity.len());
+     CodexEventKey::Usage(CodexUsageKey {
+         session_hash,
+         session_len,
+--- a/rust/adapters/codex/src/loader.rs
++++ b/rust/adapters/codex/src/loader.rs
+@@ -244,6 +244,7 @@
+         let key = event.response_id.as_deref().map_or_else(
+             || {
+                 CodexEventDeduplicationKey::Usage(
++                    CompactString::new(crate::types::codex_session_identity(&event.session_id).as_ref()),
+                     CompactString::new(&event.timestamp),
+                     event.model.as_deref().map(CompactString::new),
+                     event.input_tokens,
+@@ -272,6 +273,7 @@
+ enum CodexEventDeduplicationKey {
+     Response(CompactString),
+     Usage(
++        CompactString,
+         CompactString,
+         Option<CompactString>,
+         u64,
+--- a/rust/adapters/codex/src/types.rs
++++ b/rust/adapters/codex/src/types.rs
+@@ -656,3 +656,22 @@
+         assert_eq!(usage.total_tokens, 0);
+     }
+ }
++
++// No Short Usage NS-20: report IDs are relative paths, but Codex rollout names
++// retain their logical UUID when moved or renamed. Fall back to the existing
++// identity when no validated UUID suffix exists; do not infer it from usage.
++pub(crate) fn codex_session_identity(value: &str) -> std::borrow::Cow<'_, str> {
++    let Some(candidate) = value.get(value.len().saturating_sub(36)..) else {
++        return std::borrow::Cow::Borrowed(value);
++    };
++    if candidate.len() != 36 || !candidate.bytes().enumerate().all(|(index, byte)| {
++        if matches!(index, 8 | 13 | 18 | 23) { byte == b'-' } else { byte.is_ascii_hexdigit() }
++    }) {
++        return std::borrow::Cow::Borrowed(value);
++    }
++    if candidate.bytes().any(|byte| byte.is_ascii_uppercase()) {
++        std::borrow::Cow::Owned(candidate.to_ascii_lowercase())
++    } else {
++        std::borrow::Cow::Borrowed(candidate)
++    }
++}
