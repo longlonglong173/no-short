@@ -45,21 +45,77 @@ struct UsageGroupingView: View {
         }.padding(.vertical,5)
     }
     private func members(_ rows:[UsageGroupMember])->some View {
+        UsageGroupingMembers(rows:rows,language:language)
+    }
+}
+
+struct UsageGroupingMembers: View {
+    let rows: [UsageGroupMember]
+    let language: AppLanguage
+
+    var body: some View {
         VStack(alignment:.leading,spacing:10) {
-            Text(l("Phân bổ trực tiếp theo phiên")).font(.system(size:11,weight:.medium))
+            Text(AppLocalization(language:language).text("Phân bổ trực tiếp theo phiên"))
+                .font(.system(size:11,weight:.medium))
             ForEach(rows,id:\.id) { row in
-                VStack(alignment:.leading,spacing:4) {
-                    HStack(alignment:.firstTextBaseline) {
-                        Text((row.depth > 0 ? "↳ " : "") + UsagePresentation.cleanTitle(row.title == "Phiên chưa xác định" ? l(row.title) : row.title))
-                            .padding(.leading,CGFloat(min(row.depth,8)*12)).fixedSize(horizontal:false,vertical:true)
-                        Spacer(minLength:8)
-                        Text(UsagePresentation.money(row.aggregate.cost)).monospacedDigit()
-                        Text(UsagePresentation.number(row.aggregate.tokens.total)).monospacedDigit()
-                    }
-                    Text(row.provider.rawValue + " · " + l(row.kind == "main" ? "Phiên chính" : row.kind == "subagent" ? "Tác vụ con" : "Loại phiên chưa xác định") + " · " + row.aggregate.models.map{$0.name + ": " + UsagePresentation.money($0.cost) + " · " + UsagePresentation.number($0.tokens.total)}.joined(separator:" · "))
-                        .font(.system(size:10)).foregroundStyle(.secondary).fixedSize(horizontal:false,vertical:true)
-                }.font(.system(size:12))
+                UsageGroupingMemberRow(row:row,language:language)
             }
         }.padding(.vertical,8)
+    }
+}
+
+private struct UsageGroupingMemberRow: View {
+    let row: UsageGroupMember
+    let language: AppLanguage
+
+    private func l(_ key:String)->String { AppLocalization(language:language).text(key) }
+
+    var body: some View {
+        VStack(alignment:.leading,spacing:4) {
+            header
+            models
+        }.font(.system(size:12))
+    }
+
+    private var header: some View {
+        let title: String = memberTitle
+        let indent: CGFloat = CGFloat(min(row.depth,8)*12)
+        let amount: String = UsagePresentation.money(row.aggregate.cost)
+        let tokens: String = UsagePresentation.number(row.aggregate.tokens.total)
+        return HStack(alignment:.firstTextBaseline) {
+            Text(title).padding(.leading,indent).fixedSize(horizontal:false,vertical:true)
+            Spacer(minLength:8)
+            Text(amount).monospacedDigit()
+            Text(tokens).monospacedDigit()
+        }
+    }
+
+    private var models: some View {
+        Text(modelSummary).font(.system(size:10)).foregroundStyle(.secondary)
+            .fixedSize(horizontal:false,vertical:true)
+    }
+
+    private var memberTitle: String {
+        let title: String = row.title == "Phiên chưa xác định" ? l(row.title) : row.title
+        let cleanTitle: String = UsagePresentation.cleanTitle(title)
+        let prefix: String = row.depth > 0 ? "↳ " : ""
+        return prefix + cleanTitle
+    }
+
+    private var modelSummary: String {
+        let kindKey: String
+        switch row.kind {
+        case "main": kindKey = "Phiên chính"
+        case "subagent": kindKey = "Tác vụ con"
+        default: kindKey = "Loại phiên chưa xác định"
+        }
+        let kind: String = l(kindKey)
+        let summaries: [String] = row.aggregate.models.map { model in
+            let amount: String = UsagePresentation.money(model.cost)
+            let tokens: String = UsagePresentation.number(model.tokens.total)
+            return model.name + ": " + amount + " · " + tokens
+        }
+        let models: String = summaries.joined(separator:" · ")
+        return row.provider.rawValue + " · " + kind + " · " + models
     }
 }
