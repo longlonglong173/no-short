@@ -12,6 +12,8 @@ const presets: [HistoryPreset, string][] = [['7d', '7 ngày'], ['30d', '30 ngày
 export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snapshot: UsageSnapshot; initialProvider: ProviderFilter; downloadFile: DownloadFile }) {
   const { l, language } = useTranslation();
   const [provider, setProvider] = useState<ProviderFilter>(initialProvider);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [preset, setPreset] = useState<HistoryPreset>('30d');
   const now = new Date();
   const initial = historyRange('30d', now, snapshot.timeZone)!;
@@ -31,8 +33,6 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     document.addEventListener('visibilitychange', syncClock);
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', syncClock); };
   }, [comparisonEnabled]);
-  const [selectedSession, setSelectedSession] = useState<string | null>(null);
-  const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const range = historyRange(preset, now, snapshot.timeZone, custom);
   const active = range ?? lastValid.range;
