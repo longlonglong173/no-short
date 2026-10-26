@@ -28,3 +28,24 @@ test('build applies verified exact-context patch and refuses tampering or a chan
     expect(await readFile(join(directory, 'reader.txt'), 'utf8')).toBe('fixed\n');
   } finally { await rm(directory, { recursive: true, force: true }); }
 });
+
+test('source-build pins both Rust commands despite upstream source-cwd toolchain override', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'ccusage-toolchain-'));
+  try {
+    const { mkdir } = await import('node:fs/promises');
+    const source = join(directory, 'source'), bin = join(directory, 'bin');
+    await mkdir(source); await mkdir(bin);
+    // Upstream currently carries this override, while CI installs 1.98.1.
+    await writeFile(join(source, 'rust-toolchain.toml'), '[toolchain]\nchannel = "1.97.1"\n');
+    await writeFile(join(bin, 'rustc'), '#!/bin/sh\n[ -f rust-toolchain.toml ] || exit 41\nprintf "rustc %s (fixture)\\n" "${RUSTUP_TOOLCHAIN:-1.97.1}"\n', { mode: 0o755 });
+    await writeFile(join(bin, 'cargo'), '#!/bin/sh\n[ -f rust-toolchain.toml ] || exit 42\n[ "$RUSTUP_TOOLCHAIN" = "1.98.1" ] || exit 43\nmkdir -p "$CARGO_TARGET_DIR/aarch64-apple-darwin/release"\nprintf "built with selected toolchain" > "$CARGO_TARGET_DIR/aarch64-apple-darwin/release/ccusage"\n', { mode: 0o755 });
+    const destination = join(directory, 'reader'), harness = join(directory, 'build.ts');
+    const module = new URL('../scripts/build-ccusage.ts', import.meta.url).pathname;
+    await writeFile(harness, `import { buildPatchedCcusage } from ${JSON.stringify(module)}; await buildPatchedCcusage(${JSON.stringify({ source, artifacts: directory, pricing: join(directory, 'pricing.json') })}, 'darwin-arm64', ${JSON.stringify(destination)});`);
+    const child = Bun.spawn([process.execPath, harness], { cwd: directory,
+      env: { ...process.env, PATH: bin + ':' + process.env.PATH, RUSTUP_TOOLCHAIN: '1.97.1' }, stdout: 'pipe', stderr: 'pipe' });
+    const [output, error, code] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited]);
+    expect({ output, error, code }).toEqual({ output: '', error: '', code: 0 });
+    expect(await readFile(destination, 'utf8')).toBe('built with selected toolchain');
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});

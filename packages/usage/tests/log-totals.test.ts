@@ -129,3 +129,36 @@ test.skipIf(!existsSync(nativeCli))('same UUID rollout moved or renamed across s
     expect(snapshot.sessions.reduce((sum, row) => sum + row.tokens.total, 0)).toBe(220);
   }
 }, 15_000);
+
+test.skipIf(!existsSync(nativeCli))('moved stale-prefix and appended copies form one stable complete logical session in either root order', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'usage-moved-append-')); dirs.push(directory);
+  const roots = [join(directory, 'first'), join(directory, 'second')];
+  for (const root of roots) await mkdir(join(root, 'sessions'), { recursive: true });
+  // Choose the stale path as the representative so the test also catches a
+  // grouping fix that picks only IDs from whichever events survived first.
+  await writeFile(join(roots[0], `sessions/a-stale-${ids[0]}.jsonl`), content(ids[0]));
+  await writeFile(join(roots[1], `sessions/z-appended-${ids[0]}.jsonl`), content(ids[0]) + JSON.stringify(event('2026-10-17T03:01:00Z', 220)) + '\n');
+  const summaries = [];
+  for (const sources of [roots, [...roots].reverse()]) {
+    const cacheDir = join(directory, 'cache');
+    const raw = await runReport({ binary: nativeCli, roots: sources, cacheDir, timeZone: 'UTC', offline: true });
+    const snapshot = buildSnapshot(raw, { now: new Date('2026-10-17T12:00:00Z'), timeZone: 'UTC', metadata: new Map() });
+    expect(snapshot.sessions).toHaveLength(1);
+    expect(snapshot.sessions[0].id).toBe(`a-stale-${ids[0]}`);
+    expect(snapshot.sessions[0].tokens.total).toBe(220);
+    expect(snapshot.sessions[0].models[0].tokens.total).toBe(220);
+    expect(snapshot.sessions[0].cost).toEqual(snapshot.today.cost);
+    expect(snapshot.sessions[0].models).toEqual(snapshot.today.models);
+    expect(snapshot.today.tokens.total).toBe(220);
+    expect(snapshot.history?.days[0].aggregate.tokens.total).toBe(220);
+    summaries.push({ sessions: snapshot.sessions, daily: snapshot.today });
+    const bounded = Bun.spawn([nativeCli, 'session', '--json', '--sections', 'daily,session', '--by-agent', '--since', '2026-10-17', '--until', '2026-10-17', '--timezone', 'UTC', '--offline', '--config', join(cacheDir, 'ccusage-config.json')],
+      { cwd: directory, env: createReportEnvironment(process.env, sources, join(cacheDir, 'empty-sources')), stdout: 'pipe', stderr: 'pipe' });
+    const [output, error, code] = await Promise.all([new Response(bounded.stdout).text(), new Response(bounded.stderr).text(), bounded.exited]);
+    expect(code).toBe(0); expect(error).toBe('');
+    const boundedSnapshot = buildSnapshot(JSON.parse(output), { now: new Date('2026-10-17T12:00:00Z'), timeZone: 'UTC', metadata: new Map() });
+    expect(boundedSnapshot.sessions).toEqual(snapshot.sessions);
+    expect(boundedSnapshot.today).toEqual(snapshot.today);
+  }
+  expect(summaries[0]).toEqual(summaries[1]);
+}, 15_000);

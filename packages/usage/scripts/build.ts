@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile, copyFile, chmod, readdir } from 'node:fs/pr
 import { resolve, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import lock from '../ccusage-lock.json';
-import sourceLock from '../ccusage-source-lock.json';
+import sourceLock from '../ccusage-source-lock.json' with { type: 'json' };
 import { prepareCcusageSource, buildPatchedCcusage } from './build-ccusage';
 
 const root = resolve(import.meta.dirname, '../../..');

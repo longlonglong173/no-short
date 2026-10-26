@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile, rm, copyFile, chmod } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import lock from '../ccusage-source-lock.json';
-import upstream from '../ccusage-lock.json';
+import lock from '../ccusage-source-lock.json' with { type: 'json' };
+import upstream from '../ccusage-lock.json' with { type: 'json' };
 
 export function verifySha256(bytes: Uint8Array, expected: string, label: string): void {
   if (createHash('sha256').update(bytes).digest('hex') !== expected) throw new Error(`${label} integrity mismatch`);
@@ -54,11 +54,14 @@ export async function prepareCcusageSource(artifacts: string): Promise<PreparedC
 export async function buildPatchedCcusage(prepared: PreparedCcusage, platform: string, destination: string): Promise<void> {
   const target = platform === 'darwin-arm64' ? 'aarch64-apple-darwin' : platform === 'darwin-x64' ? 'x86_64-apple-darwin' : null;
   if (!target) throw new Error(`Unsupported ccusage target: ${platform}`);
-  const rust = await run(['rustc', '--version'], prepared.source);
+  // The pinned upstream tree has its own rust-toolchain.toml. Override it for
+  // both rustup-shim processes rather than trusting the caller's default.
+  const environment = { ...process.env, RUSTUP_TOOLCHAIN: lock.rustVersion };
+  const rust = await run(['rustc', '--version'], prepared.source, environment);
   if (!rust.startsWith(`rustc ${lock.rustVersion} `)) throw new Error(`ccusage requires Rust ${lock.rustVersion}; found ${rust.trim()}`);
   const targetDir = join(prepared.artifacts, 'target');
   await run(['cargo', 'build', '--manifest-path', join(prepared.source, 'rust/Cargo.toml'), '--locked', '--release', '--target', target, '-p', 'ccusage'], prepared.source, {
-    ...process.env, CCUSAGE_VERSION: lock.version, CCUSAGE_PRICING_JSON_PATH: prepared.pricing,
+    ...environment, CCUSAGE_VERSION: lock.version, CCUSAGE_PRICING_JSON_PATH: prepared.pricing,
     CARGO_TARGET_DIR: targetDir, CARGO_BUILD_JOBS: process.env.CARGO_BUILD_JOBS ?? '2',
   });
   await copyFile(join(targetDir, target, 'release/ccusage'), destination);

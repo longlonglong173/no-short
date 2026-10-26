@@ -1,6 +1,6 @@
 {
   "version": "20.0.34",
-  "patchRevision": "ns20-session-scope-v1",
+  "patchRevision": "ns20-session-scope-v2",
   "rustVersion": "1.98.1",
   "source": {
     "revision": "d7555844929ad76ec97a113d1d51c31de92bee35",
@@ -14,6 +14,6 @@
   },
   "patch": {
     "file": "patches/ccusage-20.0.34-ns20.patch",
-    "sha256": "99e7709b03351877ef3601636538de16b5e0a04883bfb81050b7641c3d99f50a"
+    "sha256": "fa749f0b135be93fbacc28058a11a64c4c63257bbcf8f0f189911c37982164f4"
   }
 }

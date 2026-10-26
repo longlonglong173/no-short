@@ -1,6 +1,26 @@
 --- a/rust/adapters/codex/src/aggregate.rs
 +++ b/rust/adapters/codex/src/aggregate.rs
-@@ -754,16 +754,16 @@
+@@ -247,7 +247,8 @@
+         run.sessions_dir,
+         file,
+         run.replay_plan.replay_prefix(file),
+-        |event| {
++        |mut event| {
++            run.replay_plan.normalize_report_session(&mut event);
+             if run
+                 .replay_plan
+                 .is_replayed_compaction(file, event.response_id.as_deref())
+@@ -297,7 +298,8 @@
+         run.sessions_dir,
+         file,
+         run.replay_plan.replay_prefix(file),
+-        |event| {
++        |mut event| {
++            run.replay_plan.normalize_report_session(&mut event);
+             if run
+                 .replay_plan
+                 .is_replayed_compaction(file, event.response_id.as_deref())
+@@ -754,16 +756,16 @@
      event: &CodexTokenUsageEvent,
      timestamp: crate::TimestampMs,
      model: &str,
@@ -25,7 +45,17 @@
          session_len,
 --- a/rust/adapters/codex/src/loader.rs
 +++ b/rust/adapters/codex/src/loader.rs
-@@ -244,6 +244,7 @@
+@@ -226,7 +226,8 @@
+         sessions_dir,
+         path,
+         replay_plan.replay_prefix(path),
+-        |event| {
++        |mut event| {
++            replay_plan.normalize_report_session(&mut event);
+             if replay_plan.is_replayed_compaction(path, event.response_id.as_deref()) {
+                 return Ok(());
+             }
+@@ -244,6 +245,7 @@
          let key = event.response_id.as_deref().map_or_else(
              || {
                  CodexEventDeduplicationKey::Usage(
@@ -33,7 +63,7 @@
                      CompactString::new(&event.timestamp),
                      event.model.as_deref().map(CompactString::new),
                      event.input_tokens,
-@@ -272,6 +273,7 @@
+@@ -272,6 +274,7 @@
  enum CodexEventDeduplicationKey {
      Response(CompactString),
      Usage(
@@ -66,3 +96,85 @@
 +        std::borrow::Cow::Borrowed(candidate)
 +    }
 +}
+--- a/rust/adapters/codex/src/replay.rs
++++ b/rust/adapters/codex/src/replay.rs
+@@ -9,7 +9,7 @@
+ 
+ use serde_json::Value;
+ 
+-use crate::{CodexRawUsage, TimestampMs, chunk_file_indexes_by_size, parse_ts_timestamp};
++use crate::{CodexRawUsage, CodexTokenUsageEvent, TimestampMs, chunk_file_indexes_by_size, parse_ts_timestamp};
+ 
+ use super::{
+     parser::{codex_value_timestamp, visit_codex_session_file_with_compaction_history},
+@@ -74,6 +74,7 @@
+ }
+ 
+ pub(super) struct CodexReplayPlan {
++    report_ids_by_identity: HashMap<String, String>,
+     parent_by_child: HashMap<PathBuf, ParentReplay>,
+     usage_by_parent: HashMap<PathBuf, ParentUsage>,
+ }
+@@ -110,6 +111,7 @@
+             .collect::<Vec<_>>();
+ 
+         Self {
++            report_ids_by_identity: representative_report_ids(&files),
+             parent_by_child,
+             usage_by_parent: read_parent_usage(&parents, single_thread),
+         }
+@@ -146,8 +148,21 @@
+             .collect::<Vec<_>>();
+ 
+         Self {
++            report_ids_by_identity: representative_report_ids(&available_files),
+             parent_by_child,
+             usage_by_parent: read_parent_usage(&parents, single_thread),
++        }
++    }
++
++    // NS-20: all retained events for one logical rollout must contribute to
++    // one complete report row, including prefix events read from stale copies.
++    pub(super) fn normalize_report_session(&self, event: &mut CodexTokenUsageEvent) {
++        let representative = {
++            let identity = crate::types::codex_session_identity(&event.session_id);
++            self.report_ids_by_identity.get(identity.as_ref())
++        };
++        if let Some(representative) = representative {
++            event.session_id.clone_from(representative);
+         }
+     }
+ 
+@@ -198,6 +213,21 @@
+             .forked_at
+             .is_none_or(|forked_at| timestamp.is_none_or(|timestamp| timestamp <= forked_at))
+     }
++}
++
++// Choose from every scanned file, not just those whose events won deduplication.
++// Keeping the smallest existing path identity makes the choice independent of
++// source order and preserves the existing public report-ID shape.
++fn representative_report_ids(files: &[(PathBuf, &Path)]) -> HashMap<String, String> {
++    let mut representatives = HashMap::<String, String>::new();
++    for (path, sessions_dir) in files {
++        let report_id = super::parser::codex_session_id(sessions_dir, path);
++        let identity = crate::types::codex_session_identity(&report_id).into_owned();
++        representatives.entry(identity).and_modify(|current| {
++            if report_id < *current { current.clone_from(&report_id); }
++        }).or_insert(report_id);
++    }
++    representatives
+ }
+ 
+ fn index_session_paths(
+--- a/rust/adapters/codex/src/parser.rs
++++ b/rust/adapters/codex/src/parser.rs
+@@ -889,7 +889,7 @@
+     year.is_multiple_of(4) && !year.is_multiple_of(100) || year.is_multiple_of(400)
+ }
+ 
+-fn codex_session_id(sessions_dir: &Path, path: &Path) -> String {
++pub(super) fn codex_session_id(sessions_dir: &Path, path: &Path) -> String {
+     let relative = path.strip_prefix(sessions_dir).unwrap_or(path);
+     let mut session_id = uncompressed_rollout_path(relative)
+         .with_extension("")
