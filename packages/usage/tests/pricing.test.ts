@@ -116,3 +116,32 @@ test('a price change during a scan cannot publish an apparently current snapshot
   expect(next.status).toBe('ready');
   expect(next.month.cost.amountUSD).toBeCloseTo(.25278);
 });
+
+test('an unrelated override preserves recorded known costs in partially unpriced model groups', () => {
+  const report = structuredClone(raw);
+  Object.assign(report.session[0].modelBreakdowns[0], { missingPricing: true });
+  Object.assign(report.daily[1].agents[0].modelBreakdowns[0], { missingPricing: true });
+  const s = buildSnapshot(report, { ...options, pricing: { version: 1, overrides: [{ provider: 'codex', model: 'gpt-6-luna', input: 1, output: 1, cacheRead: 1, cacheWrite: 1 }] } });
+  const session = s.sessions.find(s => s.id === report.session[0].period)!;
+  expect(session.models[0].cost).toEqual({ amountUSD: null, knownCostUSD: .32, status: 'partial' });
+  expect(session.cost.status).toBe('partial');
+  expect(session.cost.knownCostUSD).toBeCloseTo(.32042);
+  expect(s.today.cost.knownCostUSD).toBeCloseTo(.32048);
+  expect(s.history!.days.find(d => d.date === '2026-10-17')!.aggregate.cost.knownCostUSD).toBeCloseTo(.32048);
+  const doc = createUsageExport(s, 'codex', '2026-10-17', '2026-10-17')!;
+  expect(doc.aggregate.cost.knownCostUSD).toBeCloseTo(.32048);
+  expect(doc.aggregate.cost.status).toBe('partial');
+});
+
+test('a solely partially priced model retains known subtotal and valid history rather than becoming wholly unknown', () => {
+  const report = structuredClone(raw);
+  const day = report.daily[1].agents[0];
+  day.modelBreakdowns = [day.modelBreakdowns[0]];
+  Object.assign(day.modelBreakdowns[0], { missingPricing: true });
+  day.totalCost = .32;
+  const s = buildSnapshot(report, options);
+  expect(s.today.cost).toEqual({ amountUSD: null, knownCostUSD: .32, status: 'partial' });
+  const doc = createUsageExport(s, 'codex', '2026-10-17', '2026-10-17');
+  expect(doc).not.toBeNull();
+  expect(doc!.aggregate.models[0].cost.knownCostUSD).toBe(.32);
+});

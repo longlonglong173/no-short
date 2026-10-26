@@ -28,14 +28,15 @@ function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider
     const unavailable = m.missingPricing || unpriced.has(m.modelName) || m.isFallback;
     if (override || m.isFallback) repriced = true;
     return { name: m.modelName, tokens: value,
-      cost: rates ? customCost(value, rates) : unavailable ? { amountUSD: null, knownCostUSD: 0, status: 'unknown' } : knownCost(m.cost),
+      cost: rates ? customCost(value, rates) : m.isFallback ? { amountUSD: null, knownCostUSD: 0, status: 'unknown' }
+        : unavailable ? { amountUSD: null, knownCostUSD: m.cost, status: m.cost > 0 ? 'partial' : 'unknown' } : knownCost(m.cost),
       pricing: rates ? { source: 'custom', provider, ...(options.pricing?.updatedAt ? { updatedAt: options.pricing.updatedAt } : {}), rates }
         : { source: m.isFallback ? 'fallback' : unavailable ? 'unpriced' : 'ccusage', provider } };
   });
   const missing = models.some(m => m.cost.amountUSD === null);
   const known = repriced ? Number(models.reduce((n, m) => n + m.cost.knownCostUSD, 0).toPrecision(15)) : row.totalCost;
   return { tokens: tokens(row), models, cost: missing ? { amountUSD: null, knownCostUSD: known,
-    status: models.some(m => m.cost.amountUSD !== null) ? 'partial' : 'unknown' } : knownCost(known) };
+    status: models.some(m => m.cost.status !== 'unknown') ? 'partial' : 'unknown' } : knownCost(known) };
 }
 function sumCost(a: Cost, b: Cost): Cost {
   const knownCostUSD = a.knownCostUSD + b.knownCostUSD;
