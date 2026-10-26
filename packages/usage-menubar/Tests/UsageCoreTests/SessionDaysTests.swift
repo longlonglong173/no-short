@@ -107,3 +107,56 @@ extension SessionDaysTests {
         XCTAssertTrue(try XCTUnwrap(UsageHistory.sessionUsageForRange(snapshot, provider: "all", range: range)).reconciled)
     }
 }
+
+extension SessionDaysTests {
+    func testMalformedLedgerValidationRemainsSeparateFromLegacyHistory() throws {
+        let mutations: [(inout [String: Any]) -> Void] = [
+            { $0["date"] = "2026-02-30" },
+            { $0["provider"] = "unknown" },
+            { $0["sessionId"] = "" },
+            { $0["sessionId"] = String(repeating: "a", count: 4097) },
+            { row in
+                var aggregate = row["aggregate"] as! [String: Any]
+                var tokens = aggregate["tokens"] as! [String: Any]; tokens["input"] = -1
+                aggregate["tokens"] = tokens; row["aggregate"] = aggregate
+            },
+            { row in
+                var aggregate = row["aggregate"] as! [String: Any]
+                aggregate["cost"] = ["amountUSD": 2, "knownCostUSD": 1, "status": "estimated"]
+                row["aggregate"] = aggregate
+            },
+            { row in
+                var aggregate = row["aggregate"] as! [String: Any]
+                aggregate["cost"] = ["amountUSD": NSNull(), "knownCostUSD": 1, "status": "unknown"]
+                row["aggregate"] = aggregate
+            },
+            { row in
+                var aggregate = row["aggregate"] as! [String: Any]
+                var models = aggregate["models"] as! [[String: Any]]; models[0]["name"] = ""
+                aggregate["models"] = models; row["aggregate"] = aggregate
+            },
+            { row in
+                var aggregate = row["aggregate"] as! [String: Any]
+                var models = aggregate["models"] as! [[String: Any]]
+                models[0]["cost"] = ["amountUSD": NSNull(), "knownCostUSD": 1, "status": "unknown"]
+                aggregate["models"] = models; row["aggregate"] = aggregate
+            }
+        ]
+        for mutate in mutations {
+            let snapshot = try shared { object in
+                var history = object["history"] as! [String: Any]
+                var ledger = history["sessionDays"] as! [[String: Any]]
+                mutate(&ledger[0]); history["sessionDays"] = ledger; object["history"] = history
+            }
+            XCTAssertNotNil(snapshot.history)
+            XCTAssertNil(snapshot.history?.sessionDays)
+            XCTAssertEqual(snapshot.history?.days.count, 4)
+        }
+        let duplicate = try shared { object in
+            var history = object["history"] as! [String: Any]
+            var ledger = history["sessionDays"] as! [[String: Any]]; ledger.append(ledger[0])
+            history["sessionDays"] = ledger; object["history"] = history
+        }
+        XCTAssertNotNil(duplicate.history); XCTAssertNil(duplicate.history?.sessionDays)
+    }
+}

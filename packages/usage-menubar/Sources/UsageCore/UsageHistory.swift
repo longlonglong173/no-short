@@ -11,14 +11,8 @@ public struct UsageHistory: Decodable, Sendable {
         version = try c.decode(Int.self, forKey: .version)
         providers = try c.decode([UsageProvider].self, forKey: .providers)
         days = try c.decode([UsageHistoryDay].self, forKey: .days)
-        let supportedProviders = providers
-        if let rows = try? c.decode([UsageHistorySessionDay].self, forKey: .sessionDays),
-           Set(rows.map { $0.date + "\0" + $0.provider.rawValue + "\0" + $0.sessionId }).count == rows.count,
-           rows.allSatisfy({ supportedProviders.contains($0.provider) && Self.date($0.date, timeZone: "UTC") != nil &&
-               !$0.sessionId.isEmpty && $0.sessionId.utf8.count <= 4096 && (try? $0.aggregate.validate()) != nil &&
-               $0.aggregate.models.allSatisfy { !$0.name.isEmpty } &&
-               ([$0.aggregate.cost] + $0.aggregate.models.map(\.cost)).allSatisfy { $0.status == "estimated" ? $0.amountUSD == $0.knownCostUSD : $0.status != "unknown" || $0.knownCostUSD == 0 } }) {
-            sessionDays = rows
+        if let rows = try? c.decode([UsageHistorySessionDay].self, forKey: .sessionDays) {
+            sessionDays = Self.validSessionDays(rows, providers: providers) ? rows : nil
         } else { sessionDays = nil }
         guard version == 1, !providers.isEmpty, Set(providers).count == providers.count else { throw SnapshotError.invalid }
         var seen = Set<String>()
@@ -34,6 +28,33 @@ public struct UsageHistory: Decodable, Sendable {
         }
     }
     private enum CodingKeys: String, CodingKey { case version, providers, days, sessionDays }
+
+    private static func validSessionDays(_ rows: [UsageHistorySessionDay], providers: [UsageProvider]) -> Bool {
+        var seen = Set<String>()
+        for row in rows {
+            var key: String = row.date
+            key += "\0" + row.provider.rawValue
+            key += "\0" + row.sessionId
+            guard seen.insert(key).inserted else { return false }
+            guard providers.contains(row.provider) else { return false }
+            guard date(row.date, timeZone: "UTC") != nil else { return false }
+            guard !row.sessionId.isEmpty, row.sessionId.utf8.count <= 4096 else { return false }
+            do { try row.aggregate.validate() } catch { return false }
+            for model in row.aggregate.models {
+                guard !model.name.isEmpty else { return false }
+            }
+            var costs: [UsageCost] = [row.aggregate.cost]
+            for model in row.aggregate.models { costs.append(model.cost) }
+            for cost in costs {
+                if cost.status == "estimated" {
+                    guard cost.amountUSD == cost.knownCostUSD else { return false }
+                } else if cost.status == "unknown" {
+                    guard cost.knownCostUSD == 0 else { return false }
+                }
+            }
+        }
+        return true
+    }
 
     public static func calendar(timeZone: String) -> Calendar? {
         guard let zone = TimeZone(identifier: timeZone) else { return nil }
