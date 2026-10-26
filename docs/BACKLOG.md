@@ -71,9 +71,9 @@ có yêu cầu của người dùng.
 
 ### NS-16 — Nguồn giá và đơn giá tùy chỉnh
 
-- [ ] **Trạng thái:** Đang thực hiện (2026-10-27) — subagent trên nhánh `codex/ns16-custom-model-pricing`; chưa hoàn tất kiểm chứng hoặc merge.
+- [ ] **Trạng thái:** Đang review PR [#41](https://github.com/longlonglong173/no-short/pull/41), đặt trên NS-20 / PR #40; chưa merge.
 - **Ưu tiên:** P1
-- **Phụ thuộc:** NS-06, NS-09 và NS-10 để đồng bộ giá giữa bảng model, lịch sử và export.
+- **Phụ thuộc:** NS-20 cung cấp build ccusage có bản vá nguồn để bổ sung tín hiệu fallback đáng tin cậy; NS-06, NS-09 và NS-10 để đồng bộ giá giữa bảng model, lịch sử và export.
 - **Nội dung:** Hiển thị nguồn đơn giá, thời điểm cập nhật và model thiếu giá; cho đặt và khôi phục đơn giá riêng cho model/endpoint tùy chỉnh. Ghi rõ cơ sở giá đang được áp dụng.
 - **Tiêu chí nghiệm thu:** Giá 0 do người dùng đặt phải khác giá chưa biết. Lưu cấu hình local; thao tác hủy không thay đổi giá, khôi phục trả về nguồn giá mặc định. Tổng, bảng model, lịch sử và CSV/JSON dùng cùng cơ sở giá và thể hiện được giá tùy chỉnh hoặc thiếu giá. Kiểm tra thay đổi/khôi phục giá, model không có giá, dữ liệu cũ và giá trị nhập không hợp lệ. Không trình bày chi phí API quy đổi thành hóa đơn hoặc quota thuê bao.
 - **Bằng chứng:** Chưa có.
@@ -91,12 +91,12 @@ có yêu cầu của người dùng.
 
 ### NS-20 — Độ đúng khi gộp nhiều nguồn log
 
-- [ ] **Trạng thái:** Đang thực hiện (2026-10-27) — subagent trên nhánh `codex/ns20-correct-log-totals`; chưa hoàn tất kiểm chứng hoặc merge.
+- [ ] **Trạng thái:** Chờ CI và merge PR [#40](https://github.com/longlonglong173/no-short/pull/40); review lại đã qua tại commit `cfe0ba1`.
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không; tiếp nhận vấn đề còn mở được ghi nhận trong NS-08, không phụ thuộc việc mở lại tối ưu metadata.
 - **Nội dung:** Tái hiện và xử lý việc ccusage gộp nhầm sự kiện giữa hai phiên khi timestamp và số token giống nhau, đồng thời giữ loại trùng bản sao cùng sự kiện trên nhiều nguồn. Ghi rõ phương án xử lý, định danh sự kiện sử dụng và giới hạn còn lại.
 - **Tiêu chí nghiệm thu:** Hai phiên khác nhau, mỗi phiên 110 token có cùng timestamp/token phải cho tổng 220; bản sao cùng sự kiện trên hai nguồn chỉ được tính một lần. Đối chiếu tổng theo phiên/ngày/provider/model, lịch sử và export trên cùng dữ liệu. Kiểm tra thứ tự nguồn, thêm/bỏ nguồn, ghi thêm log và cache cũ; không dùng timestamp/token đơn thuần làm định danh liên phiên. Có bằng chứng hồi quy trước/sau và phương án xử lý tương thích consumer hiện có; không đánh dấu hoàn thành nếu chỉ ghi nhận hoặc che sai lệch.
-- **Bằng chứng:** Chưa có.
+- **Bằng chứng:** [Báo cáo NS-20](https://github.com/longlonglong173/no-short/blob/codex/ns20-correct-log-totals/docs/tasks/NS-20.md) nằm trong PR #40: local 153 Usage, 16 focused regressions, build/signature hai kiến trúc và ARM synthetic smoke qua; review lại lỗi tách phiên qua. Bản 0.6.1 đã phát hành chưa có bản vá; cần bản runtime build/phát hành mới. CI macOS và merge được theo dõi riêng.
 
 ## P2 — Tính nhất quán và khả năng phân tích
 
@@ -189,12 +189,12 @@ có yêu cầu của người dùng.
 
 ### NS-17 — So sánh hai khoảng thời gian
 
-- [ ] **Trạng thái:** Đang thực hiện (2026-10-27) — subagent trên nhánh `codex/ns17-period-comparison`; chưa hoàn tất kiểm chứng hoặc merge.
+- [ ] **Trạng thái:** Chờ merge PR [#42](https://github.com/longlonglong173/no-short/pull/42); review độc lập và CI đã qua tại commit `1f406c7`.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-09.
 - **Nội dung:** So sánh khoảng đã chọn với kỳ trước cùng độ dài; hiển thị chênh lệch token/chi phí theo provider, model và thay đổi tỷ lệ cache.
 - **Tiêu chí nghiệm thu:** Hai kỳ dùng cùng bộ lọc, múi giờ và cơ sở giá. Hiển thị rõ ngày bắt đầu/kết thúc, chênh lệch tuyệt đối và phần trăm khi tính được; kỳ gốc bằng 0 không sinh phần trăm vô hạn. Nêu cách tính tỷ lệ cache; không suy ra mức tăng chính xác khi thiếu giá hoặc dữ liệu không đầy đủ. Kiểm tra ranh giới ngày/tháng, năm nhuận, kỳ rỗng, model chỉ xuất hiện ở một kỳ và dữ liệu cũ.
-- **Bằng chứng:** Chưa có.
+- **Bằng chứng:** [Báo cáo NS-17](https://github.com/longlonglong173/no-short/blob/codex/ns17-period-comparison/docs/tasks/NS-17.md) nằm trong PR #42: local 148 Usage / 1 compiled-runtime skip, 202 Swift, 19 script và 36 browser; lỗi freshness đã được review lại. Chưa nghiệm thu app cài đặt, host hoặc Intel; task chưa merge.
 
 ### NS-18 — Truy từ ngày tới các phiên đóng góp
 
