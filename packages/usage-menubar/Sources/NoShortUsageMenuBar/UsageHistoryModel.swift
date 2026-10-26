@@ -24,6 +24,11 @@ import UsageCore
     @Published var customStart = ""
     @Published var customEnd = ""
     @Published var includeSessionIdentifiers = false
+    @Published var comparisonEnabled = false
+    var comparison: UsageComparisonResult? {
+        guard comparisonEnabled, let snapshot, let range else { return nil }
+        return UsageComparison.compare(snapshot, provider: provider, range: range, isStale: isStale)
+    }
     @Published var isExporting = false
     @Published var exportFailure: UsageHistoryExportFailure?
     var onExport: ((UsageExportFormat, Bool) -> Void)?
