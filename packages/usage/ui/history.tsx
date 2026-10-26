@@ -1,3 +1,5 @@
+import { groupedUsage } from '../src/grouping';
+import { GroupingPanel, type GroupBy } from './grouping';
 import { PricingOrigin } from './pricing';
 import { useEffect, useMemo, useState } from 'react';
 import { ExportControls, type DownloadFile } from './export';
@@ -30,6 +32,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', syncClock); };
   }, [comparisonEnabled]);
   const [selectedSession, setSelectedSession] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<GroupBy>('none');
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const range = historyRange(preset, now, snapshot.timeZone, custom);
   const active = range ?? lastValid.range;
@@ -42,6 +45,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
   const sessionDetail = sessionUsage && sessionUsage.reconciliationIssue !== 'tokens' ? sessionUsage.sessions.find(s => s.sessionId === selectedSession) : undefined;
   const sessionTitle = (id: string) => snapshot.sessions.find(s => s.id === id)?.title ?? id;
   const detail: Aggregate | undefined = sessionDetail?.aggregate ?? (selectedDay ? view?.days.find(d => d.date === selectedDay)?.aggregate : view?.aggregate);
+  const groups = useMemo(() => groupBy==='none' || (!range && lastValid.timeZone!==snapshot.timeZone) ? null : groupedUsage(snapshot,provider,active.start,active.end),[snapshot,provider,active.start,active.end,groupBy,!!range,lastValid.timeZone]);
   const money = (a: Aggregate) => costText(a.cost, language);
   const max = (view?.days ?? []).reduce((max, day) => Math.max(max, day.aggregate.cost.knownCostUSD), .01);
   const hasClaude = Array.isArray(snapshot.history?.providers) && snapshot.history.providers.includes('claude');
@@ -95,9 +99,13 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
         </table>
       </div> : null}
     </>}
+    <label className="history-group-control">{l('Nhóm usage')}<select aria-label={l('Nhóm usage')} value={groupBy} onChange={e=>setGroupBy(e.target.value as GroupBy)}>
+      <option value="none">{l('Không nhóm')}</option><option value="project">{l('Theo dự án')}</option><option value="work">{l('Công việc cha–con')}</option>
+    </select></label>
+    <GroupingPanel value={groups} mode={groupBy}/>
     <label className="comparison-toggle"><input type="checkbox" checked={comparisonEnabled} onChange={e => setComparisonEnabled(e.target.checked)}/>{l('So sánh với kỳ trước cùng độ dài')}</label>
     {comparisonEnabled ? <ComparisonPanel value={view ? compareHistory(snapshot, provider, active, comparisonNow) : null}/> : null}
-    <ExportControls snapshot={snapshot} provider={provider} range={active} available={!!view} downloadFile={downloadFile}/>
+    <ExportControls groupBy={groupBy} snapshot={snapshot} provider={provider} range={active} available={!!view && (groupBy==='none' || (!!groups && groups.reconciliationIssue!=='tokens'))} downloadFile={downloadFile}/>
     <p className="history-scope">{l('Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.')} · {l('Nhận gần nhất')}: {new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</p>
   </div>;
 }

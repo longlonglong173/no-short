@@ -69,6 +69,16 @@ public struct SessionUsage: Decodable, Sendable {
     public let tokens: UsageTokens
     public let cost: UsageCost
     public let models: [ModelUsage]
+    public let grouping: SessionGrouping?
+    private enum CodingKeys:String,CodingKey { case id,title,kind,provider,sessionKey,lastActivity,tokens,cost,models,grouping }
+    public init(from decoder:Decoder) throws {
+        let c=try decoder.container(keyedBy:CodingKeys.self)
+        id=try c.decode(String.self,forKey:.id);title=try c.decode(String.self,forKey:.title);kind=try c.decode(String.self,forKey:.kind)
+        provider=try c.decodeIfPresent(UsageProvider.self,forKey:.provider);sessionKey=try c.decodeIfPresent(String.self,forKey:.sessionKey)
+        lastActivity=try c.decodeIfPresent(String.self,forKey:.lastActivity);tokens=try c.decode(UsageTokens.self,forKey:.tokens)
+        cost=try c.decode(UsageCost.self,forKey:.cost);models=try c.decode([ModelUsage].self,forKey:.models)
+        let optional=try? c.decode(SessionGrouping.self,forKey:.grouping);grouping=optional?.valid == true ? optional : nil
+    }
 }
 public struct ChartDay: Decodable, Sendable { public let date: String; public let cost: UsageCost }
 public struct ProviderBreakdown: Decodable, Sendable {

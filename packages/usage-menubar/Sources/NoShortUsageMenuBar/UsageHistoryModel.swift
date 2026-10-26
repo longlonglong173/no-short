@@ -32,6 +32,11 @@ import UsageCore
     @Published var customStart = ""
     @Published var customEnd = ""
     @Published var includeSessionIdentifiers = false
+    @Published var groupBy = "none"
+    var grouping: UsageGroupingProjection? {
+        guard groupBy != "none",let snapshot,let range else { return nil }
+        return UsageGrouping.project(snapshot,provider:provider,range:range)
+    }
     @Published var comparisonEnabled = false
     var comparison: UsageComparisonResult? {
         guard comparisonEnabled, let snapshot, let range else { return nil }
@@ -51,7 +56,7 @@ import UsageCore
     func prepareExport(_ format: UsageExportFormat, includeSessionIdentifiers: Bool) throws -> PreparedUsageExport {
         guard projection != nil, let snapshot, let range,
               let document = UsageExport.create(snapshot, provider: provider, start: range.start, end: range.end,
-                  includeSessionIdentifiers: includeSessionIdentifiers, isStale: isStale) else { throw UsageHistoryExportFailure.unavailable }
+                  includeSessionIdentifiers: includeSessionIdentifiers, isStale: isStale, groupBy: groupBy) else { throw UsageHistoryExportFailure.unavailable }
         return PreparedUsageExport(data: Data(try document.serialize(format).utf8),
             filename: "no-short-usage-\(provider)-\(range.start)-\(range.end).\(format.rawValue)")
     }

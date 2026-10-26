@@ -5,11 +5,11 @@ import type { DateRange } from '../src/history';
 import type { ProviderFilter } from './model';
 import { useTranslation } from './language';
 export type DownloadFile = (filename: string, mimeType: string, text: string) => Promise<void>;
-export function ExportControls({ snapshot, provider, range, available, downloadFile }: { snapshot: UsageSnapshot; provider: ProviderFilter; range: DateRange; available: boolean; downloadFile: DownloadFile }) {
+export function ExportControls({ groupBy = 'none', snapshot, provider, range, available, downloadFile }: { groupBy?: 'none'|'project'|'work'; snapshot: UsageSnapshot; provider: ProviderFilter; range: DateRange; available: boolean; downloadFile: DownloadFile }) {
   const { l } = useTranslation();
   const [identifiers, setIdentifiers] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState(false);
   async function save(format: 'csv' | 'json') {
-    const document = createUsageExport(snapshot, provider, range.start, range.end, { includeSessionIdentifiers: identifiers });
+    const document = createUsageExport(snapshot, provider, range.start, range.end, { includeSessionIdentifiers: identifiers, groupBy });
     if (!document) { setError(true); return; }
     const payload = serializeUsageExport(document, format);
     setBusy(true); setError(false);
