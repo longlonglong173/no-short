@@ -193,8 +193,9 @@ extension UsageHistory {
     /// Exact inclusive calendar-day attribution. nil means unavailable; empty sessions means supported empty.
     public static func sessionUsageForRange(_ snapshot: UsageSnapshot, provider: String, range: UsageHistoryRange) -> SessionUsageRange? {
         guard let projection = project(snapshot, provider: provider, range: range), let history = snapshot.history,
-              let ledger = history.sessionDays,
-              ledger.allSatisfy({ row in snapshot.sessions.contains { $0.id == row.sessionId && $0.usageProvider == row.provider } }) else { return nil }
+              let ledger = history.sessionDays else { return nil }
+        let sessionIdentities = Set(snapshot.sessions.map { $0.usageProvider.rawValue + "\0" + $0.id })
+        guard ledger.allSatisfy({ sessionIdentities.contains($0.provider.rawValue + "\0" + $0.sessionId) }) else { return nil }
         let rows = ledger.filter { $0.date >= range.start && $0.date <= range.end && (provider == "all" || $0.provider.rawValue == provider) }
         let grouped = Dictionary(grouping: rows, by: { $0.provider.rawValue + "\0" + $0.sessionId })
         var sessions: [SessionUsageRange.Session] = []

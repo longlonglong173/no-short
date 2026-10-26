@@ -79,3 +79,31 @@ extension SessionDaysTests {
         XCTAssertEqual(result.aggregate.cost.status, "partial")
     }
 }
+
+extension SessionDaysTests {
+    func testReferenceIndexRequiresExactProviderAndSessionIdentity() throws {
+        let range = UsageHistoryRange(start: "2026-09-30", end: "2026-10-01")
+        for wrongReference in ["missing-session", "claude-fixture"] {
+            let snapshot = try shared { object in
+                var history = object["history"] as! [String: Any]
+                var ledger = history["sessionDays"] as! [[String: Any]]
+                let index = ledger.firstIndex { $0["provider"] as? String == "codex" }!
+                ledger[index]["sessionId"] = wrongReference
+                history["sessionDays"] = ledger; object["history"] = history
+            }
+            XCTAssertNotNil(snapshot.history?.sessionDays)
+            XCTAssertNil(UsageHistory.sessionUsageForRange(snapshot, provider: "all", range: range))
+        }
+        // Equal IDs on different providers remain valid distinct identities.
+        let snapshot = try shared { object in
+            var sessions = object["sessions"] as! [[String: Any]]
+            let claude = sessions.firstIndex { $0["provider"] as? String == "claude" }!
+            sessions[claude]["id"] = "codex-fixture"; object["sessions"] = sessions
+            var history = object["history"] as! [String: Any]
+            var ledger = history["sessionDays"] as! [[String: Any]]
+            for i in ledger.indices where ledger[i]["provider"] as? String == "claude" { ledger[i]["sessionId"] = "codex-fixture" }
+            history["sessionDays"] = ledger; object["history"] = history
+        }
+        XCTAssertTrue(try XCTUnwrap(UsageHistory.sessionUsageForRange(snapshot, provider: "all", range: range)).reconciled)
+    }
+}
