@@ -7,6 +7,7 @@ public struct UsageExport: Encodable, Sendable {
     public let formatVersion = 1
     public let costBasis = "api-equivalent-estimate-not-billing"
     public let provider, start, end, timeZone, generatedAt, status: String
+    public let pricing: SnapshotPricing?
     public let aggregate: UsageAggregate
     public let days: [Day]
     public let sessionReferences: SessionReferences?
@@ -40,7 +41,7 @@ public struct UsageExport: Encodable, Sendable {
         }
         return Self(provider: provider, start: start, end: end, timeZone: snapshot.timeZone,
             generatedAt: snapshot.generatedAtText, status: isStale ? "stale" : snapshot.status,
-            aggregate: projection.aggregate, days: projection.days.map { Day(date: $0.date, aggregate: $0.aggregate) }, sessionReferences: references)
+            pricing: snapshot.pricing, aggregate: projection.aggregate, days: projection.days.map { Day(date: $0.date, aggregate: $0.aggregate) }, sessionReferences: references)
     }
     public func serialize(_ format: UsageExportFormat) throws -> String {
         if format == .json {
@@ -49,26 +50,35 @@ public struct UsageExport: Encodable, Sendable {
         }
         var columns = ["recordType", "scope", "date", "provider", "model", "input", "output", "cacheRead", "cacheWrite", "total",
             "amountUSD", "knownCostUSD", "pricingStatus", "timezone", "start", "end", "generatedAt", "status", "costBasis"]
+        if pricing != nil { columns += ["pricingBasis", "pricingOrigin", "pricingUpdatedAt", "inputUSDPerMillion", "outputUSDPerMillion", "cacheReadUSDPerMillion", "cacheWriteUSDPerMillion"] }
         if sessionReferences != nil { columns += ["sessionId", "sessionTitle", "lastActivity"] }
         var lines = [columns.map { Self.csvCell(.text($0)) }.joined(separator: ",")]
         let metadata: [String: Cell] = ["timezone": .text(timeZone), "start": .text(start), "end": .text(end),
-            "generatedAt": .text(generatedAt), "status": .text(status), "costBasis": .text(costBasis)]
+            "generatedAt": .text(generatedAt), "status": .text(status), "costBasis": .text(costBasis), "pricingBasis": .text(pricing?.basis ?? "ccusage-report")]
         func write(_ row: [String: Cell]) {
             let record = metadata.merging(row) { _, new in new }
             lines.append(columns.map { Self.csvCell(record[$0]) }.joined(separator: ","))
         }
-        func usage(_ type: String, _ scope: String, _ date: String, _ tokens: UsageTokens, _ cost: UsageCost, _ model: String = "") {
+        func usage(_ type: String, _ scope: String, _ date: String, _ tokens: UsageTokens, _ cost: UsageCost, _ model: String = "", _ pricing: ModelPricing? = nil) {
             var row: [String: Cell] = ["recordType": .text(type), "scope": .text(scope), "date": .text(date), "provider": .text(provider), "model": .text(model),
                 "input": .number(tokens.input), "output": .number(tokens.output), "cacheRead": .number(tokens.cacheRead),
                 "cacheWrite": .number(tokens.cacheWrite), "total": .number(tokens.total), "knownCostUSD": .number(cost.knownCostUSD), "pricingStatus": .text(cost.status)]
+            if let pricing {
+                row["pricingOrigin"] = .text(pricing.source)
+                if let updatedAt = pricing.updatedAt { row["pricingUpdatedAt"] = .text(updatedAt) }
+                if let rates = pricing.rates {
+                    row["inputUSDPerMillion"] = .number(rates.input); row["outputUSDPerMillion"] = .number(rates.output)
+                    row["cacheReadUSDPerMillion"] = .number(rates.cacheRead); row["cacheWriteUSDPerMillion"] = .number(rates.cacheWrite)
+                }
+            }
             if let amount = cost.amountUSD { row["amountUSD"] = .number(amount) }
             write(row)
         }
         usage("aggregate", "selected-range", "", aggregate.tokens, aggregate.cost)
-        for model in aggregate.models { usage("model", "selected-range", "", model.tokens, model.cost, model.name) }
+        for model in aggregate.models { usage("model", "selected-range", "", model.tokens, model.cost, model.name, model.pricing) }
         for day in days {
             usage("day", "day", day.date, day.aggregate.tokens, day.aggregate.cost)
-            for model in day.aggregate.models { usage("day-model", "day", day.date, model.tokens, model.cost, model.name) }
+            for model in day.aggregate.models { usage("day-model", "day", day.date, model.tokens, model.cost, model.name, model.pricing) }
         }
         if let sessionReferences {
             for session in sessionReferences.items {

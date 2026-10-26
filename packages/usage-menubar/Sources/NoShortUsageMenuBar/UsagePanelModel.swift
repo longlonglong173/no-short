@@ -83,6 +83,7 @@ struct DailyCostPoint: Identifiable {
     var onOpenSettings: (() -> Void)?
     var onAbout: (() -> Void)?
     var onHistory: (() -> Void)?
+    var onPricing: (() -> Void)?
     var onBudgets: (() -> Void)?
     var onDataManagement: (() -> Void)?
     var onCheckUpdates: (() -> Void)?

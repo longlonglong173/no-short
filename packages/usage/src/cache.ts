@@ -7,6 +7,9 @@ import { assertNoCacheMaintenance } from './cache-maintenance.ts';
 import type { UsageSnapshot } from './types.ts';
 
 const notices: Record<string, string> = {
+  PRICING_CONFIG_CHANGED: 'Cấu hình đơn giá đã thay đổi khi đọc log. Làm mới để tính theo cấu hình mới.',
+  PRICING_CONFIG_INVALID: 'Không đọc được cấu hình đơn giá. Mở Đơn giá để kiểm tra hoặc khôi phục; số liệu cũ giữ cơ sở giá trước đó.',
+  PRICING_COST_OVERFLOW: 'Đơn giá tạo ra chi phí quá lớn. Giảm đơn giá và thử lại.',
   REPORT_TIMEOUT: 'Đọc log quá lâu. Thử lại hoặc giảm số thư mục log.',
   RUNTIME_UNAVAILABLE: 'Không tìm thấy bộ đọc ccusage. Hãy cài lại gói runtime đúng phiên bản.',
   REPORT_INVALID: 'Dữ liệu ccusage không tương thích. Hãy cập nhật plugin.',
@@ -36,13 +39,15 @@ function unavailable(timeZone: string, notice: string): UsageSnapshot {
   return { ...value, status: 'error', notice, today: { ...value.today, cost: unknown }, month: { ...value.month, cost: unknown }, chart: value.chart.map(p => ({ ...p, cost: unknown })) };
 }
 export class SnapshotStore {
-  constructor(private directory: string, private load: () => Promise<UsageSnapshot>, private options: { ttlMs?: number; timeZone?: string; maintenanceRoot?: string } = {}) {}
+  constructor(private directory: string, private load: () => Promise<UsageSnapshot>, private options: { ttlMs?: number; timeZone?: string; maintenanceRoot?: string; revision?: () => Promise<string> } = {}) {}
   async get(): Promise<UsageSnapshot> {
     const path = join(this.directory, 'snapshot.json'); const lock = join(this.directory, 'scan.lock');
     let cached = await readSnapshot(path);
-    const fresh = (v: UsageSnapshot | null) => v !== null && Date.now() - Date.parse(v.generatedAt) < (this.options.ttlMs ?? 15_000);
+    let revision: string | undefined;
+    const fresh = (v: UsageSnapshot | null) => v !== null && (!this.options.revision || v.pricing?.configurationRevision === revision) && Date.now() - Date.parse(v.generatedAt) < (this.options.ttlMs ?? 15_000);
     let ownsLock = false;
     try {
+      revision = await this.options.revision?.();
       await assertNoCacheMaintenance(this.options.maintenanceRoot);
       if (fresh(cached)) return cached!;
       await mkdir(this.directory, { recursive: true, mode: 0o700 });
@@ -76,6 +81,7 @@ export class SnapshotStore {
       await assertNoCacheMaintenance(this.options.maintenanceRoot);
       if (fresh(cached)) return cached!;
       const value = await this.load();
+      if (this.options.revision && value.pricing?.configurationRevision !== await this.options.revision()) throw new Error('PRICING_CONFIG_CHANGED');
       await assertNoCacheMaintenance(this.options.maintenanceRoot);
       const temporary = join(this.directory, `snapshot-${randomUUID()}.tmp`);
       await writeFile(temporary, JSON.stringify(value), { mode: 0o600 });

@@ -1,3 +1,4 @@
+import { PricingOrigin } from './pricing';
 import { useEffect, useMemo, useState } from 'react';
 import { ExportControls, type DownloadFile } from './export';
 import { historyRange, historyView, type HistoryPreset, type DateRange } from '../src/history';
@@ -56,7 +57,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
       <p className="history-scope">{l('Ngày thiếu giá: cột gạch chéo, không phải chi phí bằng 0.')}</p>
       {detail ? <div className="history-table" data-testid="history-models" tabIndex={0} role="region" aria-label={l('Bảng model lịch sử')}>
         <table><thead><tr>{['Model', 'Input', 'Output', 'Cache read', 'Cache write', 'Tổng', 'Chi phí'].map(label => <th key={label}>{l(label)}</th>)}</tr></thead>
-          <tbody>{detail.models.map((model, index) => <tr key={`${model.name}:${index}`}><td>{model.name}</td>{[model.tokens.input, model.tokens.output, model.tokens.cacheRead, model.tokens.cacheWrite, model.tokens.total].map((n, i) => <td key={i}>{n.toLocaleString(language)}</td>)}<td>{costText(model.cost, language)}{model.cost.status === 'partial' ? ` ≥$${model.cost.knownCostUSD.toFixed(2)}` : ''}</td></tr>)}</tbody>
+          <tbody>{detail.models.map((model, index) => <tr key={`${model.name}:${index}`}><td>{model.name}<PricingOrigin pricing={model.pricing}/></td>{[model.tokens.input, model.tokens.output, model.tokens.cacheRead, model.tokens.cacheWrite, model.tokens.total].map((n, i) => <td key={i}>{n.toLocaleString(language)}</td>)}<td>{costText(model.cost, language)}{model.cost.status === 'partial' ? ` ≥$${model.cost.knownCostUSD.toFixed(2)}` : ''}</td></tr>)}</tbody>
         </table>
       </div> : null}
     </>}

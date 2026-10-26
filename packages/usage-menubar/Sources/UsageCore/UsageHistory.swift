@@ -88,7 +88,7 @@ public struct UsageHistory: Decodable, Sendable {
     private static func sum(_ values: [UsageAggregate]) -> UsageAggregate? {
         let grouped: [String: [ModelUsage]] = Dictionary(grouping: values.flatMap(\.models), by: \.name)
         var models: [ModelUsage] = grouped.map { name, rows in
-            ModelUsage(name: name, tokens: tokens(rows.map(\.tokens)), cost: cost(rows.map(\.cost)))
+            ModelUsage(name: name, tokens: tokens(rows.map(\.tokens)), cost: cost(rows.map(\.cost)), pricing: ModelPricing.merge(rows.map(\.pricing)))
         }
         models.sort { left, right in
             if left.cost.knownCostUSD == right.cost.knownCostUSD { return left.name < right.name }

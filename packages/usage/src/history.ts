@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { modelPricingSchema } from './pricing.ts';
 import { dayKey, sumAggregates } from './adapter.ts';
 import type { Aggregate, UsageHistory, UsageSnapshot } from './types.ts';
 
@@ -44,7 +45,7 @@ const costSchema = z.union([
   z.object({ amountUSD: z.null(), knownCostUSD: z.literal(0), status: z.literal('unknown') }),
 ]);
 const aggregateSchema = z.object({ tokens: tokenSchema, cost: costSchema,
-  models: z.array(z.object({ name: z.string().min(1), tokens: tokenSchema, cost: costSchema })) });
+  models: z.array(z.object({ name: z.string().min(1), tokens: tokenSchema, cost: costSchema, pricing: modelPricingSchema.optional() })) });
 const providerSchema = z.enum(['codex', 'claude']);
 const historySchema = z.object({ version: z.literal(1), providers: z.array(providerSchema).min(1).max(2),
   days: z.array(z.object({ date: z.string().refine(calendarDate), provider: providerSchema, aggregate: aggregateSchema }))

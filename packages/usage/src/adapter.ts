@@ -1,6 +1,7 @@
 import { z } from 'zod';
+import { customCost, mergedPricing, type PricingConfig } from './pricing.ts';
 import type { Aggregate, Cost, ModelUsage, SessionMetadata, SessionUsage, Tokens, UsageSnapshot, UsageProvider } from './types.ts';
-export interface SnapshotOptions { now: Date; timeZone: string; metadata: Map<string, SessionMetadata>; pricingSource?: 'online' | 'cached'; providers?: readonly UsageProvider[] }
+export interface SnapshotOptions { now: Date; timeZone: string; metadata: Map<string, SessionMetadata>; pricingSource?: 'online' | 'cached'; providers?: readonly UsageProvider[]; pricing?: PricingConfig; pricingRevision?: string }
 
 const count = z.number().finite().nonnegative();
 const tokenFields = { inputTokens: count, outputTokens: count, cacheReadTokens: count, cacheCreationTokens: count, totalTokens: count.optional() };
@@ -18,12 +19,23 @@ function tokens(row: z.infer<typeof modelSchema> | UsageRow): Tokens {
   return { input: row.inputTokens, output: row.outputTokens, cacheRead: row.cacheReadTokens, cacheWrite: row.cacheCreationTokens,
     total: row.totalTokens ?? row.inputTokens + row.outputTokens + row.cacheReadTokens + row.cacheCreationTokens };
 }
-function aggregate(row: UsageRow, unpriced: Set<string>): Aggregate {
-  const models: ModelUsage[] = row.modelBreakdowns.map(m => ({ name: m.modelName, tokens: tokens(m),
-    cost: m.missingPricing || unpriced.has(m.modelName) ? { amountUSD: null, knownCostUSD: 0, status: 'unknown' } : knownCost(m.cost) }));
+function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider, options: SnapshotOptions): Aggregate {
+  let repriced = false;
+  const models: ModelUsage[] = row.modelBreakdowns.map(m => {
+    const value = tokens(m);
+    const override = options.pricing?.overrides.find(p => p.provider === provider && p.model === m.modelName);
+    const rates = override && { input: override.input, output: override.output, cacheRead: override.cacheRead, cacheWrite: override.cacheWrite };
+    const unavailable = m.missingPricing || unpriced.has(m.modelName) || m.isFallback;
+    if (override || m.isFallback) repriced = true;
+    return { name: m.modelName, tokens: value,
+      cost: rates ? customCost(value, rates) : unavailable ? { amountUSD: null, knownCostUSD: 0, status: 'unknown' } : knownCost(m.cost),
+      pricing: rates ? { source: 'custom', provider, ...(options.pricing?.updatedAt ? { updatedAt: options.pricing.updatedAt } : {}), rates }
+        : { source: m.isFallback ? 'fallback' : unavailable ? 'unpriced' : 'ccusage', provider } };
+  });
   const missing = models.some(m => m.cost.amountUSD === null);
-  return { tokens: tokens(row), models, cost: missing ? { amountUSD: null, knownCostUSD: row.totalCost,
-    status: models.some(m => m.cost.amountUSD !== null) ? 'partial' : 'unknown' } : knownCost(row.totalCost) };
+  const known = repriced ? Number(models.reduce((n, m) => n + m.cost.knownCostUSD, 0).toPrecision(15)) : row.totalCost;
+  return { tokens: tokens(row), models, cost: missing ? { amountUSD: null, knownCostUSD: known,
+    status: models.some(m => m.cost.amountUSD !== null) ? 'partial' : 'unknown' } : knownCost(known) };
 }
 function sumCost(a: Cost, b: Cost): Cost {
   const knownCostUSD = a.knownCostUSD + b.knownCostUSD;
@@ -47,6 +59,8 @@ export function sumAggregates(rows: Aggregate[]): Aggregate {
       else {
         for (const key of Object.keys(existing.tokens) as (keyof Tokens)[]) existing.tokens[key] += m.tokens[key];
         existing.cost = sumCost(existing.cost, m.cost);
+        const pricing = mergedPricing(existing.pricing, m.pricing);
+        if (pricing) existing.pricing = pricing; else delete existing.pricing;
       }
     }
   }
@@ -71,7 +85,7 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
     const prefix = provider === 'claude' ? 'claude:' : '';
     const meta = options.metadata.get(prefix + row.period) ?? options.metadata.get(prefix + row.period.split('/').at(-1)!) ?? options.metadata.get(prefix + sessionKey) ?? { title: `Phiên ${shortId(row.period)}`, kind: 'unknown' as const };
     return { id: prefix + row.period, provider, sessionKey, title: meta.title.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 160), kind: meta.kind,
-      lastActivity: row.metadata?.lastActivity ?? null, ...aggregate(row, unpriced) };
+      lastActivity: row.metadata?.lastActivity ?? null, ...aggregate(row, unpriced, provider, options) };
   }).sort((a, b) => (b.lastActivity ?? '').localeCompare(a.lastActivity ?? '') || a.id.localeCompare(b.id));
   const daily = new Map<string, Aggregate>();
   const providerDaily = new Map<UsageProvider, Map<string, Aggregate>>(providers.map(provider => [provider, new Map()]));
@@ -81,7 +95,7 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
     const sources = row.agents ?? (providers.includes(row.agent as UsageProvider) ? [row] : []);
     if (sources.some(a => !providers.includes(a.agent as UsageProvider)) || (!sources.length && row.totalTokens > 0)) throw new Error('Unexpected daily data source');
     const values = sources.map(source => {
-      const value = aggregate(source, unpriced);
+      const value = aggregate(source, unpriced, source.agent as UsageProvider, options);
       const days = providerDaily.get(source.agent as UsageProvider)!;
       days.set(row.period, days.has(row.period) ? sumAggregates([days.get(row.period)!, value]) : value);
       return value;
@@ -105,7 +119,9 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
     [...days].map(([date, aggregate]) => ({ date, provider, aggregate }))).sort((a, b) => a.date.localeCompare(b.date) || providers.indexOf(a.provider) - providers.indexOf(b.provider)) };
   return { schemaVersion: 1, source: 'ccusage', ccusageVersion: '20.0.34', generatedAt: options.now.toISOString(), timeZone: options.timeZone,
     status: sessions.length ? 'ready' : 'empty', pricingSource: options.pricingSource ?? 'online', sessions,
-    today: daily.get(today) ?? emptyAggregate(), month: sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart, providerBreakdowns, history };
+    today: daily.get(today) ?? emptyAggregate(), month: sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart, providerBreakdowns, history,
+    pricing: { basis: options.pricing?.overrides.length ? 'current-custom-rates' : 'ccusage-report',
+      configurationRevision: options.pricingRevision ?? 'default-v1', ...(options.pricing?.updatedAt ? { updatedAt: options.pricing.updatedAt } : {}) } };
 }
 export function selectSession(sessions: SessionUsage[], id: string | null): SessionUsage | null {
   if (id !== null) return sessions.find(s => s.id === id) ?? null;

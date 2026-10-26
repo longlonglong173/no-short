@@ -2,6 +2,7 @@ import type { Aggregate, UsageProvider, UsageSnapshot } from './types.ts';
 import { z } from 'zod';
 import { dayKey } from './adapter.ts';
 import { historyView } from './history.ts';
+import type { ModelPricing, SnapshotPricing } from './pricing';
 
 export interface UsageExport {
   formatVersion: 1;
@@ -12,6 +13,7 @@ export interface UsageExport {
   timeZone: string;
   generatedAt: string;
   status: UsageSnapshot['status'];
+  pricing?: SnapshotPricing;
   aggregate: Aggregate;
   days: { date: string; aggregate: Aggregate }[];
   sessionReferences?: {
@@ -35,7 +37,7 @@ export function createUsageExport(snapshot: UsageSnapshot, provider: 'all' | 'co
   if (!view) return null;
   const document: UsageExport = { formatVersion: 1, costBasis: 'api-equivalent-estimate-not-billing',
     provider, start, end, timeZone: snapshot.timeZone, generatedAt: snapshot.generatedAt, status: snapshot.status,
-    aggregate: view.aggregate, days: view.days };
+    ...(snapshot.pricing ? { pricing: snapshot.pricing } : {}), aggregate: view.aggregate, days: view.days };
   if (options?.includeSessionIdentifiers) {
     const items: NonNullable<UsageExport['sessionReferences']>['items'] = [];
     for (const session of snapshot.sessions) {
@@ -63,23 +65,26 @@ export function serializeUsageExport(document: UsageExport, format: 'csv' | 'jso
   if (format === 'json') return JSON.stringify(document, null, 2) + '\n';
   const columns = ['recordType', 'scope', 'date', 'provider', 'model', 'input', 'output', 'cacheRead', 'cacheWrite', 'total',
     'amountUSD', 'knownCostUSD', 'pricingStatus', 'timezone', 'start', 'end', 'generatedAt', 'status', 'costBasis'];
+  if (document.pricing) columns.push('pricingBasis', 'pricingOrigin', 'pricingUpdatedAt', 'inputUSDPerMillion', 'outputUSDPerMillion', 'cacheReadUSDPerMillion', 'cacheWriteUSDPerMillion');
   if (document.sessionReferences) columns.push('sessionId', 'sessionTitle', 'lastActivity');
   const lines = [columns.map(csvCell).join(',')];
   const metadata = { timezone: document.timeZone, start: document.start, end: document.end, generatedAt: document.generatedAt,
-    status: document.status, costBasis: document.costBasis };
+    status: document.status, costBasis: document.costBasis, pricingBasis: document.pricing?.basis ?? 'ccusage-report' };
   const write = (row: Record<string, Cell>) => {
     const record: Record<string, Cell> = { ...metadata, ...row };
     lines.push(columns.map(column => csvCell(record[column] ?? null)).join(','));
   };
-  const usage = (recordType: string, scope: string, date: string, value: Omit<Aggregate, 'models'>, model = '') => write({
+  const usage = (recordType: string, scope: string, date: string, value: Omit<Aggregate, 'models'>, model = '', pricing?: ModelPricing) => write({
     recordType, scope, date, provider: document.provider, model, ...value.tokens,
-    amountUSD: value.cost.amountUSD, knownCostUSD: value.cost.knownCostUSD, pricingStatus: value.cost.status,
+    amountUSD: value.cost.amountUSD, knownCostUSD: value.cost.knownCostUSD, pricingStatus: value.cost.status, pricingOrigin: pricing?.source ?? null, pricingUpdatedAt: pricing?.updatedAt ?? null,
+    inputUSDPerMillion: pricing?.rates?.input ?? null, outputUSDPerMillion: pricing?.rates?.output ?? null,
+    cacheReadUSDPerMillion: pricing?.rates?.cacheRead ?? null, cacheWriteUSDPerMillion: pricing?.rates?.cacheWrite ?? null,
   });
   usage('aggregate', 'selected-range', '', document.aggregate);
-  for (const model of document.aggregate.models) usage('model', 'selected-range', '', model, model.name);
+  for (const model of document.aggregate.models) usage('model', 'selected-range', '', model, model.name, model.pricing);
   for (const day of document.days) {
     usage('day', 'day', day.date, day.aggregate);
-    for (const model of day.aggregate.models) usage('day-model', 'day', day.date, model, model.name);
+    for (const model of day.aggregate.models) usage('day-model', 'day', day.date, model, model.name, model.pricing);
   }
   for (const session of document.sessionReferences?.items ?? []) write({ recordType: 'session-reference',
     scope: document.sessionReferences!.scope, date: dayKey(new Date(session.lastActivity), document.timeZone),
