@@ -5,7 +5,7 @@ import raw from './unified.json' with { type: 'json' };
 export function mixedDashboard(): DashboardResult {
   const report = structuredClone(raw);
   const claude = { ...structuredClone(report.session[0]), agent: 'claude', totalCost: 4,
-    modelBreakdowns: [{ modelName: 'claude-fixture', inputTokens: 1200, outputTokens: 80,
+    modelBreakdowns: [{ isFallback: false, modelName: 'claude-fixture', inputTokens: 1200, outputTokens: 80,
       cacheReadTokens: 800, cacheCreationTokens: 0, cost: 4 }] };
   report.session.push(claude);
   for (const [index, amount] of [2.5, 1.25].entries()) {

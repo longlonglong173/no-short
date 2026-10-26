@@ -18,6 +18,7 @@ export function translate(language: Language, key: string, ...args: string[]): s
   return template.replace(/%@/g, () => args[index++] ?? '%@');
 }
 export const catalog: Record<string, readonly [string, string]> = {
+  "Bộ đọc chưa cung cấp nguồn giá model Codex. Cập nhật runtime No Short Usage rồi thử lại.": ["The reader does not supply Codex model price provenance. Update the No Short Usage runtime and retry.", "读取器未提供 Codex 模型价格来源。请更新 No Short Usage 运行时后重试。"],
   "Cấu hình đơn giá đã thay đổi khi đọc log. Làm mới để tính theo cấu hình mới.": ["Pricing configuration changed while reading logs. Refresh to use the new configuration.", "读取日志期间定价配置发生变化。请刷新以使用新配置。"],
   "Đơn giá…": ["Pricing…", "价格…"],
   "Đơn giá tùy chỉnh": ["Custom pricing", "自定义定价"],

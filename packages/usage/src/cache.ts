@@ -7,6 +7,7 @@ import { assertNoCacheMaintenance } from './cache-maintenance.ts';
 import type { UsageSnapshot } from './types.ts';
 
 const notices: Record<string, string> = {
+  REPORT_PRICING_UNSUPPORTED: 'Bộ đọc chưa cung cấp nguồn giá model Codex. Cập nhật runtime No Short Usage rồi thử lại.',
   PRICING_CONFIG_CHANGED: 'Cấu hình đơn giá đã thay đổi khi đọc log. Làm mới để tính theo cấu hình mới.',
   PRICING_CONFIG_INVALID: 'Không đọc được cấu hình đơn giá. Mở Đơn giá để kiểm tra hoặc khôi phục; số liệu cũ giữ cơ sở giá trước đó.',
   PRICING_COST_OVERFLOW: 'Đơn giá tạo ra chi phí quá lớn. Giảm đơn giá và thử lại.',
