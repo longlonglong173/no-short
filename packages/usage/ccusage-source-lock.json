@@ -1,6 +1,6 @@
 {
   "version": "20.0.34",
-  "patchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1",
+  "patchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1-ns18-session-days-v1",
   "rustVersion": "1.98.1",
   "source": {
     "revision": "d7555844929ad76ec97a113d1d51c31de92bee35",
@@ -14,6 +14,6 @@
   },
   "patch": {
     "file": "patches/ccusage-20.0.34-ns20.patch",
-    "sha256": "fe3c4d0a079414505b2d623a47a4fd7d88cf98c1bf46719a7832b9281d0234c1"
+    "sha256": "9f264b93510287a7d45e8ee006948481a8c733bdc0084542e1a4ad97012d1468"
   }
 }

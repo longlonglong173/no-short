@@ -16,6 +16,14 @@ import UsageCore
     @Published private(set) var customRange: UsageHistoryRange?
     @Published private(set) var projection: UsageHistoryProjection?
     @Published private(set) var selectedDay: String?
+    @Published private(set) var selectedSessionID: String?
+    var sessionUsage: SessionUsageRange? {
+        guard let snapshot, let selectedDay else { return nil }
+        return UsageHistory.sessionUsageForRange(snapshot, provider: provider, range: .init(start: selectedDay, end: selectedDay))
+    }
+    var selectedSessionUsage: SessionUsageRange.Session? { sessionUsage?.sessions.first { $0.sessionId == selectedSessionID } }
+    func selectSession(_ id: String?) { selectedSessionID = sessionUsage != nil && sessionUsage?.reconciliationIssue != "tokens" ? id : nil }
+    func sessionTitle(_ id: String) -> String { snapshot?.sessions.first { $0.id == id }?.title ?? id }
     @Published private var validationFailed = false
     @Published private var customRangeInvalid = false
     var validationMessage: String? {
@@ -64,11 +72,12 @@ import UsageCore
         }
     }
     var modelRows: [ModelUsage] {
+        if let selected = selectedSessionUsage { return selected.aggregate.models }
         if let selectedDay { return projection?.days.first { $0.date == selectedDay }?.aggregate.models ?? [] }
         return projection?.aggregate.models ?? []
     }
     var scopeLabel: String { range.map { l("Khoảng đã chọn: %@ → %@", $0.start, $0.end) } ?? "—" }
-    var breakdownLabel: String { selectedDay.map { l("Model trong ngày %@", $0) } ?? l("Model trong toàn khoảng") }
+    var breakdownLabel: String { if let selected = selectedSessionUsage { return sessionTitle(selected.sessionId) }; return selectedDay.map { l("Model trong ngày %@", $0) } ?? l("Model trong toàn khoảng") }
     var updatedLabel: String {
         guard let snapshot else { return l("Chưa cập nhật") }
         let formatter = DateFormatter(); formatter.locale = language.locale
@@ -93,7 +102,7 @@ import UsageCore
     }
     func setProvider(_ value: String) {
         guard ["all", "codex", "claude"].contains(value) else { return }
-        provider = value; selectedDay = nil; rebuild()
+        provider = value; selectedDay = nil; selectedSessionID = nil; rebuild()
     }
     func setPreset(_ value: UsageHistoryPreset) {
         if value == .custom {
@@ -112,9 +121,11 @@ import UsageCore
         validationFailed = false; rebuild(); return true
     }
     func selectDay(_ value: String?) {
+        selectedSessionID = nil
         selectedDay = value.flatMap { date in projection?.days.contains { $0.date == date } == true ? date : nil }
     }
     private func rebuild() {
+        selectedSessionID = nil
         range = UsageHistory.range(preset, now: now(), timeZone: timeZone, custom: customRange)
         customRangeInvalid = preset == .custom && range == nil
         if let snapshot, let range { projection = UsageHistory.project(snapshot, provider: provider, range: range) }

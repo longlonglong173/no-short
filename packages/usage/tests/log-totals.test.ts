@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createReportEnvironment, runReport } from '../src/runner';
 import { buildSnapshot } from '../src/adapter';
+import { sessionUsageForRange } from '../src/history';
 import { createUsageExport, serializeUsageExport } from '../src/export';
 import { createUsageService, usageCacheScope } from '../src/service';
 
@@ -101,7 +102,10 @@ test.skipIf(!existsSync(nativeCli))('explicit fork replay and compaction respons
   ]));
   const load = async () => buildSnapshot(await runReport({ binary: nativeCli, roots: [root], cacheDir: join(directory, 'cache'), timeZone: 'UTC', offline: true }),
     { now: new Date('2026-10-17T12:00:00Z'), timeZone: 'UTC', metadata: new Map() });
-  expect((await load()).today.tokens.total).toBe(110);
+  const compaction = await load();
+  expect(compaction.today.tokens.total).toBe(110);
+  expect(sessionUsageForRange(compaction, 'all', '2026-10-17', '2026-10-17')?.reconciled).toBe(true);
+  expect(sessionUsageForRange(compaction, 'all', '2026-10-17', '2026-10-17')?.aggregate.tokens.total).toBe(110);
   await writeFile(join(root, `sessions/rollout-${ids[0]}.jsonl`), content(ids[0]));
   await writeFile(join(root, `sessions/rollout-${ids[1]}.jsonl`), stringify([
     { timestamp: '2026-10-17T03:01:00Z', type: 'session_meta', payload: { id: ids[1], forked_from_id: ids[0], source: 'cli' } },
@@ -109,6 +113,8 @@ test.skipIf(!existsSync(nativeCli))('explicit fork replay and compaction respons
   ]));
   const replay = await load();
   expect(replay.today.tokens.total).toBe(220);
+  expect(sessionUsageForRange(replay, 'all', '2026-10-17', '2026-10-17')?.reconciled).toBe(true);
+  expect(sessionUsageForRange(replay, 'all', '2026-10-17', '2026-10-17')?.aggregate.tokens.total).toBe(220);
   expect(replay.sessions.map(row => row.tokens.total)).toEqual([110, 110]);
 }, 15_000);
 

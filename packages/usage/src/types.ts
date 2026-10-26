@@ -12,6 +12,7 @@ export interface UsageHistory {
   version: 1;
   providers: UsageProvider[];
   days: { date: string; provider: UsageProvider; aggregate: Aggregate }[];
+  sessionDays?: { date: string; provider: UsageProvider; sessionId: string; aggregate: Aggregate }[];
 }
 export interface UsageSnapshot {
   schemaVersion: 1;

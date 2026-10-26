@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { customCost, mergedPricing, type PricingConfig } from './pricing.ts';
-import type { Aggregate, Cost, ModelUsage, SessionMetadata, SessionUsage, Tokens, UsageSnapshot, UsageProvider } from './types.ts';
+import type { Aggregate, Cost, ModelUsage, SessionMetadata, SessionUsage, Tokens, UsageSnapshot, UsageProvider, UsageHistory } from './types.ts';
 export interface SnapshotOptions { now: Date; timeZone: string; metadata: Map<string, SessionMetadata>; pricingSource?: 'online' | 'cached'; providers?: readonly UsageProvider[]; pricing?: PricingConfig; pricingRevision?: string }
 
 const count = z.number().finite().nonnegative();
@@ -9,7 +9,7 @@ const modelSchema = z.object({ ...tokenFields, modelName: z.string().min(1), cos
 const usageSchema = z.object({ ...tokenFields, totalTokens: count, totalCost: count, modelBreakdowns: z.array(modelSchema) });
 const rowSchema = usageSchema.extend({ agent: z.string(), period: z.string(), metadata: z.object({ lastActivity: z.string().datetime().optional() }).optional() });
 const dailySchema = rowSchema.extend({ agents: z.array(usageSchema.extend({ agent: z.string() })).optional() });
-const reportSchema = z.object({ session: z.array(rowSchema), daily: z.array(dailySchema), totals: z.object({ unpricedModels: z.array(z.string()).optional() }) });
+const reportSchema = z.object({ session: z.array(rowSchema), daily: z.array(dailySchema), sessionDays: z.unknown().optional(), totals: z.object({ unpricedModels: z.array(z.string()).optional() }) });
 type UsageRow = z.infer<typeof usageSchema>;
 export const emptyTokens = (): Tokens => ({ input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 });
 const knownCost = (n: number): Cost => ({ amountUSD: n, knownCostUSD: n, status: 'estimated' });
@@ -119,8 +119,21 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
       month: sumAggregates([...days].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)),
       chart: chart.map(point => ({ date: point.date, cost: days.get(point.date)?.cost ?? knownCost(0) })) };
   });
-  const history = { version: 1 as const, providers: [...providers], days: [...providerDaily].flatMap(([provider, days]) =>
+  const history: UsageHistory = { version: 1 as const, providers: [...providers], days: [...providerDaily].flatMap(([provider, days]) =>
     [...days].map(([date, aggregate]) => ({ date, provider, aggregate }))).sort((a, b) => a.date.localeCompare(b.date) || providers.indexOf(a.provider) - providers.indexOf(b.provider)) };
+  // An optional ledger is decoded independently; malformed detail cannot discard daily history.
+  const rawLedger = z.array(rowSchema.extend({ date: z.string() })).safeParse(report.sessionDays);
+  if (rawLedger.success) {
+    try {
+      const values = rawLedger.data.map(row => {
+        if (!providers.includes(row.agent as UsageProvider)) throw new Error('Unexpected ledger source');
+        return { date: row.date, provider: row.agent as UsageProvider,
+          sessionId: (row.agent === 'claude' ? 'claude:' : '') + row.period,
+          aggregate: aggregate(row, unpriced, row.agent as UsageProvider, options) };
+      });
+      history.sessionDays = values;
+    } catch { /* Keep legacy daily capability. */ }
+  }
   return { schemaVersion: 1, source: 'ccusage', ccusageVersion: '20.0.34', generatedAt: options.now.toISOString(), timeZone: options.timeZone,
     status: sessions.length ? 'ready' : 'empty', pricingSource: options.pricingSource ?? 'online', sessions,
     today: daily.get(today) ?? emptyAggregate(), month: sumAggregates([...daily].filter(([key]) => key.startsWith(today.slice(0, 7))).map(([, row]) => row)), chart, providerBreakdowns, history,

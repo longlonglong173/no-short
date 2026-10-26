@@ -4,12 +4,22 @@ public struct UsageHistory: Decodable, Sendable {
     public let version: Int
     public let providers: [UsageProvider]
     public let days: [UsageHistoryDay]
+    public let sessionDays: [UsageHistorySessionDay]?
 
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         version = try c.decode(Int.self, forKey: .version)
         providers = try c.decode([UsageProvider].self, forKey: .providers)
         days = try c.decode([UsageHistoryDay].self, forKey: .days)
+        let supportedProviders = providers
+        if let rows = try? c.decode([UsageHistorySessionDay].self, forKey: .sessionDays),
+           Set(rows.map { $0.date + "\0" + $0.provider.rawValue + "\0" + $0.sessionId }).count == rows.count,
+           rows.allSatisfy({ supportedProviders.contains($0.provider) && Self.date($0.date, timeZone: "UTC") != nil &&
+               !$0.sessionId.isEmpty && $0.sessionId.utf8.count <= 4096 && (try? $0.aggregate.validate()) != nil &&
+               $0.aggregate.models.allSatisfy { !$0.name.isEmpty } &&
+               ([$0.aggregate.cost] + $0.aggregate.models.map(\.cost)).allSatisfy { $0.status == "estimated" ? $0.amountUSD == $0.knownCostUSD : $0.status != "unknown" || $0.knownCostUSD == 0 } }) {
+            sessionDays = rows
+        } else { sessionDays = nil }
         guard version == 1, !providers.isEmpty, Set(providers).count == providers.count else { throw SnapshotError.invalid }
         var seen = Set<String>()
         for day in days {
@@ -23,7 +33,7 @@ public struct UsageHistory: Decodable, Sendable {
             }
         }
     }
-    private enum CodingKeys: String, CodingKey { case version, providers, days }
+    private enum CodingKeys: String, CodingKey { case version, providers, days, sessionDays }
 
     public static func calendar(timeZone: String) -> Calendar? {
         guard let zone = TimeZone(identifier: timeZone) else { return nil }
@@ -85,7 +95,7 @@ public struct UsageHistory: Decodable, Sendable {
         }
         return UsageHistoryProjection(range: range, provider: provider, aggregate: aggregate, days: days)
     }
-    private static func sum(_ values: [UsageAggregate]) -> UsageAggregate? {
+    public static func sum(_ values: [UsageAggregate]) -> UsageAggregate? {
         let grouped: [String: [ModelUsage]] = Dictionary(grouping: values.flatMap(\.models), by: \.name)
         var models: [ModelUsage] = grouped.map { name, rows in
             ModelUsage(name: name, tokens: tokens(rows.map(\.tokens)), cost: cost(rows.map(\.cost)), pricing: ModelPricing.merge(rows.map(\.pricing)))
@@ -153,4 +163,71 @@ public struct UsageHistoryProjection: Sendable {
     public let provider: String
     public let aggregate: UsageAggregate
     public let days: [Day]
+}
+
+public struct UsageHistorySessionDay: Decodable, Sendable {
+    public let date: String
+    public let provider: UsageProvider
+    public let sessionId: String
+    public let aggregate: UsageAggregate
+    private enum CodingKeys: String, CodingKey { case sessionId }
+    public init(from decoder: Decoder) throws {
+        let day = try UsageHistoryDay(from: decoder)
+        date = day.date; provider = day.provider; aggregate = day.aggregate
+        sessionId = try decoder.container(keyedBy: CodingKeys.self).decode(String.self, forKey: .sessionId)
+    }
+}
+public struct SessionUsageRange: Sendable {
+    public struct Session: Sendable, Identifiable {
+        public let sessionId: String
+        public let provider: UsageProvider
+        public let aggregate: UsageAggregate
+        public var id: String { provider.rawValue + ":" + sessionId }
+    }
+    public let sessions: [Session]
+    public let aggregate: UsageAggregate
+    public let reconciled: Bool
+    public let reconciliationIssue: String?
+}
+extension UsageHistory {
+    /// Exact inclusive calendar-day attribution. nil means unavailable; empty sessions means supported empty.
+    public static func sessionUsageForRange(_ snapshot: UsageSnapshot, provider: String, range: UsageHistoryRange) -> SessionUsageRange? {
+        guard let projection = project(snapshot, provider: provider, range: range), let history = snapshot.history,
+              let ledger = history.sessionDays,
+              ledger.allSatisfy({ row in snapshot.sessions.contains { $0.id == row.sessionId && $0.usageProvider == row.provider } }) else { return nil }
+        let rows = ledger.filter { $0.date >= range.start && $0.date <= range.end && (provider == "all" || $0.provider.rawValue == provider) }
+        let grouped = Dictionary(grouping: rows, by: { $0.provider.rawValue + "\0" + $0.sessionId })
+        var sessions: [SessionUsageRange.Session] = []
+        for key in grouped.keys.sorted() {
+            let values = grouped[key]!
+            guard let aggregate = sum(values.map(\.aggregate)) else { return nil }
+            sessions.append(.init(sessionId: values[0].sessionId, provider: values[0].provider, aggregate: aggregate))
+        }
+        guard let aggregate = sum(sessions.map(\.aggregate)) else { return nil }
+        let dates = Set(projection.days.map(\.date) + rows.map(\.date))
+        var tokensMatch = true, reconciled = true
+        let expectedGroups = Dictionary(grouping: history.days.filter { $0.date >= range.start && $0.date <= range.end }, by: { $0.date + "\0" + $0.provider.rawValue })
+        let actualGroups = Dictionary(grouping: rows, by: { $0.date + "\0" + $0.provider.rawValue })
+        for date in dates {
+            for p in history.providers where provider == "all" || p.rawValue == provider {
+                let key = date + "\0" + p.rawValue
+                guard let expected = sum((expectedGroups[key] ?? []).map(\.aggregate)),
+                      let actual = sum((actualGroups[key] ?? []).map(\.aggregate)) else { return nil }
+                if !matches(expected, actual, tokensOnly: true) { tokensMatch = false }
+                if !matches(expected, actual) { reconciled = false }
+            }
+        }
+        return SessionUsageRange(sessions: sessions, aggregate: aggregate, reconciled: reconciled, reconciliationIssue: reconciled ? nil : tokensMatch ? "pricing" : "tokens")
+    }
+    private static func matches(_ a: UsageAggregate, _ b: UsageAggregate, tokensOnly: Bool = false) -> Bool {
+        func close(_ x: Double, _ y: Double) -> Bool { abs(x-y) <= max(1e-10, max(x,y)*1e-9) }
+        func usage(_ x: UsageTokens, _ y: UsageTokens, _ a: UsageCost, _ b: UsageCost) -> Bool {
+            [x.input,x.output,x.cacheRead,x.cacheWrite,x.total] == [y.input,y.output,y.cacheRead,y.cacheWrite,y.total] &&
+            (tokensOnly || (a.status == b.status && close(a.knownCostUSD,b.knownCostUSD) &&
+            (a.amountUSD == nil ? b.amountUSD == nil : b.amountUSD.map { close(a.amountUSD!,$0) } == true)))
+        }
+        return usage(a.tokens,b.tokens,a.cost,b.cost) && a.models.count == b.models.count && a.models.allSatisfy { model in
+            b.models.contains { $0.name == model.name && usage(model.tokens,$0.tokens,model.cost,$0.cost) }
+        }
+    }
 }
