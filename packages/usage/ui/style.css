@@ -25,6 +25,7 @@
 .history-session-list span { color: var(--muted); font-size: 12px; }
 .history-session-detail { border: 1px solid var(--border); padding: 12px; border-radius: 8px; overflow-wrap: anywhere; }
 .history-group-control { display:flex;gap:12px;align-items:center;flex-wrap:wrap; }
+.history-grouping { min-width:0; }
 .history-grouping details { border-bottom:1px solid var(--border, #ddd);padding:12px 0; }
 .history-grouping summary { cursor:pointer;overflow-wrap:anywhere; }
 .history-grouping small { display:block;overflow-wrap:anywhere; }

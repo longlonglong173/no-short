@@ -32,3 +32,24 @@ test('legacy ledger absence stays unavailable and disables only grouped export',
  await expect(page.getByRole('button',{name:'Xuất JSON',exact:true})).toBeDisabled();
  await page.getByLabel('Nhóm usage',{exact:true}).selectOption('none');await expect(page.getByRole('button',{name:'Xuất JSON',exact:true})).toBeEnabled();
 });
+test('expanded all-provider work details keep the page within 360px in every language',async({page})=>{
+ const value={snapshot:structuredClone(fixture),selectedSession:null,requestedSessionId:null};
+ await page.clock.install({time:new Date(fixture.generatedAt)});
+ await page.route('**/__usage/snapshot',r=>r.fulfill({json:value}));
+ await page.setViewportSize({width:360,height:1000});
+ await page.goto('/');await page.getByRole('tab',{name:'Lịch sử',exact:true}).click();
+ await page.getByLabel('Công cụ lịch sử').selectOption('all');
+ await page.getByLabel('Khoảng lịch sử').selectOption('custom');
+ await page.getByLabel('Từ ngày',{exact:true}).fill('2026-10-27');await page.getByLabel('Đến ngày',{exact:true}).fill('2026-10-27');
+ await page.getByLabel('Nhóm usage',{exact:true}).selectOption('work');
+ const groups=page.getByTestId('history-grouping');
+ await groups.locator('summary').filter({hasText:'Private root'}).last().click();
+ const expanded=groups.locator('details[open]');
+ for(const language of ['EN','VI','中文']) {
+  await page.getByRole('button',{name:language,exact:true}).click();
+  await expect(expanded).toHaveCount(1);
+  await expect(expanded.getByText('Private grandchild',{exact:false})).toBeVisible();
+  expect(await page.evaluate(()=>({viewport:innerWidth,page:document.documentElement.scrollWidth}))).toEqual({viewport:360,page:360});
+  expect(await expanded.locator('.history-table').evaluate(el=>el.scrollWidth>el.clientWidth)).toBe(true);
+ }
+});
