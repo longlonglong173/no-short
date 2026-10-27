@@ -21,8 +21,8 @@ function tokens(row: z.infer<typeof modelSchema> | UsageRow): Tokens {
     total: row.totalTokens ?? row.inputTokens + row.outputTokens + row.cacheReadTokens + row.cacheCreationTokens };
 }
 function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider, options: SnapshotOptions): Aggregate {
-  if (provider === 'codex' && (row.modelBreakdowns.some(m => typeof m.isFallback !== 'boolean') || (!row.modelBreakdowns.length && row.totalTokens > 0))) {
-    throw new Error('REPORT_PRICING_UNSUPPORTED');
+  if (provider === 'codex' && (!row.modelBreakdowns.length && row.totalTokens > 0)) {
+    return { tokens: tokens(row), models: [], cost: { amountUSD: null, knownCostUSD: 0, status: 'unknown' } };
   }
   let repriced = false;
   const parts: ModelUsage[] = row.modelBreakdowns.map(m => {
