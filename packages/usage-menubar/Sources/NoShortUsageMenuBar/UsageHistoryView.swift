@@ -136,7 +136,6 @@ struct UsageHistoryView: View {
                         BarMark(x: .value(model.l("Ngày"), point.date), y: .value("USD", amount))
                             .foregroundStyle(point.markerAmount == nil ? Color.accentColor.opacity(0.8) : Color.orange.opacity(0.6))
                             .opacity(model.selectedDay == nil || model.selectedDay == point.date ? 1 : 0.4)
-                            .accessibilityLabel(point.description)
                     }
                     if let knownAmount = point.markerAmount {
                         PointMark(x: .value(model.l("Ngày"), point.date), y: .value("USD", knownAmount))
@@ -145,7 +144,6 @@ struct UsageHistoryView: View {
                                 Text(point.pricingLabel).font(.system(size: 9)).foregroundStyle(.orange)
                                     .help(point.description)
                             }
-                            .accessibilityLabel(point.description)
                     }
                 }
             }
@@ -153,6 +151,24 @@ struct UsageHistoryView: View {
             .chartYScale(domain: 0...max(0.01, (projection.days.map { $0.aggregate.cost.amountUSD ?? $0.aggregate.cost.knownCostUSD }.max() ?? 0) * 1.1))
             .chartXSelection(value: Binding(get: { model.selectedDay }, set: { model.selectDay($0) }))
             .frame(height: 180)
+            // Swift Charts aggregates BarMark + PointMark for a date, doubling partial costs
+            // and publishing the unknown marker's visual baseline as a numeric zero.
+            // Replace that synthesized tree with one semantic, selectable entry per day.
+            .accessibilityRepresentation {
+                VStack {
+                    ForEach(model.chartPoints) { point in
+                        Button(point.date) {
+                            model.selectDay(model.selectedDay == point.date ? nil : point.date)
+                        }
+                        .accessibilityLabel(point.date + " · " + chartProviderLabel)
+                        .accessibilityValue(point.accessibilityValue)
+                        .accessibilityAddTraits(model.selectedDay == point.date ? .isSelected : [])
+                        .accessibilityIdentifier("history-chart-day-" + point.date)
+                    }
+                }
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel(model.l("Chi phí theo ngày") + " · " + chartProviderLabel)
+            }
             Text(model.l("Ngày không có dòng: không có usage trong log hiện còn. Giá chưa biết không được vẽ thành $0."))
                 .font(.system(size: 11)).foregroundStyle(.secondary)
             Picker(model.l("Xem model theo ngày"), selection: Binding(get: { model.selectedDay ?? "" }, set: { model.selectDay($0.isEmpty ? nil : $0) })) {
@@ -161,6 +177,13 @@ struct UsageHistoryView: View {
                     Text(point.description).tag(point.date)
                 }
             }.accessibilityIdentifier("history-day")
+        }
+    }
+    private var chartProviderLabel: String {
+        switch model.provider {
+        case "codex": "Codex"
+        case "claude": "Claude Code"
+        default: model.l("Tất cả công cụ")
         }
     }
     private var sessions: some View {
