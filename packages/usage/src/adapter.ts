@@ -25,7 +25,7 @@ function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider
     throw new Error('REPORT_PRICING_UNSUPPORTED');
   }
   let repriced = false;
-  const models: ModelUsage[] = row.modelBreakdowns.map(m => {
+  const parts: ModelUsage[] = row.modelBreakdowns.map(m => {
     const value = tokens(m);
     const override = options.pricing?.overrides.find(p => p.provider === provider && p.model === m.modelName);
     const rates = override && { input: override.input, output: override.output, cacheRead: override.cacheRead, cacheWrite: override.cacheWrite };
@@ -37,6 +37,10 @@ function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider
       pricing: rates ? { source: 'custom', provider, ...(options.pricing?.updatedAt ? { updatedAt: options.pricing.updatedAt } : {}), rates }
         : { source: m.isFallback ? 'fallback' : unavailable ? 'unpriced' : 'ccusage', provider } };
   });
+  // Reader rows are partitioned by provenance. Apply prices before merging so
+  // inferred usage cannot erase an identified cost for the same model name.
+  const merged = new Map(sumAggregates(parts.map(m => ({ tokens: m.tokens, cost: m.cost, models: [m] }))).models.map(m => [m.name, m]));
+  const models = [...new Set(parts.map(m => m.name))].map(name => merged.get(name)!);
   const missing = models.some(m => m.cost.amountUSD === null);
   const known = repriced ? Number(models.reduce((n, m) => n + m.cost.knownCostUSD, 0).toPrecision(15)) : row.totalCost;
   return { tokens: tokens(row), models, cost: missing ? { amountUSD: null, knownCostUSD: known,

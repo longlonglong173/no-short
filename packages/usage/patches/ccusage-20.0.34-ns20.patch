@@ -500,3 +500,100 @@
      if no_cost {
          report.strip_costs();
      }
+--- a/rust/adapters/codex/src/aggregate.rs
++++ b/rust/adapters/codex/src/aggregate.rs
+@@ -906,6 +906,8 @@
+         let group = groups.entry(period).or_insert_with(CodexGroup::default);
+         let model = crate::model_aliases::resolve_model_name(model);
+         accumulate_codex_event_into_group(group, event, model.as_ref(), timestamp, true);
++        let part = group.pricing_parts.entry((model.to_string(), event.is_fallback_model)).or_default();
++        accumulate_codex_event_into_model_usage(part, event, model.as_ref(), timestamp, true);
+     }
+     Ok(groups)
+ }
+--- a/rust/adapters/codex/src/types.rs
++++ b/rust/adapters/codex/src/types.rs
+@@ -123,6 +123,8 @@
+     pub reasoning_output_tokens: u64,
+     pub total_tokens: u64,
+     pub models: BTreeMap<String, CodexModelUsage>,
++    /// NS-21: retain pricing buckets separately after canonical event deduplication.
++    pub pricing_parts: BTreeMap<(String, bool), CodexModelUsage>,
+     pub last_activity: Option<String>,
+ }
+ 
+--- a/rust/crates/ccusage-adapter-all/src/loader.rs
++++ b/rust/crates/ccusage-adapter-all/src/loader.rs
+@@ -844,9 +844,15 @@
+     S: Into<codex::CodexSpeedPolicy> + Copy,
+ {
+     let speed = speed.into();
+-    let mut model_breakdowns: Vec<ModelBreakdown> = group
+-        .models
+-        .iter()
++    // NS-21: the unified reader keeps identified and inferred usage separate.
++    // The model-only path supports callers constructing groups directly.
++    let parts: Vec<_> = if group.pricing_parts.is_empty() {
++        group.models.iter().collect()
++    } else {
++        group.pricing_parts.iter().map(|((model, _), usage)| (model, usage)).collect()
++    };
++    let mut model_breakdowns: Vec<ModelBreakdown> = parts
++        .into_iter()
+         .map(|(model, usage)| {
+             let input = codex::non_cached_input_tokens(
+                 usage.input_tokens,
+--- a/rust/crates/ccusage-adapter-all/src/types.rs
++++ b/rust/crates/ccusage-adapter-all/src/types.rs
+@@ -155,10 +155,10 @@
+     existing: impl IntoIterator<Item = ModelBreakdown>,
+     additional: impl IntoIterator<Item = ModelBreakdown>,
+ ) -> Vec<ModelBreakdown> {
+-    let mut indexes = FxHashMap::<String, usize>::default();
++    let mut indexes = FxHashMap::<(String, Option<bool>), usize>::default();
+     let mut breakdowns: Vec<ModelBreakdown> = Vec::new();
+     for item in existing.into_iter().chain(additional) {
+-        let index = *indexes.entry(item.model_name.clone()).or_insert_with(|| {
++        let index = *indexes.entry((item.model_name.clone(), item.is_fallback)).or_insert_with(|| {
+             let i = breakdowns.len();
+             breakdowns.push(ModelBreakdown {
+                 model_name: item.model_name.clone(),
+@@ -185,11 +185,11 @@
+ }
+ 
+ fn aggregate_model_breakdowns(rows: &[AllRow]) -> Vec<ModelBreakdown> {
+-    let mut indexes = FxHashMap::<String, usize>::default();
++    let mut indexes = FxHashMap::<(String, Option<bool>), usize>::default();
+     let mut breakdowns: Vec<ModelBreakdown> = Vec::new();
+     for row in rows {
+         for item in &row.model_breakdowns {
+-            let index = *indexes.entry(item.model_name.clone()).or_insert_with(|| {
++            let index = *indexes.entry((item.model_name.clone(), item.is_fallback)).or_insert_with(|| {
+                 let i = breakdowns.len();
+                 breakdowns.push(ModelBreakdown {
+                     model_name: item.model_name.clone(),
+--- a/rust/crates/ccusage-core/src/summary.rs
++++ b/rust/crates/ccusage-core/src/summary.rs
+@@ -228,7 +228,7 @@
+         versions: None,
+     };
+     let mut seen_models = FxHashSet::default();
+-    let mut breakdown_indexes = FxHashMap::<String, usize>::default();
++    let mut breakdown_indexes = FxHashMap::<(String, Option<bool>), usize>::default();
+ 
+     for row in rows {
+         summary.input_tokens = summary.input_tokens.saturating_add(row.input_tokens);
+@@ -255,11 +255,11 @@
+             }
+         }
+         for item in &row.model_breakdowns {
+-            let index = if let Some(index) = breakdown_indexes.get(item.model_name.as_str()) {
++            let index = if let Some(index) = breakdown_indexes.get(&(item.model_name.clone(), item.is_fallback)) {
+                 *index
+             } else {
+                 let index = summary.model_breakdowns.len();
+-                breakdown_indexes.insert(item.model_name.clone(), index);
++                breakdown_indexes.insert((item.model_name.clone(), item.is_fallback), index);
+                 summary.model_breakdowns.push(ModelBreakdown {
+                     model_name: item.model_name.clone(),
+                     ..ModelBreakdown::default()
