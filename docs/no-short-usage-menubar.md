@@ -26,11 +26,11 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**An experimental Apple Silicon app is available in [v0.4.3](https://github.com/longlonglong173/no-short/releases/tag/v0.4.3).** Download `NoShortUsage-0.4.3-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with first-run setup guidance, connection diagnostics, About and manual update checks. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.4.3.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**The current Experimental Apple Silicon release is [v0.7.0](https://github.com/longlonglong173/no-short/releases/tag/v0.7.0).** Download `NoShortUsage-0.7.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.7.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
-Use the ZIP for your Mac: `darwin-arm64` for Apple Silicon or `darwin-x64` for Intel. Extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
+For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
-Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
+Local builds appear in `.artifacts/usage-menubar/releases/`. These artifacts are not automatically published releases. Local `darwin-x64` builds are not an available or device-verified Intel download. Development builds are ad-hoc signed and **not notarized**; Gatekeeper acceptance on a downloaded/quarantined app needs separate verification. Do not disable Gatekeeper globally to run a development artifact.
 
 The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an API key, cookies, or account tokens. Installing the Codex plugin alone does not install this companion app.
 
@@ -42,6 +42,28 @@ The complete runtime is bundled. Runtime users do not need Node, Bun, Swift, an 
 - Refresh runs every 15 seconds while the app is awake, including when the menu and Codex panel are closed, with additional refreshes after log/activity changes. **Làm mới** also requests a scan; native requests use a one-second cache TTL and the shared inter-process scan lock.
 - Old results remain visible with a warning if reading fails, a snapshot becomes old, or the local calendar day changes. Unknown prices never become zero. A scan times out after 90 seconds. Every completed read, including successful reads, cleans up its report process group before returning; cancellation waits for cleanup before a replacement read or normal app exit.
 - Sleep suspends the schedule and cancels reading. Wake requests a fresh snapshot. **Thoát No Short Usage** stops the companion's scans; it does not change the plugin or the login-item preference.
+
+## Costs by model (NS-06, 0.5.0)
+
+Click **Model** beside the main cost to open a scrollable breakdown with each
+model's tokens, estimated USD cost and pricing status. **Quay lại thống kê**
+returns to the dashboard without changing the pin, followed session or provider.
+The detail view uses the existing popover height rather than extending it.
+
+For **Codex / Claude Code**, the model rows cover the selected or followed
+session's entire retained history. For **All**, they cover today's combined
+usage, not the month or the sum of lifetime sessions. Both the dashboard and
+detail view name the cost's scope; the day/month totals and seven-day chart
+remain provider-scoped across all sessions in the snapshot's time zone.
+The table reads the runtime's existing model aggregates without recomputing
+dates from session timestamps. Old Codex-only schema-v1 snapshots remain valid.
+
+`$0.00` with **Estimated** is a known estimate of zero. `≥$…` with **Partial
+pricing** is only the known-priced portion, including `≥$0.00` when none of
+that portion has positive cost. `—` with **Unknown price** is not free usage.
+Missing/empty model arrays display an explicit empty state, never another
+session's models. UI labels support English, Vietnamese and Simplified Chinese;
+recorded model names are not translated.
 
 ## Log source
 
@@ -274,8 +296,70 @@ tests cover the exact threshold, rearming, unknown data, independent sources and
 providers, persisted state, settings and stale suppression. These checks do not
 prove a macOS notification banner was delivered on a user's machine.
 
-## Setup, diagnostics and manual updates — 0.4.3
+## Setup, diagnostics and manual updates — since 0.4.3
 
 The first run opens Setup and connections. Return to usage when ready; reopen the guide through the stethoscope button or Settings. Each provider's logs/hooks and Claude context have a separate status, last recorded data time and recovery guidance. Missing default logs can mean the provider has not been used yet; selected sources that disappear need attention. Configuring hooks alone does not mean an event arrived. Hook connection buttons explicitly connect both providers; Claude context is a separate opt-in action.
 
-About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The app does not download or replace itself.
+About shows the version and build from the running app bundle. Check for Updates contacts GitHub only after you choose it; update errors leave usage tracking independent. Open Release Notes to see the installed or newly discovered release. Checks compare release versions and cannot detect replaced assets under an unchanged tag. The published 0.5.0 app does not download or replace itself. Versions0.6.0 and later include the signed updater;0.6.1 adds quiet daily checks and visible main-panel status.
+
+## Adaptive popover (NS-07, 0.5.0)
+
+The popover clamps to the visible screen area below its menu-bar item. When content does not fit, scroll vertically; Home/End and Page Up/Page Down reach the full content when not editing text. It resizes for warning, language, and screen changes. Included in 0.5.0; older release assets remain unchanged. Live VoiceOver and multi-display acceptance remain separate checks.
+
+## History window (NS-09, 0.5.0)
+
+Choose **Xem chi tiết… / Usage details…** in the popover or right-click menu. The app opens one resizable, retained window; repeated clicks focus it. Closing it (including Cmd-W) does not quit background tracking.
+
+Filter All/Codex/Claude and 7/30 days, this/previous month, or inclusive custom dates in the snapshot timezone. Custom dates use YYYY-MM-DD; start must not follow end and future end dates are rejected. The summary always covers the selected range. Select a day in the chart or its accessible picker to inspect that day's model token/cost breakdown, then choose Entire range to reset. Missing source rows mean no usage in retained local logs, not proof of zero account usage. Unknown/partial prices remain explicit.
+
+History filters do not change the menu-bar session pin, automatic following, context alerts or provider selection. The window shares the existing snapshot/refresh pipeline, not another log reader. Old runtimes without optional history show unavailable rather than guessing historical model/token totals from lifetime sessions. Both UI languages and stale/error status follow the app. No conversation text is shown. Installed-app/VoiceOver and clean-machine acceptance remain separate from synthetic render/model tests.
+
+## CSV / JSON export (NS-10, 0.5.0)
+
+Use Export CSV / Export JSON in Usage details to choose a destination with the macOS Save dialog. The export freezes the current range/provider data when clicked; cancellation writes nothing. Export covers the full range, not only the selected day's model table. Costs retain estimated/partial/unknown status and API-equivalent cost basis, timezone and snapshot timestamp; stale data is labeled.
+
+Session titles/IDs are off by default. Explicit opt-in includes only references whose last activity falls in the selected range/provider, labeled as references rather than cost attribution. No lifetime session costs, conversation text or log-source paths are exported. Synthetic serializer and Save-payload tests do not prove an installed-app Save dialog interaction.
+
+## Opt-in budgets (NS-11, 0.5.0)
+
+Budgets are disabled by default. Open **Budgets… / Ngân sách…** from settings and enter finite positive USD limits per day/month for All, Codex or Claude Code; leave a field empty to disable it. Save applies validated changes, Cancel does not. These limits compare **API-equivalent estimates, not subscription bills, credits or quota**. They do not stop the source tools or enforce spending.
+
+Status uses today/month source aggregates regardless of the pinned session or history filter. Partial pricing is a lower bound: an alert is justified only when the known subtotal already crosses the threshold; otherwise the budget state is uncertain, not a precise remaining balance. Unknown, stale, wrong-day and unavailable-provider data cannot generate a budget crossing.
+
+In-app budget status works without system notification permission. macOS banners have a separate explicit opt-in, off by default; permission requests occur only when the user saves that opt-in. Background refresh checks existing authorization without prompting. Notification events are persisted once per source/timezone/provider/calendar day or month, so refreshes, relaunch and threshold edits do not spam the same period. Source keys are hashed; notifications contain no session names or conversation text. Missing data does not rearm prior alerts. Permission denial/delivery errors remain visible without hiding usage read failures.
+
+## Data management (NS-12, 0.5.0)
+
+Open Data management / Quản lý dữ liệu… from settings. Clear generated cache opens a confirmation whose default action is Cancel. It clears recognized snapshot, metadata and marker/scratch files shared with the MCP plugin; it does **not** reset usage or bills. Totals rebuild from retained source logs after refresh. Original Codex/Claude logs, preferences, activity, hooks/context configuration, backups and exported files remain. Downloaded runtimes and third-party global pricing caches are separate.
+
+Close older plugin runtimes first. New readers honor a shared maintenance guard; the native app cancels and drains its reader before clearing, then refreshes if awake. Any scope scan lock refuses deletion rather than being force-unlocked. If busy, wait for readers to finish/recover and retry. Only recognized files in hash-named cache scopes are unlinked; unknown data remains and only empty generated directories are removed. Symlinks, overlaps with protected source roots and custom `NO_SHORT_USAGE_CACHE_DIR` paths are refused. Cancellation/permission errors do not authorize deleting source data. Quit waits for an owned maintenance operation to finish.
+
+The same window explains disconnecting existing hooks/context, disabling Open at login, quitting/removing the app, and which data remains. These instructions do not automatically edit settings or uninstall anything. Fixture/model tests use isolated files and never invoke clearing the user's real cache; installed-app confirmation and simultaneous older-plugin behavior remain manual checks.
+
+Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.
+
+## Signed in-app updates — since0.6.0 (NS-14)
+
+A configured Apple Silicon build uses **Check for Updates → review version/notes → Install Update → Install and Relaunch**. Signed feed/archive verification is mandatory; an error or cancellation keeps the current app. Checking/downloading leaves usage reads independent; installation goes through the normal shutdown drain and waits for maintenance. Since0.6.1, the app performs a quiet signed informational check at most once per24hours while running; opening About does not add another request. Disable daily checks in About or Settings to use manual checks only. Automatic checks never download archives, present installer dialogs, install updates or send OS notifications. Profiling and JavaScript remain disabled.
+
+Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
+
+**Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install 0.7.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
+
+See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#native-app-updates).
+
+## Visible update status — since0.6.1 (NS-15)
+
+The main popover always shows its running version and update status, including in session/model/setup views. A newer verified release shows its version and an Update action; no verified result shows “not checked”, and network/signature failures offer retry without claiming the app is current. The last successful check time stays visible. Closing an update dialog keeps a known newer-version notice; installation always rechecks through Sparkle.
+
+Daily information-only checks are on by default, with an on/off toggle in About and Settings. The app stores the last attempt across restarts and waits24hours between automatic attempts, including failures; manual checks remain available. Checks pause while sleeping, terminating, updating or doing cache maintenance. There is no separate daemon.
+
+To update 0.6.0 or 0.6.1 → 0.7.0, choose About → Check for Updates after the 0.7.0 signed feed is deployed, then confirm Install Update and Install and Relaunch. Check that the popover shows v0.7.0 after relaunch. Users of 0.5.0 or earlier install the new ZIP manually once.
+
+## History and pricing additions — 0.7.0
+
+History can compare with the preceding equal-length period, show exact sessions contributing to a selected day, and group by project or recorded parent/child work. Project metadata can be unresolved; it is not guessed. These modes retain the provider/date scope, pricing uncertainty and export privacy protections.
+
+The native pricing settings show provenance and let you save/reset exact provider/model input/output/cache rates. A zero custom rate differs from unknown pricing. The same selected rates apply to history and export, including historical repricing. The panel can inspect the shared pricing basis.
+
+Usage anomaly/month scenario analysis is off by default and uses observed, fully priced days. It explains insufficient basis rather than inventing missing usage. Notification permission is a separate opt-in; forecasts are API-equivalent scenarios, not invoices or subscription quotas. See [0.7.0 release details](releases/0.7.0.md).

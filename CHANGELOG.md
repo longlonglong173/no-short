@@ -1,9 +1,40 @@
 # Changelog
 
-## Unreleased
+## 0.7.0 — Experimental (2026-10-27)
+
+- NS-20: preserve logical session identity when merging log roots. Distinct sessions with matching timestamps/tokens remain separate; copied events in the same logical session are deduplicated. Build the checksum-locked patched ccusage reader from pinned source for both architectures.
+- NS-16: show pricing provenance and unknown-price coverage; configure/reset local provider/model rates in the native app. Reprice snapshots, history and exports consistently, distinguishing explicit zero from unknown prices.
+- NS-17: compare the selected History range with the preceding equal-length range, including provider/model token and estimated-cost changes and cache-read ratio. Handle zero baselines, incomplete prices and stale data explicitly.
+- NS-18: drill from a day to exact contributing session/day usage and session details, without lifetime-cost attribution or changing pin/follow state.
+- NS-13: group History by projects or explicit parent/child work, using trustworthy metadata and exact temporal contributions. Keep unresolved groups and privacy-safe exports; do not infer Claude lineage.
+- NS-19: add default-off anomaly analysis and a labelled end-of-month cost scenario from observed priced days, with insufficient-basis states and separate notification opt-in/deduplication.
+- Keep schema v1, ccusage 20.0.34, English/Vietnamese/Simplified Chinese and the existing owner-signed Apple Silicon update channel. The native download remains ad-hoc signed and not Apple-notarized; Intel runtime/device and NS-05 acceptance remain separate.
+
+## 0.6.1 — Experimental (2026-10-26)
+
+- NS-15: show the running app version, latest verified update status, last check time and update action in the main popover. Share state with About/menu and preserve a known update after cancellation.
+- Add quiet information-only checks at most once per24hours across restarts, with an on/off setting and manual retry. Background discovery never downloads, opens installer dialogs, installs or sends OS notifications.
+- Reuse the existing pinned owner key and signed channel;0.6.0 users can install this release through Check for Updates. Old releases remain immutable.
+
+## 0.6.0 — Experimental (2026-10-26)
+
+- NS-14: add manual, confirmation-only signed native updates using pinned Sparkle 2.10.0, shared About/menu state and the existing safe shutdown gate. Require signed feeds and archives; disable background checks/downloads, profiling and release-notes JavaScript.
+- Embed/verify nested framework code for both architectures; gate distribution on reviewed public configuration and ARM payload identity. Prepare signed feeds locally without publishing.
+- Verify actual replacement/relaunch and failure cases on isolated test copies. Configure the owner-signed ARM update channel for the 0.6.0 bootstrap. Users of0.5.0 install this release manually once; subsequent updates use confirmation in the app. See [local evidence and remaining gates](docs/releases/ns14-local-validation.md).
+
+## 0.5.0 — Experimental (2026-10-21)
+
+- NS-06: bring provider filters, per-provider period/model breakdowns and pinned-session behavior into parity between panel and native app.
+- NS-07: adapt the native popover to the visible screen, with full-content scrolling and keyboard navigation.
+- NS-08: persist a bounded, source-aware session metadata cache; preserve append/rename/delete invalidation. The upstream identical-event ccusage daily-total limitation remains documented, not fixed.
+- NS-09: add a retained native History window and panel history filters/day-model details from the same cached snapshot.
+- NS-10: export the active history view as JSON/CSV; omit session references by default, preserve uncertain prices and harden CSV spreadsheet cells. Native Save dialog and capability-checked host downloads.
+- NS-11: optional local day/month API-equivalent budgets with persistent alert deduplication; OS notifications remain off by default.
+- NS-12: confirmed, bounded shared-cache maintenance and disconnect/uninstall guidance; never remove original provider logs or third-party settings.
+- Align package, CLI, MCP server, panel and build identities at 0.5.0. Runtime checksums are regenerated from actual builds; the [Experimental release record](docs/releases/0.5.0.md) separates local checks from outstanding device acceptance. The Apple Silicon download remains ad-hoc signed and not notarized.
 
 - Make No Short Usage the primary product; move both unchanged skills and their related Git history to [no-short-skills](https://github.com/longlonglong173/no-short-skills).
-- Give skills independent manifests, installation and validation; remove skills and the Claude skills wrapper from future Usage packages. Keep Usage plugin IDs, runtime version and historical release assets unchanged.
+- Give skills independent manifests, installation and validation; remove skills and the Claude skills wrapper from future Usage packages. Keep Usage plugin IDs and historical release assets unchanged.
 - Update the bilingual product website, README and [migration instructions](docs/migration-to-no-short-skills.md).
 
 - Fix bundled ccusage attribution by fetching the full MIT license from the

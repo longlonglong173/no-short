@@ -1,6 +1,6 @@
 # No Short Usage
 
-No Short Usage provides the optional local Codex usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs using **ccusage 20.0.34**. These amounts are **not** ChatGPT subscription charges, invoices, remaining quota, or credits deducted.
+No Short Usage provides the optional local usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs and explicitly configured Claude Code logs using **ccusage 20.0.34**. These amounts are **not** subscription charges, invoices, remaining quota, or credits deducted.
 
 ## Interface language
 
@@ -44,8 +44,43 @@ Reusable skills are distributed separately in [no-short-skills](https://github.c
 - **Hôm nay / Tháng này**: totals grouped in the machine's local timezone.
 - Seven-day chart, refresh button, price-cache status and timestamp.
 - Refresh every 15 seconds while visible. Closing the panel stops polling; no separate daemon is installed.
+
 - Automatic selection follows the latest known main session's usage, not the focused Desktop tab. Pinning prevents switching. Subagents stay separate rather than being added to parents speculatively.
 - Unknown prices display “Chưa xác định”; incomplete totals display “Chưa đầy đủ”. Failed refreshes retain the last success and mark it stale.
+
+
+### Provider filters (NS-06, 0.5.0)
+
+Codex remains the default. If the helper has explicit Claude roots configured
+through `NO_SHORT_USAGE_CLAUDE_ROOTS` (comma-separated Claude home folders
+containing `projects`), the panel offers **All / Codex / Claude Code**. The
+native app's source preferences do not configure the plugin. An empty configured
+Claude source still appears; it does not borrow Codex usage.
+
+The filter applies to the session picker, today/month totals, model rows and
+seven-day chart. **Session** covers the selected session's entire retained
+history, not just today. Day/month include all sessions of the chosen provider
+in the snapshot's time zone. The chart always covers seven days across those
+sessions, even while viewing a single session. Scope labels distinguish these
+values. Choosing **All** does not merge sessions or change a session's lifetime
+cost; it combines provider totals only for day/month/chart.
+
+Changing provider clears the pin and search. The pin and provider preference
+are stored together in `no-short-usage-selection-v1`, with host widget-state
+support and a browser-local fallback. Late host restoration is supported, but
+cannot override a manual selection or an explicit tool request. Old pins saved
+before provider controls were added remain readable. Language changes retain them. Filtering
+uses the existing snapshot, without another log scan or network call. An exact
+session requested by a tool result selects its provider; later refreshes of
+that same result do not undo a manually chosen filter.
+
+Old schema-v1 Codex snapshots without provider fields still work and do not
+show Claude controls. A mixed snapshot without provider breakdowns can show
+individual sessions and combined totals, but cannot show provider-only period
+totals; these stay unavailable rather than being inferred from session history.
+Unknown and partial prices remain labeled, with known-priced subtotals where
+available. MCP summaries identify their configured providers; their period
+totals remain combined even when the panel is filtered locally.
 
 The source is `CODEX_HOME`, or `~/.codex` by default. Comma-separated roots are supported. Active and archived logs are processed by ccusage; missing logs cannot be reconstructed. Cache read/write tokens and output are preserved as reported; reasoning is not added twice. Names come from `session_index.jsonl`, with an ID fallback. Date-prefixed ccusage IDs are preserved, with metadata resolved from the rollout basename. Compressed rollouts without readable metadata retain an unknown session kind.
 
@@ -109,3 +144,37 @@ Notarization refuses development signatures, submits ZIPs containing signed comm
 Before release, verify a clean no-Node/Bun installation, both CPU architectures, and an actual panel in a new Desktop chat. Intel cross-compilation, Rosetta, browser screenshots, protocol tests and Desktop rendering are separate evidence. A public local-MCP directory submission requires OpenAI eligibility/approval; repository installation is a different path.
 
 No script pushes, creates a GitHub release, or submits to OpenAI's public directory.
+
+## Metadata cache (NS-08, 0.5.0)
+
+Metadata uses a private, bounded per-file disk cache in the current source/timezone cache scope. Directory discovery and file stat remain live; size, inode, device, mtime and ctime changes invalidate entries. Codex title indexes are reread. Cache content contains metadata only, not conversation messages. Unstable writes are not cached; a broken/unwritable metadata cache falls back to reading logs.
+
+Run `bun packages/usage/scripts/benchmark-metadata.ts` for a synthetic-only benchmark (240 files, 501 lines each). On the recorded macOS arm64 run, original metadata code took 103.82 ms; new cold-cache 67.06 ms, warm-cache 7.58 ms (240 hits, no content reads). Outputs matched. Filesystem caching affects timing; this is not a whole-ccusage benchmark or a general speed guarantee.
+
+The pinned ccusage 20.0.34 can deduplicate identical timestamp/token events from two distinct Codex sessions. A native CLI characterization test records daily total 110 for two 110-token sessions with identical event times, and 220 when event times differ. NS-08 does not alter logs or patch that upstream behavior; estimates can undercount this case.
+
+## History (NS-09, 0.5.0)
+
+The **Lịch sử / History** tab filters retained daily provider/model aggregates by 7/30 days, this/previous month or an inclusive custom range in the snapshot timezone. The initial provider is copied when History first opens; later history filters are independent of the pinned session/dashboard. Switching tabs keeps in-memory history state; it is not persisted to host/browser storage. A new explicit tool session request returns to the session view.
+
+Click a dated bar for that day's models or Entire range for range models. Token totals and cost summary cover the range, not the lifetime session. Empty periods with a successful source read show zero; missing/invalid history is unavailable and unknown prices are never zero. Charts are sparse (dates present in source rows), not a claim of complete account history. Controls are keyboard accessible with horizontally scrollable tables/charts on narrow panels. Filtering does not fetch logs or call tools again.
+
+Snapshot schema remains v1 with optional `history: {version:1,providers,days:[{date,provider,aggregate}]}`. A new cache-scope revision avoids treating old snapshots as history-capable. History is in widget metadata, not expanded into model-visible structured summaries. Cache retains no conversation content. The native window and panel use the same daily aggregate contract; ccusage20.0.34's documented identical-event collision limitation remains.
+
+## CSV / JSON export (NS-10, 0.5.0)
+
+History exports the entire selected range/provider, not only a day selected for model inspection. CSV/JSON contain range, snapshot timezone/generatedAt/status, tokens, model/daily costs and explicit pricing status. Unknown amount remains null/blank with its known subtotal; it is not zero. CSV text is quoted and formula-like cell values are prefixed with an apostrophe.
+
+Names and session IDs are omitted by default, including CSV identifier columns. The opt-in checkbox adds **references with last activity in the chosen range/provider**, not session costs or a complete list of sessions contributing to daily totals. Missing/invalid lastActivity is excluded. Reference scope is labeled `last-activity-in-range-not-cost-attribution`; conversation text and source paths are never included.
+
+Embedded MCP panels request the host's `downloadFile` capability using an inline resource and respect denial/cancellation. Unsupported hosts show an explicit error; use native export instead. Only the standalone development preview uses a browser Blob download. Local Chrome preview downloads and legacy-host error behavior are tested; a real Codex-host download approval remains unverified.
+
+CSV `recordType` distinguishes range aggregate, range model, day, day-model and optional session-reference records. These are alternative breakdowns, not additive rows: do not sum cost/token columns across different record types.
+
+## Shared-cache maintenance (NS-12, 0.5.0)
+
+The native Data management window coordinates clearing generated shared usage-cache files using `.maintenance.lock/owner.json` with process ID, token and millisecond timestamp. Snapshot readers check before fresh-cache return, after scope-lock acquisition and after loading; an active guard returns retained data as stale or first-read unavailable, never a fake zero. Active owners are not evicted merely by age; abandoned guards recover conservatively after a 90-second grace. Unexpected/symlink contents remain protected.
+
+Stop old runtimes before maintenance because they do not implement this guard. Clearing local cache cannot remove results already provided to the host, exported files or original logs. It leaves preferences, backups and configuration intact, and data rebuilds on refresh. Custom cache paths are not cleared by native UI.
+
+Native guard mutation/recovery is serialized by a kernel lock on the permanent empty `.maintenance-recovery.lock` file, which is retained to keep one lock inode. New TS readers do not delete guards; stable abandoned guards can be ignored for reading after grace and are physically reclaimed only by native maintenance.

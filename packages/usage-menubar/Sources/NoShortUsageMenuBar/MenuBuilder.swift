@@ -17,6 +17,10 @@ import UsageCore
     var onOpenSettings: (() -> Void)?
     var onQuit: (() -> Void)?
     var onAbout: (() -> Void)?
+    var onHistory: (() -> Void)?
+    var onPricing: (() -> Void)?
+    var onBudgets: (() -> Void)?
+    var onDataManagement: (() -> Void)?
     var onCheckUpdates: (() -> Void)?
     var onReleaseNotes: (() -> Void)?
     var onConfigureContextAlerts: (() -> Void)?
@@ -39,6 +43,10 @@ import UsageCore
         menu.addItem(.separator())
         updated = line(l("Chưa cập nhật")); sourceItem = line(l("Nguồn: —")); noticeItem = line("")
         menu.addItem(.separator())
+        _ = action(l("Xem chi tiết…"), #selector(history))
+        _ = action(l("Đơn giá…"), #selector(pricing))
+        _ = action(l("Ngân sách…"), #selector(budgets))
+        _ = action(l("Quản lý dữ liệu…"), #selector(dataManagement))
         refreshItem = action(l("Làm mới"), #selector(refresh), key: "r")
         _ = action(l("Chọn thư mục log…"), #selector(chooseSource))
         _ = action(l("Dùng nguồn log mặc định"), #selector(resetSource))
@@ -106,6 +114,11 @@ import UsageCore
         threshold = value
         contextAlertItem.title = l("Ngưỡng cảnh báo context: %@%…", String(value))
     }
+    func updateAppReleaseStatus(_ presentation: AppUpdatePresentation, language: AppLanguage) {
+        checkUpdatesItem.title=presentation.actionTitle(language:language)
+        checkUpdatesItem.isEnabled=presentation.canCheck
+        put(presentation.statusText(language:language),in:updateStatusItem)
+    }
     func updateReleaseState(_ state: ManualUpdateState, language: AppLanguage) {
         // This path never touches usage loading or its warning row.
         let localization = AppLocalization(language: language)
@@ -113,6 +126,10 @@ import UsageCore
         checkUpdatesItem.isEnabled = !state.isChecking
         put(state.localizedDescription(language: language), in: updateStatusItem)
     }
+    @objc private func dataManagement() { onDataManagement?() }
+    @objc private func pricing() { onPricing?() }
+    @objc private func budgets() { onBudgets?() }
+    @objc private func history() { onHistory?() }
     @objc private func about() { onAbout?() }
     @objc private func checkUpdates() { onCheckUpdates?() }
     @objc private func releaseNotes() { onReleaseNotes?() }

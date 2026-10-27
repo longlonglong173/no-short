@@ -4,9 +4,33 @@ import UsageCore
 
 struct UsagePopoverView: View {
     @ObservedObject var model: UsagePanelModel
+    var onContentHeightChange: (@MainActor @Sendable (CGFloat) -> Void)?
     @Environment(\.colorScheme) private var colorScheme
     private var accent: Color { colorScheme == .dark ? Color(red: 0.46, green: 0.83, blue: 0.79) : Color(red: 0, green: 0.43, blue: 0.45) }
     var body: some View {
+        GeometryReader { geometry in
+            ScrollView(.vertical) {
+                content
+                    .frame(width: geometry.size.width)
+                    .frame(minHeight: model.panelHeight, alignment: .top)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .background(GeometryReader { content in
+                        Color.clear.preference(key: PopoverContentHeight.self, value: content.size.height)
+                    })
+            }
+            .id(model.showsSetup ? "setup" : model.showsModels ? "models" : model.showsSessions ? "sessions" : "dashboard")
+            .focusable()
+        }
+        .frame(idealWidth: 400, idealHeight: model.panelHeight)
+        .onPreferenceChange(PopoverContentHeight.self) { [onContentHeightChange] height in
+            guard height > 0 else { return }
+            Task { @MainActor in onContentHeightChange?(height) }
+        }
+        .background(Color(nsColor: .windowBackgroundColor))
+        .tint(accent)
+        .environment(\.locale, model.language.locale)
+    }
+    private var content: some View {
         VStack(spacing: 0) {
             header.padding(.bottom, 12)
             if model.showsSetup {
@@ -19,14 +43,13 @@ struct UsagePopoverView: View {
             }.pickerStyle(.segmented).labelsHidden().frame(maxWidth:.infinity).padding(.bottom,7)
             Text(model.activityLabel).font(.system(size:10)).foregroundStyle(.secondary)
                 .frame(maxWidth:.infinity,alignment:.leading).lineLimit(1).padding(.bottom,12)
-            if model.showsSessions { sessions } else { dashboard }
+            if model.showsModels { modelDetails } else if model.showsSessions { sessions } else { dashboard }
             }
+            Divider().padding(.top,14).padding(.bottom,10)
+            AppUpdateStatusView(presentation:model.appUpdate,language:model.language,onCheck:{model.onCheckUpdates?()})
+
         }
         .padding(22)
-        .frame(width: 400, height: model.panelHeight, alignment: .top)
-        .background(Color(nsColor: .windowBackgroundColor))
-        .tint(accent)
-        .environment(\.locale, model.language.locale)
     }
     private var header: some View {
         HStack(alignment: .center) {
@@ -34,7 +57,7 @@ struct UsagePopoverView: View {
             Spacer()
             HStack(spacing: 6) {
                 Circle().fill(model.isStale || model.notice != nil ? Color.orange : model.isLoading ? Color.secondary : accent).frame(width: 7, height: 7)
-                Text(model.isStale || model.notice != nil ? model.l("Cần cập nhật") : model.isLoading ? model.l("Đang cập nhật") : model.snapshot == nil ? model.l("Chưa có dữ liệu") : model.l("Đã cập nhật"))
+                Text(model.isStale || model.notice != nil ? model.l("Cần làm mới dữ liệu") : model.isLoading ? model.l("Đang cập nhật") : model.snapshot == nil ? model.l("Chưa có dữ liệu") : model.l("Đã cập nhật"))
                     .font(.system(size: 10)).foregroundStyle(.secondary)
             }.accessibilityElement(children: .combine)
         }
@@ -45,8 +68,8 @@ struct UsagePopoverView: View {
                 Text(model.isAll ? model.l("Chi phí hôm nay theo công cụ") : model.l("Phiên đang theo dõi")).font(.system(size: 12)).foregroundStyle(.secondary)
                 if model.isAll {
                     HStack {
-                        ForEach(UsageProvider.allCases,id:\.self) { provider in
-                            let cost = model.snapshot?.providerBreakdowns?.first { $0.provider == provider }?.today.cost
+                        ForEach(model.totalProviders,id:\.self) { provider in
+                            let cost = model.providerTodayCost(provider)
                             HStack {
                                 Text(provider.title).font(.system(size:11)).foregroundStyle(.secondary)
                                 Spacer(minLength:4)
@@ -77,16 +100,31 @@ struct UsagePopoverView: View {
                     .fixedSize(horizontal: false, vertical: true).help(warning)
                     .padding(.bottom, 10)
             }
+            budgetStatus
+            insightStatus
+            if let pricing = model.snapshot?.pricing {
+                Text(pricing.description(language: model.language)).font(.system(size: 10)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 8)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center, spacing: 10) {
                     Text(model.mainCost).font(.system(size: 49, weight: .semibold)).tracking(-1.8)
                         .monospacedDigit().foregroundStyle(accent).lineLimit(1).minimumScaleFactor(0.45)
-                        .accessibilityLabel(model.l("Chi phí phiên %@ đô la Mỹ, ước tính", String(model.mainCost)))
+                        .accessibilityLabel(model.costScopeLabel + ": " + model.mainCost + " USD")
                     Spacer(minLength: 0)
-                    Text(model.l("Ước tính")).font(.system(size: 11, weight: .medium)).foregroundStyle(accent)
-                        .padding(.horizontal, 10).padding(.vertical, 5).background(accent.opacity(0.12), in: Capsule())
+                    Button { model.showModelCosts() } label: {
+                        Label(model.l("Model"), systemImage: "list.bullet.rectangle")
+                            .font(.system(size: 11, weight: .medium))
+                            .padding(.horizontal, 10).padding(.vertical, 5)
+                    }.buttonStyle(.bordered).help(model.l("Chi phí theo model"))
+                        .accessibilityLabel(model.l("Chi phí theo model"))
                 }
-                Text(model.isAll ? model.l("Chi phí API quy đổi · Hôm nay") : model.l("Chi phí API quy đổi · Phiên này")).font(.system(size: 13)).foregroundStyle(.secondary)
+                if let cost = model.mainUsageCost, cost.status != "estimated" {
+                    Text(model.pricingLabel(cost)).font(.system(size: 10)).foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(model.costScopeLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.8).help(model.costScopeLabel)
             }.padding(.bottom, 20)
             HStack(spacing: 0) {
                 token(model.l("Input"), model.inputText)
@@ -108,7 +146,7 @@ struct UsagePopoverView: View {
                 HStack {
                     Text(model.l("Chi phí theo ngày")).font(.system(size: 12, weight: .medium))
                     Spacer()
-                    Text(model.l("7 ngày · Tất cả phiên")).font(.system(size: 10)).foregroundStyle(.secondary)
+                    Text(model.l("7 ngày · Tất cả phiên · %@", model.aggregateProviderLabel)).font(.system(size: 9)).foregroundStyle(.secondary)
                 }
                 costChart.frame(height: 124)
                 if model.hasUnpricedDays {
@@ -130,7 +168,29 @@ struct UsagePopoverView: View {
                 Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
                     .font(.system(size: 9)).foregroundStyle(.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
+            Button { model.onHistory?() } label: {
+                Label(model.l("Xem chi tiết…"), systemImage: "chart.bar.xaxis")
+                    .font(.system(size: 12)).frame(maxWidth: .infinity, alignment: .leading)
+            }.buttonStyle(.plain).padding(.bottom, 10)
             footer
+        }
+    }
+    @ViewBuilder private var insightStatus: some View {
+        if let value = model.insightResult {
+            UsageInsightsView(value: value, snapshot: model.snapshot, anomalyEnabled: model.insightAnomalyEnabled, scenarioEnabled: model.insightScenarioEnabled, language: model.language)
+        }
+        if let notice = model.insightNotificationNotice { Text(model.l(notice)).font(.system(size: 11)).foregroundStyle(.orange) }
+    }
+    @ViewBuilder private var budgetStatus: some View {
+        if !model.budgetReadings.isEmpty || model.budgetNotificationNotice != nil {
+            VStack(alignment: .leading, spacing: 6) {
+                ForEach(model.budgetReadings, id: \.rule.id) { reading in
+                    Text(budgetReadingText(reading, language: model.language))
+                        .foregroundStyle(reading.exceeded ? Color.orange : Color.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                if let notice = model.budgetNotificationNotice { Text(model.l(notice)).foregroundStyle(.orange) }
+            }.font(.system(size: 10)).frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 12)
         }
     }
     var warning: String? {
@@ -149,9 +209,9 @@ struct UsagePopoverView: View {
     private func period(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
-            Text(value).font(.system(size: 23, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.system(size: 23, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.4)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.leading, title == model.l("Hôm nay") ? 0 : 30)
-        .help(model.l("%@ · Tổng tất cả phiên · %@ USD", String(title), String(value)))
+        .help(model.l("%@ · %@ · Tổng tất cả phiên · %@ USD", title, model.aggregateProviderLabel, value))
     }
     @ViewBuilder private var costChart: some View {
         if model.chartPoints.isEmpty {
@@ -211,6 +271,9 @@ struct UsagePopoverView: View {
                 Button(model.l("Chọn thư mục log Claude Code…")) { model.onChooseClaudeSource?() }
                 Button(model.l("Dùng log Claude Code mặc định")) { model.onResetClaudeSource?() }
                 Divider()
+                Button(model.l("Đơn giá…")) { model.onPricing?() }
+                Button(model.l("Ngân sách…")) { model.onBudgets?() }
+                Button(model.l("Quản lý dữ liệu…")) { model.onDataManagement?() }
                 Button(model.l("Ngưỡng cảnh báo context: %@%…", String(model.contextAlertThreshold))) { model.onConfigureContextAlerts?() }
                 Toggle(model.l("Thông báo macOS khi vượt ngưỡng"),isOn:Binding(get:{ model.contextNotificationsEnabled },set:{ model.setContextNotificationsEnabled($0) }))
                 Divider()
@@ -226,6 +289,9 @@ struct UsagePopoverView: View {
                 Divider()
                 Button(model.l("Giới thiệu No Short Usage…")) { model.onAbout?() }
                 Button(model.l("Kiểm tra bản cập nhật…")) { model.onCheckUpdates?() }
+                if model.appUpdate.hasInstallCapability {
+                    Toggle(model.l("Tự kiểm tra cập nhật mỗi ngày"),isOn:Binding(get:{model.appUpdate.automaticChecksEnabled},set:{model.onAutomaticUpdateChecksChange?($0)}))
+                }
                 Button(model.l("Ghi chú phát hành…")) { model.onReleaseNotes?() }
                 Divider()
                 Button(model.l("Thoát No Short Usage")) { model.onQuit?() }.keyboardShortcut("q")
@@ -249,30 +315,96 @@ struct UsagePopoverView: View {
             }.buttonStyle(.bordered)
             Text(model.l("%@ phiên · Chọn để xem chi phí và token", String(model.filteredSessions.count)))
                 .font(.system(size: 10)).foregroundStyle(.secondary)
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(model.filteredSessions, id: \.id) { session in
-                        Button { model.chooseSession(session.id) } label: {
-                            HStack(alignment: .top, spacing: 12) {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(UsagePresentation.cleanTitle(session.title)).font(.system(size: 12, weight: .medium)).lineLimit(2)
-                                    Text(session.usageProvider.title + " · " + (session.kind == "subagent" ? model.l("Tác vụ con") : session.kind == "main" ? model.l("Phiên chính") : model.l("Chưa xác định loại phiên"))).font(.system(size: 9)).foregroundStyle(.secondary)
-                                }
-                                Spacer(minLength: 0)
-                                Text(UsagePresentation.money(session.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
-                            }.foregroundStyle(.primary).padding(.vertical, 12).padding(.horizontal, 4).frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
-                        }.buttonStyle(.plain).help(session.title)
-                        Divider()
-                    }
-                    if model.filteredSessions.isEmpty { Text(model.l("Không tìm thấy phiên phù hợp")).font(.system(size: 12)).foregroundStyle(.secondary).padding(.vertical, 30) }
+            VStack(spacing: 0) {
+                ForEach(model.filteredSessions, id: \.id) { session in
+                    Button { model.chooseSession(session.id) } label: {
+                        HStack(alignment: .top, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(UsagePresentation.cleanTitle(session.title)).font(.system(size: 12, weight: .medium)).lineLimit(2)
+                                Text(session.usageProvider.title + " · " + (session.kind == "subagent" ? model.l("Tác vụ con") : session.kind == "main" ? model.l("Phiên chính") : model.l("Chưa xác định loại phiên"))).font(.system(size: 9)).foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Text(UsagePresentation.money(session.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                        }.foregroundStyle(.primary).padding(.vertical, 12).padding(.horizontal, 4).frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }.buttonStyle(.plain).help(session.title)
+                    Divider()
                 }
+                if model.filteredSessions.isEmpty { Text(model.l("Không tìm thấy phiên phù hợp")).font(.system(size: 12)).foregroundStyle(.secondary).padding(.vertical, 30) }
             }
             Spacer(minLength: 0)
         }.font(.system(size: 12))
     }
+
+    private var modelDetails: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Button { model.showsModels = false } label: {
+                Label(model.l("Quay lại thống kê"), systemImage: "chevron.left")
+            }.buttonStyle(.plain).foregroundStyle(accent)
+            Text(model.l("Chi phí theo model")).font(.system(size: 17, weight: .semibold))
+            VStack(alignment: .leading, spacing: 4) {
+                Text(model.costScopeLabel).font(.system(size: 11, weight: .medium))
+                if !model.isAll {
+                    Text(model.selectionLabel).font(.system(size: 11)).foregroundStyle(.secondary)
+                        .lineLimit(2).help(model.selectionLabel)
+                }
+                HStack(alignment: .firstTextBaseline) {
+                    Text(model.mainCost).font(.system(size: 24, weight: .semibold)).monospacedDigit()
+                    Text("USD").font(.system(size: 11)).foregroundStyle(.secondary)
+                    if let cost = model.mainUsageCost {
+                        Text(model.pricingLabel(cost)).font(.system(size: 10)).foregroundStyle(.secondary)
+                    }
+                }
+            }
+            if let warning {
+                Label(warning, systemImage: "exclamationmark.circle").font(.system(size: 11))
+                    .foregroundStyle(.orange).lineLimit(2).help(warning)
+            }
+            budgetStatus
+            insightStatus
+            HStack {
+                Text(model.l("Model")).frame(maxWidth: .infinity, alignment: .leading)
+                Text(model.l("Token")).frame(width: 65, alignment: .trailing)
+                Text("USD").frame(width: 96, alignment: .trailing)
+            }.font(.system(size: 10, weight: .medium)).foregroundStyle(.secondary)
+            Divider()
+            VStack(spacing: 0) {
+                // Snapshot names need not be unique; keep every source row.
+                ForEach(Array(model.modelUsages.enumerated()), id: \.offset) { _, row in
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
+                            if let pricing = row.pricing { Text(pricing.description(language: model.language)).font(.system(size: 9)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                        }
+                            .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).help(row.name)
+                        Text(UsagePresentation.number(row.tokens.total)).font(.system(size: 11)).monospacedDigit()
+                            .frame(width: 65, alignment: .trailing)
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(UsagePresentation.money(row.cost)).font(.system(size: 12, weight: .medium)).monospacedDigit()
+                            Text(model.pricingLabel(row.cost)).font(.system(size: 9)).foregroundStyle(.secondary)
+                        }.frame(width: 96, alignment: .trailing)
+                    }.padding(.vertical, 12).accessibilityElement(children: .combine)
+                    Divider()
+                }
+                if model.modelUsages.isEmpty {
+                    Text(model.l("Chưa có dữ liệu theo model")).font(.system(size: 12)).foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity).padding(.vertical, 30)
+                }
+            }
+            Text(model.l("≥ là phần chi phí đã biết; — là giá chưa biết, không phải $0."))
+                .font(.system(size: 10)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            Text(model.l("Nguồn: ccusage · Log trên máy")).help(model.source)
+                .font(.system(size: 9)).foregroundStyle(.secondary)
+            Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
+                .font(.system(size: 9)).foregroundStyle(.secondary)
+        }.frame(maxHeight: .infinity, alignment: .top)
+    }
 }
 
+private struct PopoverContentHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
 
 private struct FooterButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled

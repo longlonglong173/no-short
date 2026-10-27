@@ -7,8 +7,13 @@ import { buildSnapshot } from './adapter.ts';
 import { readMetadata, readClaudeMetadata } from './metadata.ts';
 import { runReport } from './runner.ts';
 import { SnapshotStore } from './cache.ts';
+import { ccusagePatchRevision } from './version.ts';
+import { readPricingConfig } from './pricing-store.ts';
 
-export interface ServiceOptions { binary: string; roots?: string[]; claudeRoots?: string[]; cacheDir?: string; timeZone?: string }
+export interface ServiceOptions { binary: string; roots?: string[]; claudeRoots?: string[]; cacheDir?: string; timeZone?: string; pricingFile?: string }
+export function usageCacheScope(roots: string[], timeZone: string, requestedClaudeRoots?: string[]): string {
+  return createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', reader: ccusagePatchRevision, schema: 1, history: 1, grouping: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
+}
 export function createUsageService(options: ServiceOptions): SnapshotStore {
   const roots = (options.roots ?? (process.env.CODEX_HOME ?? join(homedir(), '.codex')).split(',')).map(p => p.trim()).filter(Boolean).map(p => resolve(p));
   if (!roots.length) roots.push(join(homedir(), '.codex'));
@@ -16,9 +21,11 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
   const claudeRoots = requestedClaudeRoots?.filter(root => existsSync(join(root,'projects')));
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone;
   new Intl.DateTimeFormat('en', { timeZone });
-  const scope = createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', schema: 1, ...(requestedClaudeRoots?.length ? { claudeRoots:requestedClaudeRoots } : {}) })).digest('hex').slice(0, 24);
-  const directory = join(options.cacheDir ?? process.env.NO_SHORT_USAGE_CACHE_DIR ?? join(homedir(), 'Library/Caches/no-short/usage'), scope);
+  const scope = usageCacheScope(roots, timeZone, requestedClaudeRoots);
+  const cacheRoot = options.cacheDir ?? process.env.NO_SHORT_USAGE_CACHE_DIR ?? join(homedir(), 'Library/Caches/no-short/usage');
+  const directory = join(cacheRoot, scope);
   return new SnapshotStore(directory, async () => {
+    const pricing = await readPricingConfig(options.pricingFile);
     const priceMarker = join(directory, 'pricing-check.json');
     let lastOnline = 0;
     try { lastOnline = JSON.parse(await readFile(priceMarker, 'utf8')).lastOnline ?? 0; } catch { /* First launch. */ }
@@ -26,10 +33,10 @@ export function createUsageService(options: ServiceOptions): SnapshotStore {
     let report;
     try { report = await runReport({ ...options, roots, claudeRoots, cacheDir: directory, timeZone, offline }); }
     catch (e) { if (offline) throw e; offline = true; report = await runReport({ ...options, roots, claudeRoots, cacheDir: directory, timeZone, offline: true }); }
-    const metadata = await readMetadata(roots);
-    if (claudeRoots?.length) for (const [key, value] of await readClaudeMetadata(claudeRoots)) metadata.set(key, value);
-    const value = buildSnapshot(report, { now: new Date(), timeZone, metadata, providers: requestedClaudeRoots?.length ? ['codex', 'claude'] : ['codex'], pricingSource: offline ? 'cached' : 'online' });
+    const metadata = await readMetadata(roots, { cacheDir: join(directory, 'metadata') });
+    if (claudeRoots?.length) for (const [key, value] of await readClaudeMetadata(claudeRoots, { cacheDir: join(directory, 'metadata') })) metadata.set(key, value);
+    const value = buildSnapshot(report, { now: new Date(), timeZone, metadata, providers: requestedClaudeRoots?.length ? ['codex', 'claude'] : ['codex'], pricingSource: offline ? 'cached' : 'online', pricing: pricing.config, pricingRevision: pricing.revision });
     if (!offline) { await mkdir(directory, { recursive: true, mode: 0o700 }); await writeFile(priceMarker, JSON.stringify({ lastOnline: Date.now() }), { mode: 0o600 }); }
     return value;
-  }, { timeZone, ttlMs: process.env.NO_SHORT_USAGE_FRESH_MS === '1000' ? 1000 : undefined });
+  }, { timeZone, maintenanceRoot: cacheRoot, revision: async () => (await readPricingConfig(options.pricingFile)).revision, ttlMs: process.env.NO_SHORT_USAGE_FRESH_MS === '1000' ? 1000 : undefined });
 }

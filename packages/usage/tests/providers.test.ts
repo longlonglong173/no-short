@@ -101,7 +101,15 @@ test.skipIf(!existsSync(nativeCli))('pinned native CLI reads controlled Claude l
 
 test.skipIf(!existsSync(nativeCli))('an absent Claude installation leaves Codex readable and reports an empty Claude breakdown', async () => {
   const root = await temp(); await mkdir(join(root, 'codex/sessions'), { recursive: true });
-  const snapshot = await createUsageService({ binary: nativeCli, roots:[join(root, 'codex')], claudeRoots:[join(root,'not-installed')], cacheDir:join(root,'cache'), timeZone:'UTC' }).get();
-  expect(snapshot.status).toBe('empty');
-  expect(snapshot.providerBreakdowns?.find(p => p.provider === 'claude')?.today.cost.amountUSD).toBe(0);
+  // This empty-source fixture checks provider availability, not live pricing.
+  const previousOffline = process.env.NO_SHORT_USAGE_OFFLINE;
+  process.env.NO_SHORT_USAGE_OFFLINE = '1';
+  try {
+    const snapshot = await createUsageService({ binary: nativeCli, roots:[join(root, 'codex')], claudeRoots:[join(root,'not-installed')], cacheDir:join(root,'cache'), timeZone:'UTC' }).get();
+    expect(snapshot.status).toBe('empty');
+    expect(snapshot.providerBreakdowns?.find(p => p.provider === 'claude')?.today.cost.amountUSD).toBe(0);
+  } finally {
+    if (previousOffline === undefined) delete process.env.NO_SHORT_USAGE_OFFLINE;
+    else process.env.NO_SHORT_USAGE_OFFLINE = previousOffline;
+  }
 });

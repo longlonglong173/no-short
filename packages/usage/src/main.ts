@@ -1,3 +1,4 @@
+import { usageVersion, ccusageVersion } from './version';
 import { dirname, join } from 'node:path';
 import { writeSync } from 'node:fs';
 import { serveStdio } from '@modelcontextprotocol/server/stdio';

@@ -1,3 +1,4 @@
+import { usageVersion } from '../src/version';
 import { Client } from '@modelcontextprotocol/client';
 import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
 import { resolve } from 'node:path';
@@ -11,6 +12,7 @@ const transport = new StdioClientTransport({ command: '/bin/sh', args: [resolve(
 const client = new Client({ name: 'no-short-native-smoke', version: '0.7.1' });
 try {
   await client.connect(transport);
+  if (client.getServerVersion()?.version !== usageVersion) throw new Error('Compiled MCP server version mismatch');
   const { tools } = await client.listTools();
   if (tools.length !== 2) throw new Error('Unexpected tool count');
   const resource = await client.readResource({ uri: 'ui://no-short/usage.html' });

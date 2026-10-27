@@ -8,13 +8,37 @@ import UsageCore
     private let menu = MenuBuilder(), login = LoginItemManager(), sources = LogSourceStore()
     private let panelModel = UsagePanelModel(defaults:.standard)
     private lazy var panel = UsagePopoverController(model: panelModel)
-    private lazy var aboutModel = AboutModel(language: panelModel.language)
+    private lazy var updateCoordinator: UpdateCoordinator = {
+        let info=Bundle.main.infoDictionary ?? [:]
+        #if NO_SHORT_UPDATER_E2E
+        let config=UpdaterE2ESupport.configuration
+        #else
+        let config=try? UpdateConfiguration(feedURL:info["SUFeedURL"] as? String ?? "",publicKey:info["SUPublicEDKey"] as? String ?? "")
+        #endif
+        #if arch(arm64)
+        let arch="arm64"
+        #else
+        let arch="x86_64"
+        #endif
+        return UpdateCoordinator(configuration:config,architecture:arch,mayCheck:{ [weak self] in
+            guard let self else { return false };return !self.terminating && !self.contextSuspended && self.controller != nil && !self.controller.isMaintaining
+        },makeDriver:{ SparkleUpdateDriver() },defaults:.standard)
+    }()
+    private lazy var aboutModel = AboutModel(language: panelModel.language,native:updateCoordinator)
     private lazy var aboutWindow = AboutWindowController(model: aboutModel)
+    private var historyWindow: UsageHistoryWindowController?
     private var controller: RefreshController!
+    private var updateTimer: Timer?
+    private var firstUpdateCheck: Task<Void,Never>?
     private var terminating = false
     private var contextSuspended = false
     private let contextReader = ContextReader()
     private lazy var contextNotifications = ContextNotificationService()
+    private lazy var insights = InsightsController(defaults: .standard, notifications: contextNotifications)
+    private lazy var budgets = BudgetController(defaults: .standard, notifications: contextNotifications)
+    private var pricingWindow: PricingSettingsWindowController?
+    private var budgetWindow: BudgetSettingsWindowController?
+    private var dataManagementWindow: DataManagementWindowController?
     private var diagnosticsTask: Task<Void, Never>?
     private var contextTask:Task<Void,Never>?
     private var contextKey:String?, contextSelection:String?
@@ -33,7 +57,7 @@ import UsageCore
         controller.onChange = { @MainActor @Sendable [weak self] in self?.render() }
         menu.onLanguageChange = { [weak self] in self?.panelModel.setLanguage($0) }
         panelModel.onLanguageChange = { [weak self] in self?.render() }
-        menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh() }
+        menu.onOpen = { [weak self] in self?.render(); self?.controller.refresh(); self?.updateCoordinator.checkIfDue() }
         menu.onRefresh = { [weak self] in self?.controller.refresh() }
         menu.onChooseSource = { [weak self] in self?.chooseSource() }
         menu.onResetSource = { [weak self] in guard let self else { return }; self.sources.reset(); self.controller.setSource(self.sources.current); self.startMonitoring() }
@@ -42,11 +66,20 @@ import UsageCore
         menu.onConfigureContextAlerts = { [weak self] in self?.configureContextAlertThreshold() }
         menu.onQuit = { NSApp.terminate(nil) }
         menu.onAbout = { [weak self] in self?.showAbout() }
+        menu.onHistory = { [weak self] in self?.showHistory() }
+        menu.onPricing = { [weak self] in self?.showPricing() }
+        menu.onBudgets = { [weak self] in self?.showBudgets() }
+        menu.onDataManagement = { [weak self] in self?.showDataManagement() }
+        insights.onChange = { [weak self] in self?.renderInsightState() }
+        budgets.onChange = { [weak self] in self?.renderBudgetState() }
         menu.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         aboutModel.onChange = { [weak self] in
             guard let self else { return }
-            menu.updateReleaseState(aboutModel.state, language: panelModel.language)
+            #if NO_SHORT_UPDATER_E2E
+            if aboutModel.nativeState == .installing { UpdaterE2ESupport.holdMaintenanceIfRequested(controller) }
+            #endif
+            renderUpdateState()
         }
         panelModel.onSelectionChange = { [weak self] in self?.render() }
         panelModel.onRefresh = { [weak self] in self?.controller.refresh() }
@@ -58,7 +91,12 @@ import UsageCore
         panelModel.onOpenSettings = { [weak self] in self?.login.openSettings() }
         panelModel.onQuit = { NSApp.terminate(nil) }
         panelModel.onAbout = { [weak self] in self?.showAbout() }
+        panelModel.onHistory = { [weak self] in self?.showHistory() }
+        panelModel.onPricing = { [weak self] in self?.showPricing() }
+        panelModel.onBudgets = { [weak self] in self?.showBudgets() }
+        panelModel.onDataManagement = { [weak self] in self?.showDataManagement() }
         panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
+        panelModel.onAutomaticUpdateChecksChange = { [weak self] in self?.updateCoordinator.setAutomaticChecksEnabled($0) }
         panelModel.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
         panelModel.onChooseClaudeSource = { [weak self] in self?.chooseSource(claude:true) }
         panelModel.onResetClaudeSource = { [weak self] in
@@ -73,13 +111,56 @@ import UsageCore
         let center = NSWorkspace.shared.notificationCenter
         center.addObserver(self, selector: #selector(willSleep), name: NSWorkspace.willSleepNotification, object: nil)
         center.addObserver(self, selector: #selector(didWake), name: NSWorkspace.didWakeNotification, object: nil)
-        startMonitoring(); render(); controller.resume()
+        startMonitoring(); render(); controller.resume(); scheduleUpdateChecks()
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.recordLaunch()
+        if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == "0.6.0" {
+            DispatchQueue.main.asyncAfter(deadline:.now()+0.5) {
+                if Bundle.main.object(forInfoDictionaryKey:"NS14ProbeOnly") as? Bool == true { self.showPanel() }
+                else { self.showAbout(check:true) }
+            }
+        }
+        #endif
         if CommandLine.arguments.contains("--show-panel") { showPanel() }
+    }
+    private func scheduleUpdateChecks() {
+        updateTimer=Timer.scheduledTimer(withTimeInterval:3600,repeats:true) { [weak self] _ in
+            Task { @MainActor in self?.updateCoordinator.checkIfDue() }
+        }
+        firstUpdateCheck=Task { [weak self] in
+            do { try await Task.sleep(for:.seconds(10)) } catch { return }
+            guard !Task.isCancelled else { return };self?.updateCoordinator.checkIfDue()
+        }
+    }
+    private func renderUpdateState() {
+        panelModel.updateAppUpdate(aboutModel.updatePresentation)
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.recordProbeIfComplete(aboutModel)
+        #endif
+        if aboutModel.nativeState != nil { menu.updateAppReleaseStatus(aboutModel.updatePresentation,language:panelModel.language) }
+        else { menu.updateReleaseState(aboutModel.state,language:panelModel.language) }
     }
     private func render() {
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
+        insights.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
+        renderInsightState()
+        budgets.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
+        renderBudgetState()
+        dataManagementWindow?.model.language = panelModel.language
+        dataManagementWindow?.window?.title = l("Quản lý dữ liệu…")
+        pricingWindow?.model.language = panelModel.language
+        pricingWindow?.window?.title = l("Đơn giá…")
+        budgetWindow?.model.language = panelModel.language
+        budgetWindow?.window?.title = l("Ngân sách…")
+        Task { @MainActor [weak self] in
+            guard let self, !self.terminating else { return }
+            await self.budgets.deliverIfNeeded(language: self.panelModel.language)
+            await self.insights.deliverIfNeeded(language: self.panelModel.language)
+        }
+        historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
+            isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
         refreshDiagnostics()
         refreshContexts()
         deliverContextAlerts()
@@ -89,7 +170,9 @@ import UsageCore
         if aboutModel.language != panelModel.language { aboutModel.language = panelModel.language }
         menu.updateContextAlertThreshold(panelModel.contextAlertThreshold)
         menu.update(presentation: presentation, source: controller.source, isLoading: controller.isLoading, notice: controller.notice, loginState: login.state, snapshot: controller.snapshot, language: panelModel.language)
-        menu.updateReleaseState(aboutModel.state, language: panelModel.language)
+        if aboutModel.nativeState != nil { menu.updateAppReleaseStatus(aboutModel.updatePresentation,language:panelModel.language) }
+        else { menu.updateReleaseState(aboutModel.state, language: panelModel.language) }
+        panelModel.updateAppUpdate(aboutModel.updatePresentation)
     }
     private func refreshDiagnostics() {
         diagnosticsTask?.cancel()
@@ -145,6 +228,79 @@ import UsageCore
                 panelModel.connectionNotice = ("Không gửi được thông báo macOS. Cảnh báo trong panel vẫn hoạt động; kiểm tra quyền Thông báo trong Cài đặt hệ thống.")
                 if panel.popover.isShown { panel.updateSize() }
             }
+        }
+    }
+    private func renderInsightState() {
+        panelModel.insightResult = insights.result
+        panelModel.insightAnomalyEnabled = insights.anomalyEnabled
+        panelModel.insightScenarioEnabled = insights.scenarioEnabled
+        panelModel.insightNotificationNotice = insights.notificationNotice
+        historyWindow?.model.anomalyEnabled = insights.anomalyEnabled
+        historyWindow?.model.scenarioEnabled = insights.scenarioEnabled
+        if panel.popover.isShown { panel.updateSize() }
+    }
+    private func renderBudgetState() {
+        panelModel.budgetReadings = budgets.readings
+        panelModel.budgetNotificationNotice = budgets.notificationNotice
+        if panel.popover.isShown { panel.updateSize() }
+    }
+    private func showDataManagement() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.terminating else { return }
+            if self.dataManagementWindow == nil {
+                let model = DataManagementModel(language: self.panelModel.language, onClear: { [weak self] in
+                    guard let self, !self.terminating else { throw CacheMaintenanceError.cancelled }
+                    let roots = DataManagementModel.protectedRoots(source: self.sources.current)
+                    return try await self.controller.withMaintenance {
+                        try await Task.detached(priority: .utility) {
+                            try CacheMaintenance.clear(root: CacheMaintenance.defaultRoot, protectedRoots: roots)
+                        }.value
+                    }
+                })
+                self.dataManagementWindow = DataManagementWindowController(model: model)
+            }
+            self.dataManagementWindow?.model.language = self.panelModel.language
+            self.dataManagementWindow?.present()
+        }
+    }
+    private func showPricing() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.terminating else { return }
+            if self.pricingWindow == nil {
+                let model = PricingSettingsModel(language: self.panelModel.language)
+                model.onSave = { [weak self] in self?.controller.refresh() }
+                self.pricingWindow = PricingSettingsWindowController(model: model)
+            }
+            self.pricingWindow?.model.language = self.panelModel.language
+            self.pricingWindow?.present()
+        }
+    }
+    private func showBudgets() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.terminating else { return }
+            if self.budgetWindow == nil {
+                self.budgetWindow = BudgetSettingsWindowController(model: BudgetSettingsModel(controller: self.budgets, language: self.panelModel.language, insights: self.insights))
+            }
+            self.budgetWindow?.model.language = self.panelModel.language
+            self.budgetWindow?.present()
+        }
+    }
+    private func showHistory() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !terminating else { return }
+            if historyWindow == nil {
+                let model = UsageHistoryModel(provider: panelModel.providerFilter, language: panelModel.language)
+                model.onRefresh = { [weak self] in self?.controller.refresh() }
+                historyWindow = UsageHistoryWindowController(model: model)
+            }
+            historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
+                isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
+            renderInsightState()
+            historyWindow?.present()
         }
     }
     private func showAbout(check: Bool = false) {
@@ -205,7 +361,7 @@ import UsageCore
     }
     private func showPanel() {
         guard let button = statusItem?.button else { return }
-        render(); controller.refresh(); panel.toggle(relativeTo: button)
+        render(); controller.refresh(); panel.toggle(relativeTo: button); updateCoordinator.checkIfDue()
     }
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         if !panel.popover.isShown { showPanel() }
@@ -263,10 +419,11 @@ import UsageCore
         let alert = NSAlert(); alert.messageText = "No Short Usage"; alert.informativeText = message
         alert.alertStyle = .warning; NSApp.activate(ignoringOtherApps: true); alert.runModal()
     }
-    @objc private func willSleep(_ notification: Notification) { contextSuspended=true; contextTask?.cancel(); contextKey=nil; panel.close(); activityMonitor?.stop(); controller.suspend() }
-    @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume() }
+    @objc private func willSleep(_ notification: Notification) { contextSuspended=true; contextTask?.cancel(); contextKey=nil; firstUpdateCheck?.cancel(); panel.close(); activityMonitor?.stop(); controller.suspend() }
+    @objc private func didWake(_ notification: Notification) { contextSuspended=false; startMonitoring(); controller.resume(); updateCoordinator.checkIfDue() }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         guard !terminating, let controller else { return terminating ? .terminateLater : .terminateNow }
+        updateTimer?.invalidate();firstUpdateCheck?.cancel()
         terminating = true; diagnosticsTask?.cancel(); contextTask?.cancel(); panel.close(); activityMonitor?.stop()
         Task { await controller.shutdown(); sender.reply(toApplicationShouldTerminate: true) }
         return .terminateLater

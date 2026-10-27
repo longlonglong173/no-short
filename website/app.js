@@ -1,5 +1,5 @@
 const vietnamese = {
-  'download.update': 'Bản 0.4.3: hướng dẫn bắt đầu, chẩn đoán kết nối và kiểm tra cập nhật thủ công.',
+  'download.update': 'Bản 0.7.0: giá tùy chỉnh, so sánh thời gian, lịch sử dự án/phiên và phân tích usage. Từ 0.6.0 trở lên, chọn Kiểm tra cập nhật.',
   'guide.sourcesTitle': 'Dùng nhiều thư mục log',
   'guide.sources': 'Trong ⚙, chọn thư mục log Codex hoặc Claude Code. Thêm một hay nhiều thư mục home chứa sessions (Codex) hoặc projects (Claude), hoặc bỏ nguồn khỏi danh sách. Kiểm tra lỗi ở từng đường dẫn rồi bấm Lưu. Mọi nguồn phải hợp lệ; Hủy giữ cấu hình cũ. Đường dẫn và bí danh trùng được gộp lại. Bỏ nguồn không xóa nhật ký. Dùng nguồn mặc định để bỏ cấu hình riêng của công cụ đó.',
   "usage.contextTitle": "Biết khi nào context chạm ngưỡng",
@@ -31,7 +31,7 @@ const vietnamese = {
   'privacy.usageTitle': 'No Short Usage',
   "privacy.usage": "App thanh menu xử lý nhật ký sử dụng trên máy bạn. Nếu cài thêm plugin MCP, tên, ID và số liệu sử dụng của phiên được chọn sẽ được trả về ChatGPT/Codex và có thể trở thành thông tin đầu vào cho mô hình AI. Danh sách phiên đầy đủ được gửi kèm cho bảng thống kê dưới dạng metadata. Dữ liệu lưu tạm trên máy tồn tại đến khi được thay thế hoặc xóa. Chính sách dự án giải thích ai nhận dữ liệu, thời gian lưu và cách xóa.",
   'privacy.projectLink': 'Đọc chính sách quyền riêng tư của dự án ↗', 'privacy.vercelLink': 'Chính sách Vercel ↗', 'privacy.back': '← Về trang chủ',
-  "usage.status": "v0.4.3 · Thử nghiệm",
+  "usage.status": "v0.7.0 · Thử nghiệm",
   "usage.description": "Vòng quanh logo cho biết phiên đang dùng khoảng bao nhiêu phần trăm dung lượng context của mô hình.",
   "usage.cta": "Hướng dẫn sử dụng",
   "usage.disclaimer": "Chi phí là ước tính theo giá API, không phải số tiền bạn thực trả.",
@@ -151,7 +151,7 @@ const vietnamese = {
 };
 
 const chinese = {
-  'download.update': '0.4.3 版：入门指南、连接诊断和手动检查更新。',
+  'download.update': '0.7.0 版：自定义价格、时间段比较、项目与会话历史及用量分析。0.6.0 及以上版本可在应用内检查更新。',
   'guide.sourcesTitle': '使用多个日志文件夹',
   'guide.sources': '在 ⚙ 中选择 Codex 或 Claude Code 日志文件夹。添加一个或多个包含 sessions（Codex）或 projects（Claude）的主目录，或从列表中移除来源。检查每个路径旁的错误后保存。所有来源必须有效；取消将保留原有设置。重复路径和别名会合并。移除来源不会删除日志。使用默认来源可清除该工具的自定义配置。',
   "usage.contextTitle": "了解上下文何时达到阈值",
@@ -183,7 +183,7 @@ const chinese = {
   'privacy.usageTitle': 'No Short Usage',
   "privacy.usage": "菜单栏应用在你的电脑上处理日志。如果另行安装 MCP 插件，所选会话的名称、ID 和用量数据会返回给 ChatGPT/Codex，并可能成为 AI 模型的输入。完整会话列表作为元数据随附发送给用量面板。本地缓存会保留，直到被替换或删除。项目隐私政策说明了数据接收方、保留时间和删除方法。",
   'privacy.projectLink': '阅读项目隐私政策 ↗', 'privacy.vercelLink': 'Vercel 隐私政策 ↗', 'privacy.back': '← 返回首页',
-  'usage.status': 'v0.4.3 · 实验版',
+  'usage.status': 'v0.7.0 · 实验版',
   "usage.description": "标志周围的圆环显示当前会话大约使用了模型上下文容量的百分之多少。",
   'usage.cta': '使用指南',
   'usage.disclaimer': '费用按 API 价格估算，并非你的实际账单。',

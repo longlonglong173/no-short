@@ -1,6 +1,8 @@
 {
   "version": "0.7.1",
   "ccusageVersion": "20.0.34",
+  "ccusagePatchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1-ns18-session-days-v1",
+  "ccusageSourceRevision": "d7555844929ad76ec97a113d1d51c31de92bee35",
   "platforms": {
     "darwin-arm64": {
       "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.1/no-short-usage-darwin-arm64.tar.gz",

@@ -1,0 +1,632 @@
+{
+  "schemaVersion": 1,
+  "source": "ccusage",
+  "ccusageVersion": "20.0.34",
+  "generatedAt": "2026-10-01T12:00:00Z",
+  "timeZone": "UTC",
+  "status": "ready",
+  "pricingSource": "cached",
+  "sessions": [
+    {
+      "id": "codex-fixture",
+      "provider": "codex",
+      "sessionKey": "codex-fixture",
+      "title": "codex across two days",
+      "kind": "main",
+      "lastActivity": "2026-10-01T10:00:00Z",
+      "tokens": {
+        "input": 150,
+        "output": 30,
+        "cacheRead": 30,
+        "cacheWrite": 0,
+        "total": 210
+      },
+      "cost": {
+        "amountUSD": 2.0,
+        "knownCostUSD": 2.0,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "gpt-fixture",
+          "tokens": {
+            "input": 150,
+            "output": 30,
+            "cacheRead": 30,
+            "cacheWrite": 0,
+            "total": 210
+          },
+          "cost": {
+            "amountUSD": 2.0,
+            "knownCostUSD": 2.0,
+            "status": "estimated"
+          }
+        }
+      ]
+    },
+    {
+      "id": "claude-fixture",
+      "provider": "claude",
+      "sessionKey": "claude-fixture",
+      "title": "claude across two days",
+      "kind": "main",
+      "lastActivity": "2026-10-01T10:00:00Z",
+      "tokens": {
+        "input": 100,
+        "output": 25,
+        "cacheRead": 30,
+        "cacheWrite": 10,
+        "total": 165
+      },
+      "cost": {
+        "amountUSD": 5,
+        "knownCostUSD": 5,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "claude-fixture",
+          "tokens": {
+            "input": 100,
+            "output": 25,
+            "cacheRead": 30,
+            "cacheWrite": 10,
+            "total": 165
+          },
+          "cost": {
+            "amountUSD": 5,
+            "knownCostUSD": 5,
+            "status": "estimated"
+          }
+        }
+      ]
+    }
+  ],
+  "today": {
+    "tokens": {
+      "input": 110,
+      "output": 25,
+      "cacheRead": 10,
+      "cacheWrite": 5,
+      "total": 150
+    },
+    "cost": {
+      "amountUSD": 3.75,
+      "knownCostUSD": 3.75,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "gpt-fixture",
+        "tokens": {
+          "input": 50,
+          "output": 10,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 60
+        },
+        "cost": {
+          "amountUSD": 0.75,
+          "knownCostUSD": 0.75,
+          "status": "estimated"
+        }
+      },
+      {
+        "name": "claude-fixture",
+        "tokens": {
+          "input": 60,
+          "output": 15,
+          "cacheRead": 10,
+          "cacheWrite": 5,
+          "total": 90
+        },
+        "cost": {
+          "amountUSD": 3,
+          "knownCostUSD": 3,
+          "status": "estimated"
+        }
+      }
+    ]
+  },
+  "month": {
+    "tokens": {
+      "input": 110,
+      "output": 25,
+      "cacheRead": 10,
+      "cacheWrite": 5,
+      "total": 150
+    },
+    "cost": {
+      "amountUSD": 3.75,
+      "knownCostUSD": 3.75,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "gpt-fixture",
+        "tokens": {
+          "input": 50,
+          "output": 10,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 60
+        },
+        "cost": {
+          "amountUSD": 0.75,
+          "knownCostUSD": 0.75,
+          "status": "estimated"
+        }
+      },
+      {
+        "name": "claude-fixture",
+        "tokens": {
+          "input": 60,
+          "output": 15,
+          "cacheRead": 10,
+          "cacheWrite": 5,
+          "total": 90
+        },
+        "cost": {
+          "amountUSD": 3,
+          "knownCostUSD": 3,
+          "status": "estimated"
+        }
+      }
+    ]
+  },
+  "chart": [
+    {
+      "date": "2026-09-25",
+      "cost": {
+        "amountUSD": 0,
+        "knownCostUSD": 0,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-09-26",
+      "cost": {
+        "amountUSD": 0,
+        "knownCostUSD": 0,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-09-27",
+      "cost": {
+        "amountUSD": 0,
+        "knownCostUSD": 0,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-09-28",
+      "cost": {
+        "amountUSD": 0,
+        "knownCostUSD": 0,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-09-29",
+      "cost": {
+        "amountUSD": 0,
+        "knownCostUSD": 0,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-09-30",
+      "cost": {
+        "amountUSD": 3.25,
+        "knownCostUSD": 3.25,
+        "status": "estimated"
+      }
+    },
+    {
+      "date": "2026-10-01",
+      "cost": {
+        "amountUSD": 3.75,
+        "knownCostUSD": 3.75,
+        "status": "estimated"
+      }
+    }
+  ],
+  "providerBreakdowns": [
+    {
+      "provider": "codex",
+      "today": {
+        "tokens": {
+          "input": 50,
+          "output": 10,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 60
+        },
+        "cost": {
+          "amountUSD": 0.75,
+          "knownCostUSD": 0.75,
+          "status": "estimated"
+        },
+        "models": [
+          {
+            "name": "gpt-fixture",
+            "tokens": {
+              "input": 50,
+              "output": 10,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 60
+            },
+            "cost": {
+              "amountUSD": 0.75,
+              "knownCostUSD": 0.75,
+              "status": "estimated"
+            }
+          }
+        ]
+      },
+      "month": {
+        "tokens": {
+          "input": 50,
+          "output": 10,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 60
+        },
+        "cost": {
+          "amountUSD": 0.75,
+          "knownCostUSD": 0.75,
+          "status": "estimated"
+        },
+        "models": [
+          {
+            "name": "gpt-fixture",
+            "tokens": {
+              "input": 50,
+              "output": 10,
+              "cacheRead": 0,
+              "cacheWrite": 0,
+              "total": 60
+            },
+            "cost": {
+              "amountUSD": 0.75,
+              "knownCostUSD": 0.75,
+              "status": "estimated"
+            }
+          }
+        ]
+      },
+      "chart": [
+        {
+          "date": "2026-09-25",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-26",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-27",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-28",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-29",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-30",
+          "cost": {
+            "amountUSD": 1.25,
+            "knownCostUSD": 1.25,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-10-01",
+          "cost": {
+            "amountUSD": 0.75,
+            "knownCostUSD": 0.75,
+            "status": "estimated"
+          }
+        }
+      ]
+    },
+    {
+      "provider": "claude",
+      "today": {
+        "tokens": {
+          "input": 60,
+          "output": 15,
+          "cacheRead": 10,
+          "cacheWrite": 5,
+          "total": 90
+        },
+        "cost": {
+          "amountUSD": 3,
+          "knownCostUSD": 3,
+          "status": "estimated"
+        },
+        "models": [
+          {
+            "name": "claude-fixture",
+            "tokens": {
+              "input": 60,
+              "output": 15,
+              "cacheRead": 10,
+              "cacheWrite": 5,
+              "total": 90
+            },
+            "cost": {
+              "amountUSD": 3,
+              "knownCostUSD": 3,
+              "status": "estimated"
+            }
+          }
+        ]
+      },
+      "month": {
+        "tokens": {
+          "input": 60,
+          "output": 15,
+          "cacheRead": 10,
+          "cacheWrite": 5,
+          "total": 90
+        },
+        "cost": {
+          "amountUSD": 3,
+          "knownCostUSD": 3,
+          "status": "estimated"
+        },
+        "models": [
+          {
+            "name": "claude-fixture",
+            "tokens": {
+              "input": 60,
+              "output": 15,
+              "cacheRead": 10,
+              "cacheWrite": 5,
+              "total": 90
+            },
+            "cost": {
+              "amountUSD": 3,
+              "knownCostUSD": 3,
+              "status": "estimated"
+            }
+          }
+        ]
+      },
+      "chart": [
+        {
+          "date": "2026-09-25",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-26",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-27",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-28",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-29",
+          "cost": {
+            "amountUSD": 0,
+            "knownCostUSD": 0,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-09-30",
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          }
+        },
+        {
+          "date": "2026-10-01",
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          }
+        }
+      ]
+    }
+  ],
+  "history": {
+    "version": 1,
+    "providers": [
+      "codex",
+      "claude"
+    ],
+    "days": [
+      {
+        "date": "2026-09-30",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 100,
+            "output": 20,
+            "cacheRead": 30,
+            "cacheWrite": 0,
+            "total": 150
+          },
+          "cost": {
+            "amountUSD": 1.25,
+            "knownCostUSD": 1.25,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "gpt-fixture",
+              "tokens": {
+                "input": 100,
+                "output": 20,
+                "cacheRead": 30,
+                "cacheWrite": 0,
+                "total": 150
+              },
+              "cost": {
+                "amountUSD": 1.25,
+                "knownCostUSD": 1.25,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-09-30",
+        "provider": "claude",
+        "aggregate": {
+          "tokens": {
+            "input": 40,
+            "output": 10,
+            "cacheRead": 20,
+            "cacheWrite": 5,
+            "total": 75
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "claude-fixture",
+              "tokens": {
+                "input": 40,
+                "output": 10,
+                "cacheRead": 20,
+                "cacheWrite": 5,
+                "total": 75
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-01",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 50,
+            "output": 10,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 60
+          },
+          "cost": {
+            "amountUSD": 0.75,
+            "knownCostUSD": 0.75,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "gpt-fixture",
+              "tokens": {
+                "input": 50,
+                "output": 10,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 60
+              },
+              "cost": {
+                "amountUSD": 0.75,
+                "knownCostUSD": 0.75,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-01",
+        "provider": "claude",
+        "aggregate": {
+          "tokens": {
+            "input": 60,
+            "output": 15,
+            "cacheRead": 10,
+            "cacheWrite": 5,
+            "total": 90
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "claude-fixture",
+              "tokens": {
+                "input": 60,
+                "output": 15,
+                "cacheRead": 10,
+                "cacheWrite": 5,
+                "total": 90
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
