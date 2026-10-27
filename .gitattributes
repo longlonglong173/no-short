@@ -1,1 +1,4 @@
 *.pdf binary
+
+# Unified diffs require a single space on blank context lines.
+packages/usage/patches/*.patch whitespace=-blank-at-eol

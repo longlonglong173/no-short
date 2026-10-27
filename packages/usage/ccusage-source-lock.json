@@ -1,0 +1,19 @@
+{
+  "version": "20.0.34",
+  "patchRevision": "ns20-session-scope-v2",
+  "rustVersion": "1.98.1",
+  "source": {
+    "revision": "d7555844929ad76ec97a113d1d51c31de92bee35",
+    "url": "https://api.github.com/repos/ccusage/ccusage/tarball/d7555844929ad76ec97a113d1d51c31de92bee35",
+    "sha256": "9a86d2f65ada8cf232b9438b2cac2bfb5fb9e99caff46510f1650a4ad0ba9862"
+  },
+  "pricing": {
+    "revision": "ca04c4909e2a631e9ed291f6b329ae4a1bfd32a7",
+    "url": "https://raw.githubusercontent.com/BerriAI/litellm/ca04c4909e2a631e9ed291f6b329ae4a1bfd32a7/model_prices_and_context_window.json",
+    "sha256": "6fc1f38bce2adaf89463e1bb9436de227dd78e5b2f6befc1b005c3cd88deb2cb"
+  },
+  "patch": {
+    "file": "patches/ccusage-20.0.34-ns20.patch",
+    "sha256": "fa749f0b135be93fbacc28058a11a64c4c63257bbcf8f0f189911c37982164f4"
+  }
+}
