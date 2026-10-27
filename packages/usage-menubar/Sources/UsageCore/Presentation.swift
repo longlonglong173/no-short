@@ -7,6 +7,8 @@ public struct UsagePresentation: Sendable {
         let formatter = NumberFormatter()
         formatter.locale = Locale(identifier: "en_US")
         formatter.numberStyle = .decimal
+        // Match Intl.NumberFormat USD half-expand rounding in the panel.
+        formatter.roundingMode = .halfUp
         formatter.minimumFractionDigits = 2; formatter.maximumFractionDigits = 2
         let amount = formatter.string(from: NSNumber(value: cost.amountUSD ?? cost.knownCostUSD)) ?? "—"
         switch cost.status { case "estimated": return "$" + amount; case "partial": return "≥$" + amount; default: return "—" }

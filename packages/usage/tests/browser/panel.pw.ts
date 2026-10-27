@@ -36,7 +36,7 @@ test('unknown pricing stays unknown and a missing pinned session is not silently
   value.snapshot.sessions[0].cost = { amountUSD: null, knownCostUSD: 0, status: 'unknown' };
   await page.route('**/__usage/snapshot', route => route.fulfill({ json: value }));
   await page.goto('/');
-  await expect(page.getByTestId('main-cost')).toHaveText('Chưa xác định');
+  await expect(page.getByTestId('main-cost')).toHaveText('—');
   await page.getByRole('button', { name: 'Ghim phiên' }).click();
   value.snapshot.sessions = value.snapshot.sessions.slice(1);
   await page.getByRole('button', { name: 'Cập nhật thống kê' }).click();
@@ -116,9 +116,9 @@ test('all languages fit mobile and desktop in both themes with translated unknow
   await page.route('**/__usage/snapshot', route => route.fulfill(fail ? {status: 500, body: 'unavailable'} : {json: value}));
   await page.goto('/');
   for (const [button, unknown, refresh, error] of [
-    ['EN', 'Unknown', 'Refresh usage', 'Could not refresh usage'],
-    ['中文', '未知', '刷新用量', '无法刷新用量'],
-    ['VI', 'Chưa xác định', 'Cập nhật thống kê', 'Không cập nhật được thống kê']
+    ['EN', '—', 'Refresh usage', 'Could not refresh usage'],
+    ['中文', '—', '刷新用量', '无法刷新用量'],
+    ['VI', '—', 'Cập nhật thống kê', 'Không cập nhật được thống kê']
   ]) {
     await page.getByRole('button', {name: button, exact: true}).click();
     await expect(page.getByTestId('main-cost')).toHaveText(unknown);

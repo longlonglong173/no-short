@@ -9,7 +9,7 @@ import { ComparisonPanel } from './comparison';
 import { comparisonIsStale, compareHistory, historyRange, historyView, sessionUsageForRange, type HistoryPreset, type DateRange } from '../src/history';
 import type { UsageSnapshot, Aggregate } from '../src/types';
 import { useTranslation } from './language';
-import { costText, tokenText, type ProviderFilter } from './model';
+import { costLabel, costStatusText, costText, tokenText, type ProviderFilter } from './model';
 function savedOptIn(key: string): boolean { try { return localStorage.getItem(key) === 'true'; } catch { return false; } }
 const presets: [HistoryPreset, string][] = [['7d', '7 ngày'], ['30d', '30 ngày'], ['month', 'Tháng này'], ['previous', 'Tháng trước'], ['custom', 'Tùy chọn']];
 export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snapshot: UsageSnapshot; initialProvider: ProviderFilter; downloadFile: DownloadFile }) {
@@ -74,10 +74,10 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     <p className="history-scope">{active.start} — {active.end} · {snapshot.timeZone}</p>
     {snapshot.status === 'stale' || snapshot.status === 'error' || ((comparisonEnabled || insightsEnabled) && comparisonIsStale(snapshot, comparisonNow)) ? <p className="notice" role="alert">{l('Dữ liệu cũ · đang chờ cập nhật')}</p> : null}
     {!view ? <p data-testid="history-unavailable" className="notice">{l('Chưa có lịch sử tương thích. Cập nhật dữ liệu hoặc runtime; không suy ra lịch sử từ toàn phiên.')}</p> : <>
-      <div className="history-summary"><strong data-testid="history-cost">{money(view.aggregate)}</strong><span>{l('Tổng trong khoảng đã chọn')}</span><span>{tokenText(view.aggregate.tokens.total)} {l('Token')}</span></div>
-      {view.aggregate.cost.status !== 'estimated' ? <p className="history-price-note">{l('Phần đã biết: $%@ · Giá chưa đầy đủ, không phải $0.', view.aggregate.cost.knownCostUSD.toFixed(2))}</p> : null}
+      <div className="history-summary"><strong data-testid="history-cost" aria-description={costStatusText(view.aggregate.cost, language)}>{money(view.aggregate)}</strong><span>{l('Tổng trong khoảng đã chọn')}</span><span>{tokenText(view.aggregate.tokens.total)} {l('Token')}</span></div>
+      {view.aggregate.cost.status !== 'estimated' ? <p className="history-price-note">{l('Giá chưa đầy đủ, không phải $0.')}</p> : null}
       <div className="history-chart" role="group" aria-label={l('Chi phí theo ngày')}>
-        {view.days.map(day => <button type="button" key={day.date} aria-pressed={selectedDay === day.date} aria-label={`${day.date}: ${money(day.aggregate)}`}
+        {view.days.map(day => <button type="button" key={day.date} aria-pressed={selectedDay === day.date} aria-label={`${day.date}: ${costLabel(day.aggregate.cost, language)}`}
           title={`${day.date}: ${money(day.aggregate)}`} onClick={() => setSelectedDay(selectedDay === day.date ? null : day.date)}>
           <span className={`history-bar ${day.aggregate.cost.status !== 'estimated' ? 'unpriced' : ''}`} style={{ height: `${Math.max(day.aggregate.cost.status !== 'estimated' ? 24 : 3, day.aggregate.cost.knownCostUSD / max * 92)}px` }}/>
           <span>{day.date.slice(5)}</span>
@@ -92,7 +92,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
           : sessionUsage.reconciliationIssue === 'tokens' ? <p role="alert" className="notice" data-testid="history-sessions-mismatch">{l('Không thể đối soát phân bổ phiên với tổng ngày. Chi tiết phiên chưa khả dụng.')}</p>
           : <>{!sessionUsage.reconciled ? <p role="alert" className="notice" data-testid="history-sessions-mismatch">{l('Giá theo phiên chưa khớp tổng ngày do giá chưa đầy đủ. Token theo ngày vẫn chính xác; chi phí từng phiên là phần đã biết.')}</p> : null}<ul className="history-session-list">{sessionUsage.sessions.map(row => <li key={row.provider + row.sessionId}>
             <button className="text-button" aria-pressed={selectedSession === row.sessionId} onClick={() => setSelectedSession(row.sessionId)}>{sessionTitle(row.sessionId)}</button>
-            <span>{row.provider === 'claude' ? 'Claude Code' : 'Codex'} · {tokenText(row.aggregate.tokens.total)} {l('Token')} · {money(row.aggregate)}{row.aggregate.cost.status === 'partial' ? ` ≥$${row.aggregate.cost.knownCostUSD.toFixed(2)}` : ''}</span>
+            <span>{row.provider === 'claude' ? 'Claude Code' : 'Codex'} · {tokenText(row.aggregate.tokens.total)} {l('Token')} · {money(row.aggregate)}</span>
           </li>)}</ul>{!sessionUsage.sessions.length ? <p>{l('Không có phiên đóng góp trong ngày này.')}</p> : null}</>}
         {sessionDetail ? <div data-testid="history-session-detail" className="history-session-detail">
           <h3>{sessionTitle(sessionDetail.sessionId)}</h3><p>{l('Chi tiết usage trong ngày · %@', selectedDay)} · {money(sessionDetail.aggregate)} · {tokenText(sessionDetail.aggregate.tokens.total)} {l('Token')}</p>
@@ -102,7 +102,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
       </section> : null}
       {detail ? <div className="history-table" data-testid="history-models" tabIndex={0} role="region" aria-label={l('Bảng model lịch sử')}>
         <table><thead><tr>{['Model', 'Input', 'Output', 'Cache read', 'Cache write', 'Tổng', 'Chi phí'].map(label => <th key={label}>{l(label)}</th>)}</tr></thead>
-          <tbody>{detail.models.map((model, index) => <tr key={`${model.name}:${index}`}><td>{model.name}<PricingOrigin pricing={model.pricing}/></td>{[model.tokens.input, model.tokens.output, model.tokens.cacheRead, model.tokens.cacheWrite, model.tokens.total].map((n, i) => <td key={i}>{n.toLocaleString(language)}</td>)}<td>{costText(model.cost, language)}{model.cost.status === 'partial' ? ` ≥$${model.cost.knownCostUSD.toFixed(2)}` : ''}</td></tr>)}</tbody>
+          <tbody>{detail.models.map((model, index) => <tr key={`${model.name}:${index}`}><td>{model.name}<PricingOrigin pricing={model.pricing}/></td>{[model.tokens.input, model.tokens.output, model.tokens.cacheRead, model.tokens.cacheWrite, model.tokens.total].map((n, i) => <td key={i}>{n.toLocaleString(language)}</td>)}<td aria-label={costLabel(model.cost, language)}>{costText(model.cost, language)}</td></tr>)}</tbody>
         </table>
       </div> : null}
     </>}

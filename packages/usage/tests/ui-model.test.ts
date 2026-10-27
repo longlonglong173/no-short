@@ -1,13 +1,17 @@
+import * as presentation from '../ui/model';
+import moneyFixtures from './fixtures/money-presentation.json';
+import type { Cost } from '../src/types';
 import { expect, test } from 'bun:test';
 import { costText, decodeResult, providerView, hasClaudeSource } from '../ui/model';
 import { mixedDashboard } from './fixtures/mixed';
 import { buildSnapshot } from '../src/adapter';
 import raw from './fixtures/unified.json';
 
-test('unknown and partial prices cannot be formatted as a zero-dollar charge', () => {
-  expect(costText({ amountUSD: null, knownCostUSD: 0, status: 'unknown' })).toBe('Chưa xác định');
-  expect(costText({ amountUSD: null, knownCostUSD: 0.1, status: 'partial' })).toBe('Chưa đầy đủ');
-  expect(costText({ amountUSD: 0.42, knownCostUSD: 0.42, status: 'estimated' })).toBe('$0.42');
+// Both runtimes consume these literal expectations, including half-cent boundaries.
+for (const row of moneyFixtures) test(`money ${row.name} keeps amount and status in every language`, () => {
+  for (const language of ['vi', 'en', 'zh-CN'] as const) {
+    expect(costText(row.cost as Cost, language)).toBe(row.expected);
+  }
 });
 test('widget reads hidden result metadata and rejects unsupported snapshot versions', () => {
   const snapshot = buildSnapshot(raw, { now: new Date(), timeZone: 'UTC', metadata: new Map() });
@@ -62,4 +66,17 @@ test('configured empty Claude sources stay available and retain pricing statuses
   expect(view.today?.models.at(-1)?.cost.status).toBe('unknown');
   expect(view.sessions).toHaveLength(0);
   expect(JSON.stringify(snapshot)).toBe(before);
+});
+
+test('money accessibility descriptions preserve localized missing-price states', () => {
+  expect(typeof presentation.costLabel).toBe('function');
+  const { costLabel } = presentation;
+  const partial = { amountUSD: null, knownCostUSD: 0, status: 'partial' as const };
+  const unknown = { amountUSD: null, knownCostUSD: 0, status: 'unknown' as const };
+  expect(costLabel(partial, 'vi')).toBe('≥$0.00 · Chưa đầy đủ');
+  expect(costLabel(partial, 'en')).toBe('≥$0.00 · Incomplete');
+  expect(costLabel(partial, 'zh-CN')).toBe('≥$0.00 · 不完整');
+  expect(costLabel(unknown, 'vi')).toBe('— · Chưa xác định');
+  expect(costLabel(unknown, 'en')).toBe('— · Unknown');
+  expect(costLabel(unknown, 'zh-CN')).toBe('— · 未知');
 });
