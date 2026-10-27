@@ -22,7 +22,7 @@ function tokens(row: z.infer<typeof modelSchema> | UsageRow): Tokens {
 }
 function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider, options: SnapshotOptions): Aggregate {
   if (provider === 'codex' && (!row.modelBreakdowns.length && row.totalTokens > 0)) {
-    throw new Error('REPORT_PRICING_UNSUPPORTED');
+    return { tokens: tokens(row), models: [], cost: { amountUSD: null, knownCostUSD: 0, status: 'unknown' } };
   }
   let repriced = false;
   const parts: ModelUsage[] = row.modelBreakdowns.map(m => {
