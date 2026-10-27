@@ -34,6 +34,9 @@ struct UsageHistoryView: View {
                 if let notice = model.notice { warning(model.l(notice)) }
                 if model.isStale { warning(model.l("Dữ liệu cũ · đang chờ cập nhật")) }
                 if model.isLoading { ProgressView(model.l("Đang cập nhật…")).controlSize(.small) }
+                if let value = model.insights {
+                    UsageInsightsView(value: value, snapshot: model.snapshot, anomalyEnabled: model.anomalyEnabled, scenarioEnabled: model.scenarioEnabled, language: model.language)
+                }
                 if let projection = model.projection {
                     summary(projection.aggregate)
                     if model.groupBy != "none" { UsageGroupingView(value:model.grouping,mode:model.groupBy,language:model.language) }

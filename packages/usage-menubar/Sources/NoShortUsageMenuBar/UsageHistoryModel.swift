@@ -60,6 +60,12 @@ import UsageCore
         return PreparedUsageExport(data: Data(try document.serialize(format).utf8),
             filename: "no-short-usage-\(provider)-\(range.start)-\(range.end).\(format.rawValue)")
     }
+    @Published var anomalyEnabled = false
+    @Published var scenarioEnabled = false
+    var insights: UsageInsightsResult? {
+        guard anomalyEnabled || scenarioEnabled, let snapshot else { return nil }
+        return UsageInsights.evaluate(snapshot, provider: provider, now: now(), isStale: isStale)
+    }
     private let now: () -> Date
 
     init(provider: String, language: AppLanguage, now: @escaping () -> Date = { Date() }) {

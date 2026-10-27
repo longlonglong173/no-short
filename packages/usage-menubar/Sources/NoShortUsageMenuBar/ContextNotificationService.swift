@@ -2,7 +2,7 @@ import Foundation
 import UserNotifications
 import UsageCore
 
-@MainActor final class ContextNotificationService: NSObject, UNUserNotificationCenterDelegate, BudgetNotificationSending {
+@MainActor final class ContextNotificationService: NSObject, UNUserNotificationCenterDelegate, BudgetNotificationSending, InsightNotificationSending {
     private let center = UNUserNotificationCenter.current()
     override init() {
         super.init()
@@ -46,6 +46,14 @@ import UsageCore
         let provider = reading.rule.provider == "all" ? AppLocalization(language: language).text("Tất cả") : reading.rule.provider == "codex" ? "Codex" : "Claude Code"
         content.title = AppLocalization(language: language).text("Cảnh báo ngân sách · %@", provider)
         content.body = budgetReadingText(reading, language: language)
+        content.sound = .default
+        try await enqueue(content)
+    }
+    func sendAnomaly(_ result: UsageInsightsResult, language: AppLanguage) async throws {
+        let content = UNMutableNotificationContent()
+        let provider = result.provider == "all" ? AppLocalization(language: language).text("Tất cả") : result.provider == "codex" ? "Codex" : "Claude Code"
+        content.title = AppLocalization(language: language).text("Cảnh báo mức dùng bất thường · %@", provider)
+        content.body = UsageInsightCopy.anomaly(result, language: language) + " " + AppLocalization(language: language).text("Ước tính API · Không phải hóa đơn thuê bao")
         content.sound = .default
         try await enqueue(content)
     }

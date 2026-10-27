@@ -34,6 +34,7 @@ import UsageCore
     private var contextSuspended = false
     private let contextReader = ContextReader()
     private lazy var contextNotifications = ContextNotificationService()
+    private lazy var insights = InsightsController(defaults: .standard, notifications: contextNotifications)
     private lazy var budgets = BudgetController(defaults: .standard, notifications: contextNotifications)
     private var pricingWindow: PricingSettingsWindowController?
     private var budgetWindow: BudgetSettingsWindowController?
@@ -69,6 +70,7 @@ import UsageCore
         menu.onPricing = { [weak self] in self?.showPricing() }
         menu.onBudgets = { [weak self] in self?.showBudgets() }
         menu.onDataManagement = { [weak self] in self?.showDataManagement() }
+        insights.onChange = { [weak self] in self?.renderInsightState() }
         budgets.onChange = { [weak self] in self?.renderBudgetState() }
         menu.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
         menu.onReleaseNotes = { [weak self] in self?.openReleaseNotes() }
@@ -142,6 +144,8 @@ import UsageCore
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
         panelModel.applyActivities(activityStore.events())
+        insights.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
+        renderInsightState()
         budgets.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
         renderBudgetState()
         dataManagementWindow?.model.language = panelModel.language
@@ -153,6 +157,7 @@ import UsageCore
         Task { @MainActor [weak self] in
             guard let self, !self.terminating else { return }
             await self.budgets.deliverIfNeeded(language: self.panelModel.language)
+            await self.insights.deliverIfNeeded(language: self.panelModel.language)
         }
         historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
             isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
@@ -225,6 +230,15 @@ import UsageCore
             }
         }
     }
+    private func renderInsightState() {
+        panelModel.insightResult = insights.result
+        panelModel.insightAnomalyEnabled = insights.anomalyEnabled
+        panelModel.insightScenarioEnabled = insights.scenarioEnabled
+        panelModel.insightNotificationNotice = insights.notificationNotice
+        historyWindow?.model.anomalyEnabled = insights.anomalyEnabled
+        historyWindow?.model.scenarioEnabled = insights.scenarioEnabled
+        if panel.popover.isShown { panel.updateSize() }
+    }
     private func renderBudgetState() {
         panelModel.budgetReadings = budgets.readings
         panelModel.budgetNotificationNotice = budgets.notificationNotice
@@ -268,7 +282,7 @@ import UsageCore
         DispatchQueue.main.async { [weak self] in
             guard let self, !self.terminating else { return }
             if self.budgetWindow == nil {
-                self.budgetWindow = BudgetSettingsWindowController(model: BudgetSettingsModel(controller: self.budgets, language: self.panelModel.language))
+                self.budgetWindow = BudgetSettingsWindowController(model: BudgetSettingsModel(controller: self.budgets, language: self.panelModel.language, insights: self.insights))
             }
             self.budgetWindow?.model.language = self.panelModel.language
             self.budgetWindow?.present()
@@ -285,6 +299,7 @@ import UsageCore
             }
             historyWindow?.update(snapshot: controller.snapshot, source: controller.source.displayName,
                 isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, language: panelModel.language)
+            renderInsightState()
             historyWindow?.present()
         }
     }
