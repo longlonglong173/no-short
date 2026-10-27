@@ -153,7 +153,8 @@ struct UsageHistoryChartPoint: Identifiable {
     var id: String { date }
     var amount: Double? { cost.status == "unknown" ? nil : cost.amountUSD ?? cost.knownCostUSD }
     var markerAmount: Double? { cost.status == "estimated" ? nil : cost.knownCostUSD }
-    var description: String { date + " · " + UsagePresentation.money(cost) + " · " + pricingLabel }
+    var accessibilityValue: String { UsagePresentation.money(cost) + (amount == nil ? "" : " USD") + " · " + pricingLabel }
+    var description: String { date + " · " + accessibilityValue }
 }
 
 enum UsageHistoryExportFailure: Error { case unavailable, writeFailed }

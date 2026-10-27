@@ -21,7 +21,7 @@ async function mixedModelFixture() {
     const rows: unknown[] = [{ type: 'session_meta', payload: { id, source: 'cli', timestamp } }];
     if (index) rows.push({ type: 'turn_context', payload: { model: 'gpt-5' } });
     rows.push({ type: 'event_msg', timestamp, payload: { type: 'token_count', info: { total_token_usage: {
-      input_tokens: 100, cached_input_tokens: 50, output_tokens: 10, reasoning_output_tokens: 5, total_tokens: 110,
+      input_tokens: 1000000, cached_input_tokens: 500000, output_tokens: 100000, reasoning_output_tokens: 50000, total_tokens: 1100000,
     } } } });
     await writeFile(join(logs, `sessions/rollout-${id}.jsonl`), rows.map(row => JSON.stringify(row)).join('\n') + '\n');
   }
@@ -37,15 +37,17 @@ test.skipIf(!existsSync(binary))('real unified CLI preserves explicit fallback a
   expect(genuine.modelBreakdowns[0].modelName).toBe('gpt-5');
   expect(fallback.modelBreakdowns[0].isFallback).toBe(true);
   expect(genuine.modelBreakdowns[0].isFallback).toBe(false);
-  expect(raw.daily[0].agents.find((a: any) => a.agent === 'codex').modelBreakdowns[0].isFallback).toBe(true);
+  expect(raw.daily[0].totalCost).toBeCloseTo(3.375, 8);
   const s = buildSnapshot(raw, options);
   expect(s.sessions.find(s => s.id.includes(ids[0]))!.models[0].pricing?.source).toBe('fallback');
   expect(s.sessions.find(s => s.id.includes(ids[0]))!.cost.status).toBe('unknown');
   expect(s.sessions.find(s => s.id.includes(ids[1]))!.cost.status).toBe('estimated');
-  expect(s.today.cost.status).toBe('unknown');
-  expect(s.today.cost.knownCostUSD).toBe(0);
+  expect(s.today.cost).toEqual({ amountUSD: null, knownCostUSD: 1.6875, status: 'partial' });
+  expect(s.today.models).toHaveLength(1);
+  expect(s.today.models[0].cost).toEqual(s.today.cost);
+  expect(s.month.cost).toEqual(s.today.cost);
   const custom = buildSnapshot(raw, { ...options, pricing: { version: 1, overrides: [{ provider: 'codex', model: 'gpt-5', input: 1, output: 1, cacheRead: 1, cacheWrite: 1 }] } });
-  expect(custom.today.cost.amountUSD).toBeCloseTo(.00022);
+  expect(custom.today.cost.amountUSD).toBeCloseTo(2.2);
 });
 
 test('legacy nonempty Codex reports produce a clear localized runtime-update error, while empty sources remain valid', async () => {
