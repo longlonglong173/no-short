@@ -21,7 +21,7 @@ function tokens(row: z.infer<typeof modelSchema> | UsageRow): Tokens {
     total: row.totalTokens ?? row.inputTokens + row.outputTokens + row.cacheReadTokens + row.cacheCreationTokens };
 }
 function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider, options: SnapshotOptions): Aggregate {
-  if (provider === 'codex' && (row.modelBreakdowns.some(m => typeof m.isFallback !== 'boolean') || (!row.modelBreakdowns.length && row.totalTokens > 0))) {
+  if (provider === 'codex' && (!row.modelBreakdowns.length && row.totalTokens > 0)) {
     throw new Error('REPORT_PRICING_UNSUPPORTED');
   }
   let repriced = false;
