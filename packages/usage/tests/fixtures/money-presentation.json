@@ -1,0 +1,209 @@
+[
+  {
+    "name": "estimated",
+    "cost": {
+      "amountUSD": 12.34,
+      "knownCostUSD": 12.34,
+      "status": "estimated"
+    },
+    "expected": "$12.34"
+  },
+  {
+    "name": "partial",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 12.34,
+      "status": "partial"
+    },
+    "expected": "\u2265$12.34"
+  },
+  {
+    "name": "unknown",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 0,
+      "status": "unknown"
+    },
+    "expected": "\u2014"
+  },
+  {
+    "name": "zero",
+    "cost": {
+      "amountUSD": 0,
+      "knownCostUSD": 0,
+      "status": "estimated"
+    },
+    "expected": "$0.00"
+  },
+  {
+    "name": "partial-zero",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 0,
+      "status": "partial"
+    },
+    "expected": "\u2265$0.00"
+  },
+  {
+    "name": "estimated-1e-05",
+    "cost": {
+      "amountUSD": 1e-05,
+      "knownCostUSD": 1e-05,
+      "status": "estimated"
+    },
+    "expected": "$0.00"
+  },
+  {
+    "name": "partial-1e-05",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 1e-05,
+      "status": "partial"
+    },
+    "expected": "\u2265$0.00"
+  },
+  {
+    "name": "estimated-0.0049",
+    "cost": {
+      "amountUSD": 0.0049,
+      "knownCostUSD": 0.0049,
+      "status": "estimated"
+    },
+    "expected": "$0.00"
+  },
+  {
+    "name": "partial-0.0049",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 0.0049,
+      "status": "partial"
+    },
+    "expected": "\u2265$0.00"
+  },
+  {
+    "name": "estimated-0.005",
+    "cost": {
+      "amountUSD": 0.005,
+      "knownCostUSD": 0.005,
+      "status": "estimated"
+    },
+    "expected": "$0.01"
+  },
+  {
+    "name": "partial-0.005",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 0.005,
+      "status": "partial"
+    },
+    "expected": "\u2265$0.01"
+  },
+  {
+    "name": "estimated-1.005",
+    "cost": {
+      "amountUSD": 1.005,
+      "knownCostUSD": 1.005,
+      "status": "estimated"
+    },
+    "expected": "$1.01"
+  },
+  {
+    "name": "partial-1.005",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 1.005,
+      "status": "partial"
+    },
+    "expected": "\u2265$1.01"
+  },
+  {
+    "name": "estimated-2.675",
+    "cost": {
+      "amountUSD": 2.675,
+      "knownCostUSD": 2.675,
+      "status": "estimated"
+    },
+    "expected": "$2.68"
+  },
+  {
+    "name": "partial-2.675",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 2.675,
+      "status": "partial"
+    },
+    "expected": "\u2265$2.68"
+  },
+  {
+    "name": "estimated-12.345",
+    "cost": {
+      "amountUSD": 12.345,
+      "knownCostUSD": 12.345,
+      "status": "estimated"
+    },
+    "expected": "$12.35"
+  },
+  {
+    "name": "partial-12.345",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 12.345,
+      "status": "partial"
+    },
+    "expected": "\u2265$12.35"
+  },
+  {
+    "name": "estimated-12.355",
+    "cost": {
+      "amountUSD": 12.355,
+      "knownCostUSD": 12.355,
+      "status": "estimated"
+    },
+    "expected": "$12.36"
+  },
+  {
+    "name": "partial-12.355",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 12.355,
+      "status": "partial"
+    },
+    "expected": "\u2265$12.36"
+  },
+  {
+    "name": "estimated-1234567.895",
+    "cost": {
+      "amountUSD": 1234567.895,
+      "knownCostUSD": 1234567.895,
+      "status": "estimated"
+    },
+    "expected": "$1,234,567.90"
+  },
+  {
+    "name": "partial-1234567.895",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 1234567.895,
+      "status": "partial"
+    },
+    "expected": "\u2265$1,234,567.90"
+  },
+  {
+    "name": "estimated-999999999.995",
+    "cost": {
+      "amountUSD": 999999999.995,
+      "knownCostUSD": 999999999.995,
+      "status": "estimated"
+    },
+    "expected": "$1,000,000,000.00"
+  },
+  {
+    "name": "partial-999999999.995",
+    "cost": {
+      "amountUSD": null,
+      "knownCostUSD": 999999999.995,
+      "status": "partial"
+    },
+    "expected": "\u2265$1,000,000,000.00"
+  }
+]

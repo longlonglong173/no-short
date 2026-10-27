@@ -20,7 +20,7 @@ test('provider filters scope periods, models, chart, sessions and persisted pins
   await page.getByRole('tab', { name: 'Hôm nay', exact: true }).click();
   await expect(page.getByTestId('main-cost')).toHaveText('$1.25');
   await expect(page.locator('.period-totals')).toContainText('$3.75');
-  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $1.25');
+  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $1.25 · Ước tính');
   await page.getByRole('tab', { name: 'Tháng này', exact: true }).click();
   await expect(page.getByTestId('main-cost')).toHaveText('$3.75');
   await page.reload();
@@ -33,7 +33,7 @@ test('provider filters scope periods, models, chart, sessions and persisted pins
   await expect(page.getByTestId('main-cost')).toHaveText('$1.72');
   await expect(page.getByLabel('Chi phí theo model')).toContainText('gpt-');
   await expect(page.getByLabel('Chi phí theo model')).toContainText('claude-fixture');
-  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $1.72');
+  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $1.72 · Ước tính');
   expect(calls).toBe(2);
 });
 
@@ -50,14 +50,15 @@ test('provider keyboard controls preserve partial pricing and localize at narrow
   await page.getByRole('group', { name: 'Công cụ', exact: true }).getByRole('button', { name: 'Claude Code' }).press('Enter');
   await page.getByRole('tab', { name: 'Hôm nay', exact: true }).click();
   for (const [language, incomplete, unknown, scope] of [
-    ['VI', 'Chưa đầy đủ', 'Chưa xác định', 'Tất cả phiên'],
-    ['EN', 'Incomplete', 'Unknown', 'All sessions'],
-    ['中文', '不完整', '未知', '所有会话'],
+    ['VI', '≥$1.25', '—', 'Tất cả phiên'],
+    ['EN', '≥$1.25', '—', 'All sessions'],
+    ['中文', '≥$1.25', '—', '所有会话'],
   ]) {
     await page.getByRole('button', { name: language, exact: true }).click();
     await expect(page.getByTestId('main-cost')).toHaveText(incomplete);
     await expect(page.locator('.model-row').filter({ hasText: 'claude-unpriced' })).toContainText(unknown);
-    await expect(page.locator('.partial-note')).toContainText('$1.25');
+    await expect(page.locator('.partial-note')).not.toContainText('$');
+    await expect(page.locator('.money-legend')).toBeVisible();
     await expect(page.locator('.scope-label')).toContainText(scope);
     for (const colorScheme of ['light', 'dark'] as const) {
       await page.setViewportSize({ width: 320, height: 1000 });
@@ -111,7 +112,7 @@ test('old Codex-only schema v1 renders without provider controls even with an ob
   await expect(page.locator('.scope-label')).toHaveText('Toàn phiên · Codex');
   await page.getByRole('tab', { name: 'Hôm nay', exact: true }).click();
   await expect(page.getByTestId('main-cost')).toHaveText('$0.47');
-  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $0.47');
+  await expect(page.locator('.chart-column').last()).toHaveAttribute('title', '2026-10-17: $0.47 · Ước tính');
 });
 
 test('mixed snapshots without provider breakdowns never show combined daily costs as provider costs', async ({ page }) => {

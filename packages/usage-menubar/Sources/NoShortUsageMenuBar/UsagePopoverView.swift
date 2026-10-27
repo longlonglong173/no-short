@@ -119,6 +119,10 @@ struct UsagePopoverView: View {
                     }.buttonStyle(.bordered).help(model.l("Chi phí theo model"))
                         .accessibilityLabel(model.l("Chi phí theo model"))
                 }
+                if let cost = model.mainUsageCost, cost.status != "estimated" {
+                    Text(model.pricingLabel(cost)).font(.system(size: 10)).foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 Text(model.costScopeLabel).font(.system(size: 11)).foregroundStyle(.secondary)
                     .lineLimit(1).minimumScaleFactor(0.8).help(model.costScopeLabel)
             }.padding(.bottom, 20)
@@ -205,7 +209,7 @@ struct UsagePopoverView: View {
     private func period(_ title: String, _ value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.system(size: 11)).foregroundStyle(.secondary)
-            Text(value).font(.system(size: 23, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.6)
+            Text(value).font(.system(size: 23, weight: .semibold)).monospacedDigit().lineLimit(1).minimumScaleFactor(0.4)
         }.frame(maxWidth: .infinity, alignment: .leading).padding(.leading, title == model.l("Hôm nay") ? 0 : 30)
         .help(model.l("%@ · %@ · Tổng tất cả phiên · %@ USD", title, model.aggregateProviderLabel, value))
     }

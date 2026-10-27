@@ -80,7 +80,8 @@ export const catalog: Record<string, readonly [string, string]> = {
   "Xuất CSV": ["Export CSV", "导出 CSV"],
   "Xuất thống kê": ["Export usage", "导出用量"],
   "Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.": ["Only retained local logs are counted, not the full account history.", "仅统计本机保留的日志，而非完整账户历史。"],
-  "Phần đã biết: $%@ · Giá chưa đầy đủ, không phải $0.": ["Known subtotal: $%@ · Pricing is incomplete, not zero.", "已知小计：$%@ · 价格不完整，并非零费用。"],
+  "Giá chưa đầy đủ, không phải $0.": ["Pricing is incomplete, not zero.", "价格不完整，并非零费用。"],
+  "≥ là phần chi phí đã biết; — là giá chưa biết, không phải $0.": ["≥ shows known costs; — means unknown price, not $0.", "≥ 表示已知费用；— 表示价格未知，并非 $0。"],
   "Chưa có lịch sử tương thích. Cập nhật dữ liệu hoặc runtime; không suy ra lịch sử từ toàn phiên.": ["Compatible history is unavailable. Refresh or update the runtime; history is not inferred from lifetime sessions.", "暂无兼容的历史数据。请刷新或更新运行时；历史数据不会从整个会话推算。"],
   "Khoảng ngày không hợp lệ. Chọn ngày bắt đầu không sau ngày kết thúc và không chọn tương lai.": ["Invalid date range. Start must not follow end; future dates are not allowed.", "日期范围无效。开始日期不能晚于结束日期，也不能选择未来日期。"],
   "Nhận gần nhất": ["Last received", "上次接收"],
@@ -310,9 +311,9 @@ export const catalog: Record<string, readonly [string, string]> = {
     "Pinned session data no longer available.",
     "固定会话的数据已不可用。"
   ],
-  "Phần đã có giá: $%@ · Còn model chưa định giá": [
-    "Known-priced portion: $%@ · Some models are unpriced",
-    "已知价格部分：$%@ · 部分模型尚无价格"
+  "Còn model chưa định giá": [
+    "Some models are unpriced",
+    "部分模型尚无价格"
   ],
   "Plugin chưa có quyền đọc log hoặc ghi cache. Kiểm tra quyền thư mục và thử lại.": [
     "The plugin cannot read logs or write cache. Check folder permissions and try again.",

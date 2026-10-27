@@ -62,8 +62,8 @@ test('unknown day/model pricing stays explicit and a new tool request leaves his
   await page.goto('/'); await page.getByRole('tab', { name: 'Lịch sử', exact: true }).click();
   await page.getByLabel('Công cụ lịch sử').selectOption('claude');
   await page.getByLabel('Khoảng lịch sử').selectOption('7d');
-  await expect(page.getByTestId('history-cost')).toHaveText('Chưa xác định');
-  await expect(page.getByTestId('history-models')).toContainText('Chưa xác định');
+  await expect(page.getByTestId('history-cost')).toHaveText('—');
+  await expect(page.getByTestId('history-models')).toContainText('—');
   value.requestedSessionId = value.snapshot.sessions.find((s: any) => s.provider === 'claude').id;
   await page.getByRole('button', { name: 'Cập nhật thống kê' }).click();
   await expect(page.getByRole('tab', { name: 'Phiên', exact: true })).toHaveAttribute('aria-selected', 'true');

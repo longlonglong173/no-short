@@ -2,7 +2,20 @@ import type { Aggregate, Cost, DashboardResult, UsageSnapshot } from '../src/typ
 import { translate, type Language } from './localization';
 const dollars = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export function costText(cost: Cost, language: Language = 'vi'): string {
-  return cost.amountUSD === null ? translate(language, cost.status === 'partial' ? 'Chưa đầy đủ' : 'Chưa xác định') : dollars.format(cost.amountUSD);
+  // USD typography is shared with native regardless of the UI language.
+  switch (cost.status) {
+    case 'estimated': return dollars.format(cost.amountUSD!);
+    case 'partial': return '≥' + dollars.format(cost.knownCostUSD);
+    default: return '—';
+  }
+}
+// Keep screen-reader status descriptions localized when the visible value is a symbol.
+export function costStatusText(cost: Cost, language: Language = 'vi'): string {
+  const status = cost.status === 'partial' ? 'Chưa đầy đủ' : cost.status === 'unknown' ? 'Chưa xác định' : 'Ước tính';
+  return translate(language, status);
+}
+export function costLabel(cost: Cost, language: Language = 'vi'): string {
+  return `${costText(cost, language)} · ${costStatusText(cost, language)}`;
 }
 export const tokenText = (n: number) => new Intl.NumberFormat('en', { notation: 'compact', maximumFractionDigits: 1 }).format(n);
 export function decodeResult(result: unknown): DashboardResult | null {

@@ -157,7 +157,8 @@ test.each(['guard', 'owner', 'root'] as const)('never follows a %s symlink when 
   } else if (target === 'owner') {
     await mkdir(guard, { recursive: true }); await writeFile(join(outside, 'owner.json'), text); await symlink(join(outside, 'owner.json'), join(guard, 'owner.json')); await utimes(guard, past(), past());
   } else {
-    await guardAt(outside, deadOwner(), true); await symlink(outside, root);
+    // Reuse the exact bytes under assertion; a second deadOwner() has a new timestamp.
+    await guardAt(outside, text, true); await symlink(outside, root);
   }
   let calls = 0; const value = await new SnapshotStore(scope, async () => { calls++; return snapshot(); }, { maintenanceRoot: root }).get();
   expect(value.notice).toBe(notice); expect(calls).toBe(0);

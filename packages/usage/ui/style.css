@@ -30,3 +30,8 @@
 .history-grouping summary { cursor:pointer;overflow-wrap:anywhere; }
 .history-grouping small { display:block;overflow-wrap:anywhere; }
 .history-grouping td:first-child { max-width:240px;white-space:normal;overflow-wrap:anywhere; }
+
+/* Keep long grouped USD amounts inside compact panels without losing digits. */
+.main-cost { max-width: 100%; overflow-wrap: anywhere; }
+.main-cost.cost-long { font-size: 26px; letter-spacing: -.8px; }
+.history-summary strong { overflow-wrap: anywhere; }
