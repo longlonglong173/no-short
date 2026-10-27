@@ -10,6 +10,7 @@ public struct UsageExport: Encodable, Sendable {
     public let pricing: SnapshotPricing?
     public let aggregate: UsageAggregate
     public let days: [Day]
+    public let grouping: UsageGroupingExport?
     public let sessionReferences: SessionReferences?
     public struct Day: Encodable, Sendable {
         public let date: String
@@ -25,8 +26,13 @@ public struct UsageExport: Encodable, Sendable {
         }
     }
     public static func create(_ snapshot: UsageSnapshot, provider: String, start: String, end: String,
-                              includeSessionIdentifiers: Bool = false, isStale: Bool = false) -> Self? {
+                              includeSessionIdentifiers: Bool = false, isStale: Bool = false, groupBy: String = "none") -> Self? {
         guard let projection = UsageHistory.project(snapshot, provider: provider, range: .init(start: start, end: end)) else { return nil }
+        var grouping: UsageGroupingExport?
+        if groupBy != "none" {
+            guard ["project","work"].contains(groupBy),let groups=UsageGrouping.project(snapshot,provider:provider,range:.init(start:start,end:end)),groups.reconciliationIssue != "tokens" else { return nil }
+            grouping=UsageGroupingExport.create(groups,by:groupBy,includeIdentifiers:includeSessionIdentifiers)
+        }
         var references: SessionReferences?
         if includeSessionIdentifiers {
             let items: [SessionReferences.Item] = snapshot.sessions.compactMap { session in
@@ -41,7 +47,7 @@ public struct UsageExport: Encodable, Sendable {
         }
         return Self(provider: provider, start: start, end: end, timeZone: snapshot.timeZone,
             generatedAt: snapshot.generatedAtText, status: isStale ? "stale" : snapshot.status,
-            pricing: snapshot.pricing, aggregate: projection.aggregate, days: projection.days.map { Day(date: $0.date, aggregate: $0.aggregate) }, sessionReferences: references)
+            pricing: snapshot.pricing, aggregate: projection.aggregate, days: projection.days.map { Day(date: $0.date, aggregate: $0.aggregate) }, grouping: grouping, sessionReferences: references)
     }
     public func serialize(_ format: UsageExportFormat) throws -> String {
         if format == .json {
@@ -52,6 +58,7 @@ public struct UsageExport: Encodable, Sendable {
             "amountUSD", "knownCostUSD", "pricingStatus", "timezone", "start", "end", "generatedAt", "status", "costBasis"]
         if pricing != nil { columns += ["pricingBasis", "pricingOrigin", "pricingUpdatedAt", "inputUSDPerMillion", "outputUSDPerMillion", "cacheReadUSDPerMillion", "cacheWriteUSDPerMillion"] }
         if sessionReferences != nil { columns += ["sessionId", "sessionTitle", "lastActivity"] }
+        if grouping != nil { columns += ["groupBy","groupLabel","groupSource","groupConfidence","groupReconciled","groupReconciliationIssue","depth"] }
         var lines = [columns.map { Self.csvCell(.text($0)) }.joined(separator: ",")]
         let metadata: [String: Cell] = ["timezone": .text(timeZone), "start": .text(start), "end": .text(end),
             "generatedAt": .text(generatedAt), "status": .text(status), "costBasis": .text(costBasis), "pricingBasis": .text(pricing?.basis ?? "ccusage-report")]
@@ -59,7 +66,7 @@ public struct UsageExport: Encodable, Sendable {
             let record = metadata.merging(row) { _, new in new }
             lines.append(columns.map { Self.csvCell(record[$0]) }.joined(separator: ","))
         }
-        func usage(_ type: String, _ scope: String, _ date: String, _ tokens: UsageTokens, _ cost: UsageCost, _ model: String = "", _ pricing: ModelPricing? = nil) {
+        func usage(_ type: String, _ scope: String, _ date: String, _ tokens: UsageTokens, _ cost: UsageCost, _ model: String = "", _ pricing: ModelPricing? = nil, _ extra: [String:Cell] = [:]) {
             var row: [String: Cell] = ["recordType": .text(type), "scope": .text(scope), "date": .text(date), "provider": .text(provider), "model": .text(model),
                 "input": .number(tokens.input), "output": .number(tokens.output), "cacheRead": .number(tokens.cacheRead),
                 "cacheWrite": .number(tokens.cacheWrite), "total": .number(tokens.total), "knownCostUSD": .number(cost.knownCostUSD), "pricingStatus": .text(cost.status)]
@@ -72,13 +79,25 @@ public struct UsageExport: Encodable, Sendable {
                 }
             }
             if let amount = cost.amountUSD { row["amountUSD"] = .number(amount) }
-            write(row)
+            write(row.merging(extra) { _,new in new })
         }
         usage("aggregate", "selected-range", "", aggregate.tokens, aggregate.cost)
         for model in aggregate.models { usage("model", "selected-range", "", model.tokens, model.cost, model.name, model.pricing) }
         for day in days {
             usage("day", "day", day.date, day.aggregate.tokens, day.aggregate.cost)
             for model in day.aggregate.models { usage("day-model", "day", day.date, model.tokens, model.cost, model.name, model.pricing) }
+        }
+        if let grouping {
+            for group in grouping.groups {
+                let extra:[String:Cell] = ["provider":.text(group.provider?.rawValue ?? provider),"groupBy":.text(grouping.by),"groupLabel":.text(group.label),"groupSource":.text(group.source ?? ""),"groupConfidence":.text(group.confidence ?? ""),"groupReconciled":.text(String(grouping.reconciled)),"groupReconciliationIssue":.text(grouping.reconciliationIssue ?? "")]
+                usage("group","selected-range-rollup","",group.aggregate.tokens,group.aggregate.cost,"",nil,extra)
+                for model in group.aggregate.models { usage("group-model","selected-range-rollup","",model.tokens,model.cost,model.name,model.pricing,extra) }
+                for session in group.sessions ?? [] {
+                    let fields=extra.merging(["sessionId":.text(session.id),"sessionTitle":.text(session.title),"provider":.text(session.provider.rawValue),"depth":.number(Double(session.depth))]) { _,new in new }
+                    usage("group-session","selected-range-direct","",session.aggregate.tokens,session.aggregate.cost,"",nil,fields)
+                    for model in session.aggregate.models { usage("group-session-model","selected-range-direct","",model.tokens,model.cost,model.name,model.pricing,fields) }
+                }
+            }
         }
         if let sessionReferences {
             for session in sessionReferences.items {

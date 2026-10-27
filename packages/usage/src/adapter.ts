@@ -1,3 +1,4 @@
+import { decodeGrouping } from './grouping-types';
 import { z } from 'zod';
 import { customCost, mergedPricing, type PricingConfig } from './pricing.ts';
 import type { Aggregate, Cost, ModelUsage, SessionMetadata, SessionUsage, Tokens, UsageSnapshot, UsageProvider, UsageHistory } from './types.ts';
@@ -88,7 +89,7 @@ export function buildSnapshot(raw: unknown, options: SnapshotOptions): UsageSnap
     const sessionKey = row.period.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i)?.[0] ?? row.period.split('/').at(-1)!;
     const prefix = provider === 'claude' ? 'claude:' : '';
     const meta = options.metadata.get(prefix + row.period) ?? options.metadata.get(prefix + row.period.split('/').at(-1)!) ?? options.metadata.get(prefix + sessionKey) ?? { title: `Phiên ${shortId(row.period)}`, kind: 'unknown' as const };
-    return { id: prefix + row.period, provider, sessionKey, title: meta.title.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 160), kind: meta.kind,
+    return { id: prefix + row.period, provider, sessionKey, title: meta.title.replace(/[\u0000-\u001f\u007f]/g, ' ').slice(0, 160), kind: meta.kind, ...(decodeGrouping(meta.grouping) ? { grouping: decodeGrouping(meta.grouping) } : {}),
       lastActivity: row.metadata?.lastActivity ?? null, ...aggregate(row, unpriced, provider, options) };
   }).sort((a, b) => (b.lastActivity ?? '').localeCompare(a.lastActivity ?? '') || a.id.localeCompare(b.id));
   const daily = new Map<string, Aggregate>();

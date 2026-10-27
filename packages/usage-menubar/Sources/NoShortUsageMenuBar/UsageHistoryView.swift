@@ -9,6 +9,11 @@ struct UsageHistoryView: View {
             VStack(alignment: .leading, spacing: 20) {
                 Text(model.l("Chi tiết sử dụng")).font(.title2.bold())
                 controls
+                Picker(model.l("Nhóm usage"),selection:$model.groupBy) {
+                    Text(model.l("Không nhóm")).tag("none")
+                    Text(model.l("Theo dự án")).tag("project")
+                    Text(model.l("Công việc cha–con")).tag("work")
+                }.accessibilityIdentifier("history-grouping")
                 exportControls
                 if model.preset == .custom { customDates }
                 Toggle(model.l("So sánh với kỳ trước cùng độ dài"), isOn: $model.comparisonEnabled)
@@ -31,6 +36,7 @@ struct UsageHistoryView: View {
                 if model.isLoading { ProgressView(model.l("Đang cập nhật…")).controlSize(.small) }
                 if let projection = model.projection {
                     summary(projection.aggregate)
+                    if model.groupBy != "none" { UsageGroupingView(value:model.grouping,mode:model.groupBy,language:model.language) }
                     if model.comparisonEnabled {
                         if let comparison = model.comparison {
                             UsageComparisonView(value: comparison, language: model.language)
@@ -76,7 +82,7 @@ struct UsageHistoryView: View {
                     .accessibilityIdentifier("history-export-csv")
                 Button(model.l("Lưu JSON…")) { model.onExport?(.json, model.includeSessionIdentifiers) }
                     .accessibilityIdentifier("history-export-json")
-            }.disabled(model.projection == nil || model.isExporting)
+            }.disabled(model.projection == nil || model.isExporting || (model.groupBy != "none" && (model.grouping == nil || model.grouping?.reconciliationIssue == "tokens")))
             Toggle(isOn: $model.includeSessionIdentifiers) {
                 Text(model.l("Kèm ID và tên phiên có hoạt động cuối trong khoảng; chỉ tham chiếu, không phân bổ chi phí hoặc token."))
                     .font(.system(size: 11)).fixedSize(horizontal: false, vertical: true)

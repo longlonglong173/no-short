@@ -1,0 +1,810 @@
+{
+  "schemaVersion": 1,
+  "source": "ccusage",
+  "ccusageVersion": "20.0.34",
+  "generatedAt": "2026-10-27T12:00:00Z",
+  "timeZone": "UTC",
+  "status": "ready",
+  "pricingSource": "cached",
+  "sessions": [
+    {
+      "id": "rollout-root",
+      "provider": "codex",
+      "sessionKey": "root",
+      "title": "Private root",
+      "kind": "main",
+      "lastActivity": "2026-10-27T12:00:00Z",
+      "tokens": {
+        "input": 999,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 999
+      },
+      "cost": {
+        "amountUSD": 999,
+        "knownCostUSD": 999,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "m",
+          "tokens": {
+            "input": 999,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 999
+          },
+          "cost": {
+            "amountUSD": 999,
+            "knownCostUSD": 999,
+            "status": "estimated"
+          }
+        }
+      ],
+      "grouping": {
+        "project": {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "label": "App",
+          "source": "recorded-directory",
+          "confidence": "recorded"
+        }
+      }
+    },
+    {
+      "id": "rollout-child",
+      "provider": "codex",
+      "sessionKey": "child",
+      "title": "Private child",
+      "kind": "subagent",
+      "lastActivity": "2026-10-27T12:00:00Z",
+      "tokens": {
+        "input": 999,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 999
+      },
+      "cost": {
+        "amountUSD": 999,
+        "knownCostUSD": 999,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "m",
+          "tokens": {
+            "input": 999,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 999
+          },
+          "cost": {
+            "amountUSD": 999,
+            "knownCostUSD": 999,
+            "status": "estimated"
+          }
+        }
+      ],
+      "grouping": {
+        "project": {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "label": "App",
+          "source": "recorded-directory",
+          "confidence": "recorded"
+        },
+        "parent": {
+          "sessionKey": "root",
+          "source": "codex-session-meta"
+        }
+      }
+    },
+    {
+      "id": "rollout-grandchild",
+      "provider": "codex",
+      "sessionKey": "grandchild",
+      "title": "Private grandchild",
+      "kind": "subagent",
+      "lastActivity": "2026-10-27T12:00:00Z",
+      "tokens": {
+        "input": 999,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 999
+      },
+      "cost": {
+        "amountUSD": 999,
+        "knownCostUSD": 999,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "m",
+          "tokens": {
+            "input": 999,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 999
+          },
+          "cost": {
+            "amountUSD": 999,
+            "knownCostUSD": 999,
+            "status": "estimated"
+          }
+        }
+      ],
+      "grouping": {
+        "project": {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "label": "App",
+          "source": "recorded-directory",
+          "confidence": "recorded"
+        },
+        "parent": {
+          "sessionKey": "child",
+          "source": "codex-session-meta"
+        }
+      }
+    },
+    {
+      "id": "rollout-unknown",
+      "provider": "codex",
+      "sessionKey": "unknown",
+      "title": "Private unknown",
+      "kind": "main",
+      "lastActivity": "2026-10-27T12:00:00Z",
+      "tokens": {
+        "input": 999,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 999
+      },
+      "cost": {
+        "amountUSD": 999,
+        "knownCostUSD": 999,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "m",
+          "tokens": {
+            "input": 999,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 999
+          },
+          "cost": {
+            "amountUSD": 999,
+            "knownCostUSD": 999,
+            "status": "estimated"
+          }
+        }
+      ]
+    },
+    {
+      "id": "claude:root",
+      "provider": "claude",
+      "sessionKey": "root",
+      "title": "Private root",
+      "kind": "main",
+      "lastActivity": "2026-10-27T12:00:00Z",
+      "tokens": {
+        "input": 999,
+        "output": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 999
+      },
+      "cost": {
+        "amountUSD": 999,
+        "knownCostUSD": 999,
+        "status": "estimated"
+      },
+      "models": [
+        {
+          "name": "m",
+          "tokens": {
+            "input": 999,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 999
+          },
+          "cost": {
+            "amountUSD": 999,
+            "knownCostUSD": 999,
+            "status": "estimated"
+          }
+        }
+      ],
+      "grouping": {
+        "project": {
+          "id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "label": "App",
+          "source": "recorded-directory",
+          "confidence": "recorded"
+        }
+      }
+    }
+  ],
+  "today": {
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 0
+    },
+    "cost": {
+      "amountUSD": 0,
+      "knownCostUSD": 0,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "m",
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        "cost": {
+          "amountUSD": 0,
+          "knownCostUSD": 0,
+          "status": "estimated"
+        }
+      }
+    ]
+  },
+  "month": {
+    "tokens": {
+      "input": 0,
+      "output": 0,
+      "cacheRead": 0,
+      "cacheWrite": 0,
+      "total": 0
+    },
+    "cost": {
+      "amountUSD": 0,
+      "knownCostUSD": 0,
+      "status": "estimated"
+    },
+    "models": [
+      {
+        "name": "m",
+        "tokens": {
+          "input": 0,
+          "output": 0,
+          "cacheRead": 0,
+          "cacheWrite": 0,
+          "total": 0
+        },
+        "cost": {
+          "amountUSD": 0,
+          "knownCostUSD": 0,
+          "status": "estimated"
+        }
+      }
+    ]
+  },
+  "chart": [],
+  "history": {
+    "version": 1,
+    "providers": [
+      "codex",
+      "claude"
+    ],
+    "days": [
+      {
+        "date": "2026-10-26",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 8,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 8
+          },
+          "cost": {
+            "amountUSD": 8,
+            "knownCostUSD": 8,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 8,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 8
+              },
+              "cost": {
+                "amountUSD": 8,
+                "knownCostUSD": 8,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-26",
+        "provider": "claude",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "codex",
+        "aggregate": {
+          "tokens": {
+            "input": 12,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 12
+          },
+          "cost": {
+            "amountUSD": null,
+            "knownCostUSD": 9,
+            "status": "partial"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 12,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 12
+              },
+              "cost": {
+                "amountUSD": null,
+                "knownCostUSD": 9,
+                "status": "partial"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "claude",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "sessionDays": [
+      {
+        "date": "2026-10-26",
+        "provider": "codex",
+        "sessionId": "rollout-root",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-26",
+        "provider": "codex",
+        "sessionId": "rollout-child",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-26",
+        "provider": "codex",
+        "sessionId": "rollout-grandchild",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-26",
+        "provider": "codex",
+        "sessionId": "rollout-unknown",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-26",
+        "provider": "claude",
+        "sessionId": "claude:root",
+        "aggregate": {
+          "tokens": {
+            "input": 2,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 2
+          },
+          "cost": {
+            "amountUSD": 2,
+            "knownCostUSD": 2,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 2,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 2
+              },
+              "cost": {
+                "amountUSD": 2,
+                "knownCostUSD": 2,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "codex",
+        "sessionId": "rollout-root",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "codex",
+        "sessionId": "rollout-child",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "codex",
+        "sessionId": "rollout-grandchild",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": null,
+            "knownCostUSD": 0,
+            "status": "unknown"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": null,
+                "knownCostUSD": 0,
+                "status": "unknown"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "codex",
+        "sessionId": "rollout-unknown",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      },
+      {
+        "date": "2026-10-27",
+        "provider": "claude",
+        "sessionId": "claude:root",
+        "aggregate": {
+          "tokens": {
+            "input": 3,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0,
+            "total": 3
+          },
+          "cost": {
+            "amountUSD": 3,
+            "knownCostUSD": 3,
+            "status": "estimated"
+          },
+          "models": [
+            {
+              "name": "m",
+              "tokens": {
+                "input": 3,
+                "output": 0,
+                "cacheRead": 0,
+                "cacheWrite": 0,
+                "total": 3
+              },
+              "cost": {
+                "amountUSD": 3,
+                "knownCostUSD": 3,
+                "status": "estimated"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

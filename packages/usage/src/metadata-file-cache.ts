@@ -1,13 +1,16 @@
 import { lstat, mkdir, readFile, writeFile, rename, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { decodeGrouping } from './grouping-types';
 import type { SessionMetadata } from './types';
 export interface MetadataOptions { cacheDir?: string; stats?: { hits: number; reads: number } }
-export interface CachedMetadata { id?: string; title?: string; kind: SessionMetadata['kind'] }
+export interface CachedMetadata { id?: string; title?: string; kind: SessionMetadata['kind']; cwd?: string; grouping?: SessionMetadata['grouping'] }
 interface Entry { signature: string; value: CachedMetadata }
 const valid = (v: any): v is Entry => typeof v?.signature === 'string' && v.signature.length < 200
   && ['main', 'subagent', 'unknown'].includes(v.value?.kind)
   && (v.value.id === undefined || typeof v.value.id === 'string' && v.value.id.length <= 1000)
+  && (v.value.cwd === undefined || typeof v.value.cwd === 'string' && v.value.cwd.length <= 4096)
+  && (v.value.grouping === undefined || decodeGrouping(v.value.grouping) !== undefined)
   && (v.value.title === undefined || typeof v.value.title === 'string' && v.value.title.length <= 160);
 const signature = async (path: string) => {
   const s = await lstat(path, { bigint: true });
@@ -24,7 +27,7 @@ export class MetadataFileCache {
     if (cache.path) try {
       if ((await lstat(cache.path)).isSymbolicLink() || (await lstat(cache.path)).size > 16 * 1024 * 1024) return cache;
       const data = JSON.parse(await readFile(cache.path, 'utf8'));
-      if (data.version === 1 && data.entries && typeof data.entries === 'object') {
+      if (data.version === 2 && data.entries && typeof data.entries === 'object') {
         for (const [key, value] of Object.entries(data.entries).slice(0, 50_000)) if (valid(value)) cache.previous.set(key, value);
       }
     } catch { /* Cache is disposable; source errors still propagate below. */ }
@@ -45,7 +48,7 @@ export class MetadataFileCache {
   async save() {
     if (!this.path) return;
     const entries = Object.fromEntries([...this.next].slice(0, 50_000));
-    const data = JSON.stringify({ version: 1, entries });
+    const data = JSON.stringify({ version: 2, entries });
     if (Buffer.byteLength(data) > 16 * 1024 * 1024) return;
     const temporary = `${this.path}-${randomUUID()}.tmp`;
     try {
