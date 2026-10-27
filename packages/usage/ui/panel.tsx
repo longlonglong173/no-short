@@ -1,3 +1,4 @@
+import { PricingBasis, PricingOrigin } from './pricing';
 import { useEffect, useRef, useState } from 'react';
 import { HistoryPanel } from './history';
 import { useUsage } from './use-usage';
@@ -38,7 +39,7 @@ function Stats({ value }: { value: Aggregate }) {
       [l('Input'), value.tokens.input, l("Token đầu vào chưa cache")], [l('Cache'), value.tokens.cacheRead, l("Token đầu vào đọc từ cache")], [l('Output'), value.tokens.output, l("Token đầu ra, đã gồm reasoning")],
     ].map(([label, n, hint]) => <div key={label} title={String(hint)}><span>{label}</span><strong>{tokenText(Number(n))}</strong></div>)}</section>
     <section className="models" aria-label={l("Chi phí theo model")}><div className="model-head"><h2>{l('Model')}</h2><span>{l("Chi phí")}</span></div>
-      {value.models.length ? value.models.map(model => <div className="model-row" key={model.name}><span>{model.name}</span><span className={model.cost.amountUSD === null ? 'unknown' : ''}>{costText(model.cost)}</span></div>) : <p className="muted no-model">{l("Chưa có usage trong khoảng thời gian này.")}</p>}
+      {value.models.length ? value.models.map(model => <div className="model-row" key={model.name}><span>{model.name}<PricingOrigin pricing={model.pricing}/></span><span className={model.cost.amountUSD === null ? 'unknown' : ''}>{costText(model.cost)}</span></div>) : <p className="muted no-model">{l("Chưa có usage trong khoảng thời gian này.")}</p>}
       <div className="model-total"><strong>{l("Tổng")}</strong><strong>{costText(value.cost)}</strong></div>
     </section>
   </>;
@@ -148,7 +149,7 @@ function UsagePanelContent() {
         : !error && !unavailable ? <div className="skeleton" aria-label={l("Đang tải thống kê")}><div/><div/><div/></div> : null}
       </div>
     </section>
-    <footer><p className="disclaimer">{l("Ước tính — không phải hóa đơn hoặc credit ChatGPT đã trừ")}</p>
+    <footer><PricingBasis pricing={snapshot?.pricing}/><p className="disclaimer">{l("Ước tính — không phải hóa đơn hoặc credit ChatGPT đã trừ")}</p>
       <div className="footer-meta"><span>{l("Nguồn: ccusage · Dữ liệu cục bộ")}</span>{snapshot ? <time dateTime={snapshot.generatedAt}>{new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</time> : null}</div>
       {snapshot && period !== 'history' ? <p className="footer-detail">{providerName(filter)} · {snapshot.timeZone} · {snapshot.pricingSource === 'cached' ? l("Dùng bảng giá cache") : l("Giá theo ccusage")} · {l('%@ phiên', String(view?.sessions.length ?? 0))}</p> : null}
     </footer>

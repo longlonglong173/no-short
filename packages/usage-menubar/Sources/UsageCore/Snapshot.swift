@@ -30,6 +30,17 @@ public struct ModelUsage: Codable, Sendable {
     public let name: String
     public let tokens: UsageTokens
     public let cost: UsageCost
+    public var pricing: ModelPricing? = nil
+    public init(name: String, tokens: UsageTokens, cost: UsageCost, pricing: ModelPricing? = nil) {
+        self.name = name; self.tokens = tokens; self.cost = cost; self.pricing = pricing
+    }
+    private enum CodingKeys: String, CodingKey { case name, tokens, cost, pricing }
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        name = try c.decode(String.self, forKey: .name); tokens = try c.decode(UsageTokens.self, forKey: .tokens)
+        cost = try c.decode(UsageCost.self, forKey: .cost)
+        if let value = try? c.decode(ModelPricing.self, forKey: .pricing), value.valid { pricing = value }
+    }
 }
 public struct UsageAggregate: Codable, Sendable {
     public let tokens: UsageTokens
@@ -77,9 +88,10 @@ public struct UsageSnapshot: Decodable, Sendable {
     public let chart: [ChartDay]
     public let providerBreakdowns: [ProviderBreakdown]?
     public let history: UsageHistory?
+    public let pricing: SnapshotPricing?
     private enum CodingKeys: String, CodingKey {
         case schemaVersion, source, ccusageVersion, generatedAt, timeZone, status, pricingSource, notice
-        case sessions, today, month, chart, providerBreakdowns, history
+        case sessions, today, month, chart, providerBreakdowns, history, pricing
     }
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -99,6 +111,8 @@ public struct UsageSnapshot: Decodable, Sendable {
         providerBreakdowns = try c.decodeIfPresent([ProviderBreakdown].self, forKey: .providerBreakdowns)
         // An unsupported or malformed optional extension must not discard a valid v1 dashboard.
         history = try? c.decode(UsageHistory.self, forKey: .history)
+        let value = try? c.decode(SnapshotPricing.self, forKey: .pricing)
+        pricing = value?.valid == true ? value : nil
     }
     public var latestSession: SessionUsage? {
         sessions.first { $0.kind == "main" } ?? sessions.first { $0.kind != "subagent" }

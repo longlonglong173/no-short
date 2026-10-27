@@ -18,6 +18,10 @@ struct UsageHistoryView: View {
                     Text(model.l("Chỉ log hiện còn trên máy · Không phải toàn bộ lịch sử tài khoản."))
                     Text(model.l("Ước tính API · Không phải hóa đơn thuê bao"))
                 }.font(.system(size: 11)).foregroundStyle(.secondary)
+                if let pricing = model.snapshot?.pricing {
+                    Text(pricing.description(language: model.language)).font(.system(size: 11)).foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
                 if let failure = model.exportFailureMessage { warning(failure) }
                 if let validation = model.validationMessage { warning(validation) }
                 if let notice = model.notice { warning(model.l(notice)) }
@@ -166,8 +170,10 @@ struct UsageHistoryView: View {
     }
     private func modelRow(_ row: ModelUsage) -> some View {
         HStack(alignment: .top) {
-            Text(UsagePresentation.cleanTitle(row.name)).frame(width: 220, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true).help(row.name)
+            VStack(alignment: .leading, spacing: 5) {
+                Text(UsagePresentation.cleanTitle(row.name)).help(row.name)
+                if let pricing = row.pricing { Text(pricing.description(language: model.language)).font(.system(size: 10)).foregroundStyle(.secondary) }
+            }.frame(width: 220, alignment: .leading).fixedSize(horizontal: false, vertical: true)
             ForEach(Array([row.tokens.input, row.tokens.output, row.tokens.cacheRead, row.tokens.cacheWrite, row.tokens.total].enumerated()), id: \.offset) { _, value in
                 Text(UsagePresentation.number(value)).monospacedDigit().frame(width: 86, alignment: .trailing)
             }

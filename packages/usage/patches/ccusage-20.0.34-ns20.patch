@@ -178,3 +178,147 @@
      let relative = path.strip_prefix(sessions_dir).unwrap_or(path);
      let mut session_id = uncompressed_rollout_path(relative)
          .with_extension("")
+--- a/rust/adapters/common/src/report.rs
++++ b/rust/adapters/common/src/report.rs
+@@ -316,6 +316,7 @@
+             models_used: vec!["model-a".to_string()],
+             model_breakdowns: vec![
+                 ModelBreakdown {
++                    is_fallback: None,
+                     model_name: "model-a".to_string(),
+                     input_tokens: 60,
+                     output_tokens: 30,
+@@ -326,6 +327,7 @@
+                     missing_pricing: false,
+                 },
+                 ModelBreakdown {
++                    is_fallback: None,
+                     model_name: "model-b".to_string(),
+                     input_tokens: 40,
+                     output_tokens: 20,
+--- a/rust/adapters/opencode/src/report.rs
++++ b/rust/adapters/opencode/src/report.rs
+@@ -168,6 +168,7 @@
+                 "claude-sonnet-4-20250514".to_string(),
+             ],
+             model_breakdowns: vec![ModelBreakdown {
++                is_fallback: None,
+                 model_name: "gpt-5.2-codex".to_string(),
+                 input_tokens: 100,
+                 output_tokens: 50,
+--- a/rust/crates/ccusage-adapter-all/src/loader.rs
++++ b/rust/crates/ccusage-adapter-all/src/loader.rs
+@@ -848,6 +848,7 @@
+                 usage.cache_creation_tokens,
+             );
+             ModelBreakdown {
++                is_fallback: Some(usage.is_fallback),
+                 model_name: model.clone(),
+                 input_tokens: input,
+                 output_tokens: usage.output_tokens,
+--- a/rust/crates/ccusage-adapter-all/src/tests.rs
++++ b/rust/crates/ccusage-adapter-all/src/tests.rs
+@@ -353,6 +353,7 @@
+         agent_breakdowns: None,
+         model_breakdowns: vec![
+             ModelBreakdown {
++                is_fallback: None,
+                 model_name: "new-model".to_string(),
+                 input_tokens: 50,
+                 output_tokens: 10,
+@@ -363,6 +364,7 @@
+                 missing_pricing: true,
+             },
+             ModelBreakdown {
++                is_fallback: None,
+                 model_name: "gpt-5".to_string(),
+                 input_tokens: 50,
+                 output_tokens: 10,
+--- a/rust/crates/ccusage-adapter-all/src/types.rs
++++ b/rust/crates/ccusage-adapter-all/src/types.rs
+@@ -174,6 +174,9 @@
+         b.extra_total_tokens = b.extra_total_tokens.saturating_add(item.extra_total_tokens);
+         b.cost += item.cost;
+         b.missing_pricing |= item.missing_pricing;
++        if let Some(value) = item.is_fallback {
++            b.is_fallback = Some(b.is_fallback.unwrap_or(false) || value);
++        }
+     }
+     breakdowns.sort_by(|a, b| b.cost.total_cmp(&a.cost));
+     breakdowns
+@@ -202,6 +205,9 @@
+             b.extra_total_tokens = b.extra_total_tokens.saturating_add(item.extra_total_tokens);
+             b.cost += item.cost;
+             b.missing_pricing |= item.missing_pricing;
++            if let Some(value) = item.is_fallback {
++                b.is_fallback = Some(b.is_fallback.unwrap_or(false) || value);
++            }
+         }
+     }
+     breakdowns
+--- a/rust/crates/ccusage-core/src/output.rs
++++ b/rust/crates/ccusage-core/src/output.rs
+@@ -703,6 +703,7 @@
+ 
+     fn breakdown(model: &str, missing_pricing: bool) -> ModelBreakdown {
+         ModelBreakdown {
++            is_fallback: None,
+             model_name: model.to_string(),
+             input_tokens: 100,
+             output_tokens: 50,
+@@ -912,6 +913,7 @@
+     #[test]
+     fn model_breakdown_total_includes_extra_tokens() {
+         let breakdown = ModelBreakdown {
++            is_fallback: None,
+             model_name: "model-a".to_string(),
+             input_tokens: 100,
+             output_tokens: 50,
+@@ -948,6 +950,7 @@
+             ],
+             model_breakdowns: vec![
+                 ModelBreakdown {
++                    is_fallback: None,
+                     model_name: "gpt-5.2-codex".to_string(),
+                     input_tokens: 900,
+                     output_tokens: 300,
+@@ -958,6 +961,7 @@
+                     missing_pricing: false,
+                 },
+                 ModelBreakdown {
++                    is_fallback: None,
+                     model_name: "claude-sonnet-4-20250514".to_string(),
+                     input_tokens: 334,
+                     output_tokens: 267,
+--- a/rust/crates/ccusage-core/src/summary.rs
++++ b/rust/crates/ccusage-core/src/summary.rs
+@@ -280,6 +280,9 @@
+                 .saturating_add(item.extra_total_tokens);
+             breakdown.cost += item.cost;
+             breakdown.missing_pricing |= item.missing_pricing;
++            if let Some(value) = item.is_fallback {
++                breakdown.is_fallback = Some(breakdown.is_fallback.unwrap_or(false) || value);
++            }
+         }
+     }
+     summary
+@@ -743,6 +746,7 @@
+             message_count: Some(1),
+             models_used: vec![fixture.model.to_string()],
+             model_breakdowns: vec![ModelBreakdown {
++                is_fallback: None,
+                 model_name: fixture.model.to_string(),
+                 input_tokens: fixture.input_tokens,
+                 output_tokens: 10,
+--- a/rust/crates/ccusage-core/src/types.rs
++++ b/rust/crates/ccusage-core/src/types.rs
+@@ -109,6 +109,9 @@
+     /// Present in JSON only when true, so priced breakdowns keep their shape.
+     #[serde(skip_serializing_if = "std::ops::Not::not")]
+     pub missing_pricing: bool,
++    /// No Short Usage: explicit provenance for Codex unified reports.
++    #[serde(skip_serializing_if = "Option::is_none")]
++    pub is_fallback: Option<bool>,
+ }
+ 
+ impl ModelBreakdown {

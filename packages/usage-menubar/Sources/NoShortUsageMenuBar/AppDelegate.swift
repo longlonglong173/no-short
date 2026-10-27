@@ -35,6 +35,7 @@ import UsageCore
     private let contextReader = ContextReader()
     private lazy var contextNotifications = ContextNotificationService()
     private lazy var budgets = BudgetController(defaults: .standard, notifications: contextNotifications)
+    private var pricingWindow: PricingSettingsWindowController?
     private var budgetWindow: BudgetSettingsWindowController?
     private var dataManagementWindow: DataManagementWindowController?
     private var diagnosticsTask: Task<Void, Never>?
@@ -65,6 +66,7 @@ import UsageCore
         menu.onQuit = { NSApp.terminate(nil) }
         menu.onAbout = { [weak self] in self?.showAbout() }
         menu.onHistory = { [weak self] in self?.showHistory() }
+        menu.onPricing = { [weak self] in self?.showPricing() }
         menu.onBudgets = { [weak self] in self?.showBudgets() }
         menu.onDataManagement = { [weak self] in self?.showDataManagement() }
         budgets.onChange = { [weak self] in self?.renderBudgetState() }
@@ -88,6 +90,7 @@ import UsageCore
         panelModel.onQuit = { NSApp.terminate(nil) }
         panelModel.onAbout = { [weak self] in self?.showAbout() }
         panelModel.onHistory = { [weak self] in self?.showHistory() }
+        panelModel.onPricing = { [weak self] in self?.showPricing() }
         panelModel.onBudgets = { [weak self] in self?.showBudgets() }
         panelModel.onDataManagement = { [weak self] in self?.showDataManagement() }
         panelModel.onCheckUpdates = { [weak self] in self?.showAbout(check: true) }
@@ -143,6 +146,8 @@ import UsageCore
         renderBudgetState()
         dataManagementWindow?.model.language = panelModel.language
         dataManagementWindow?.window?.title = l("Quản lý dữ liệu…")
+        pricingWindow?.model.language = panelModel.language
+        pricingWindow?.window?.title = l("Đơn giá…")
         budgetWindow?.model.language = panelModel.language
         budgetWindow?.window?.title = l("Ngân sách…")
         Task { @MainActor [weak self] in
@@ -243,6 +248,19 @@ import UsageCore
             }
             self.dataManagementWindow?.model.language = self.panelModel.language
             self.dataManagementWindow?.present()
+        }
+    }
+    private func showPricing() {
+        panel.close()
+        DispatchQueue.main.async { [weak self] in
+            guard let self, !self.terminating else { return }
+            if self.pricingWindow == nil {
+                let model = PricingSettingsModel(language: self.panelModel.language)
+                model.onSave = { [weak self] in self?.controller.refresh() }
+                self.pricingWindow = PricingSettingsWindowController(model: model)
+            }
+            self.pricingWindow?.model.language = self.panelModel.language
+            self.pricingWindow?.present()
         }
     }
     private func showBudgets() {

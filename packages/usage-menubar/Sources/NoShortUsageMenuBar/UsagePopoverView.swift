@@ -101,6 +101,10 @@ struct UsagePopoverView: View {
                     .padding(.bottom, 10)
             }
             budgetStatus
+            if let pricing = model.snapshot?.pricing {
+                Text(pricing.description(language: model.language)).font(.system(size: 10)).foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true).frame(maxWidth: .infinity, alignment: .leading).padding(.bottom, 8)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 HStack(alignment: .center, spacing: 10) {
                     Text(model.mainCost).font(.system(size: 49, weight: .semibold)).tracking(-1.8)
@@ -256,6 +260,7 @@ struct UsagePopoverView: View {
                 Button(model.l("Chọn thư mục log Claude Code…")) { model.onChooseClaudeSource?() }
                 Button(model.l("Dùng log Claude Code mặc định")) { model.onResetClaudeSource?() }
                 Divider()
+                Button(model.l("Đơn giá…")) { model.onPricing?() }
                 Button(model.l("Ngân sách…")) { model.onBudgets?() }
                 Button(model.l("Quản lý dữ liệu…")) { model.onDataManagement?() }
                 Button(model.l("Ngưỡng cảnh báo context: %@%…", String(model.contextAlertThreshold))) { model.onConfigureContextAlerts?() }
@@ -355,7 +360,10 @@ struct UsagePopoverView: View {
                 // Snapshot names need not be unique; keep every source row.
                 ForEach(Array(model.modelUsages.enumerated()), id: \.offset) { _, row in
                     HStack(alignment: .top) {
-                        Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(UsagePresentation.cleanTitle(row.name)).font(.system(size: 12, weight: .medium))
+                            if let pricing = row.pricing { Text(pricing.description(language: model.language)).font(.system(size: 9)).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true) }
+                        }
                             .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading).help(row.name)
                         Text(UsagePresentation.number(row.tokens.total)).font(.system(size: 11)).monospacedDigit()
                             .frame(width: 65, alignment: .trailing)
