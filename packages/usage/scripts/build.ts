@@ -8,20 +8,19 @@ import { prepareCcusageSource, buildPatchedCcusage } from './build-ccusage';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
-<<<<<<< HEAD
-const version = '0.7.1';
-=======
->>>>>>> origin/main
 const output = join(root, '.artifacts/usage/releases');
 const runtimeRoot = join(usage, 'runtime');
 await mkdir(output, { recursive: true });
 async function run(args: string[], cwd = usage) {
+  console.log('Running:', args.join(' '));
   const p = Bun.spawn(args, { cwd, stdout: 'inherit', stderr: 'inherit' });
   if (await p.exited !== 0) throw new Error(`Build step failed: ${args[0]}`);
 }
 const hash = (value: Uint8Array) => createHash('sha256').update(value).digest('hex');
 await run([process.execPath, 'run', 'build:ui']);
+console.log('Vite build completed');
 let notices = `No Short Usage ${version} — bundled dependency notices\n\n`;
+console.log('Generating notices...');
 for (const name of ['@modelcontextprotocol/server', '@modelcontextprotocol/core', '@modelcontextprotocol/client', '@modelcontextprotocol/ext-apps', '@openai/mcp-extensions', 'react', 'react-dom', 'zod']) {
   const directory = join(usage, 'node_modules', name);
   const pkg = JSON.parse(await readFile(join(directory, 'package.json'), 'utf8'));
@@ -35,8 +34,6 @@ for (const [label, url] of [
 ]) {
   const r = await fetch(url); if (!r.ok) throw new Error(`License download failed: ${label}`);
   const text = await r.text();
-  // The repository-root ccusage LICENSE is a symlink; raw GitHub returns its
-  // target path, not license text. Never ship that placeholder as attribution.
   if (label.startsWith('ccusage ') && (!text.includes('MIT License') ||
     !text.includes('Copyright (c) 2025 ryoppippi') ||
     !text.includes('The above copyright notice and this permission notice shall be included'))) {
@@ -45,9 +42,11 @@ for (const [label, url] of [
   notices += `\n\n${label}\n${text}\n`;
 }
 notices += `\nccusage ${sourceLock.version} with No Short Usage ${sourceLock.patchRevision}\nSource: ${sourceLock.source.revision}\nThe bundled reader modifies session-scoped event deduplication; upstream MIT license above applies.\n`;
+console.log('Preparing ccusage source...');
 const preparedCcusage = await prepareCcusageSource(join(root, '.artifacts/usage/ccusage-source', sourceLock.patchRevision));
 const platforms: Record<string, unknown> = {};
 for (const platform of Object.keys(lock.platforms)) {
+  console.log('Building platform:', platform);
   const directory = join(runtimeRoot, platform); await mkdir(directory, { recursive: true });
   await buildPatchedCcusage(preparedCcusage, platform, join(directory, 'ccusage'));
   const result = await Bun.build({ entrypoints: [join(usage, 'src/main.ts')], minify: true,
@@ -60,8 +59,6 @@ for (const platform of Object.keys(lock.platforms)) {
     for (const name of ['no-short-usage', 'ccusage']) await run(['/usr/bin/codesign', '--force', '--options', 'runtime', '--timestamp', '--entitlements', join(usage, 'signing-entitlements.plist'), '--sign', process.env.NO_SHORT_SIGN_IDENTITY, join(directory, name)]);
   } else {
     if (process.platform !== 'darwin') throw new Error('A macOS build host is required to ad-hoc sign development Mach-O executables.');
-    // Bun's appended executable needs a fresh signature; its inherited linker
-    // signature is invalid on arm64 and macOS otherwise kills it with SIGKILL.
     for (const name of ['no-short-usage', 'ccusage']) await run(['/usr/bin/codesign', '--force', '--sign', '-', '--entitlements', join(usage, 'signing-entitlements.plist'), join(directory, name)]);
   }
   for (const name of ['no-short-usage', 'ccusage']) await run(['/usr/bin/codesign', '--verify', '--strict', join(directory, name)]);
