@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { modelPricingSchema } from './pricing.ts';
 import { dayKey, sumAggregates } from './adapter.ts';
-import type { Aggregate, UsageHistory, UsageSnapshot } from './types.ts';
+import type { Aggregate, UsageHistory, UsageSnapshot, UsageProvider } from './types.ts';
 
 export type HistoryPreset = '7d' | '30d' | 'month' | 'previous' | 'custom';
 export interface DateRange { start: string; end: string }
@@ -60,10 +60,18 @@ const historySchema = z.object({ version: z.literal(1), providers: z.array(provi
   return true;
 });
 
+const sessionDaysSchema = z.array(z.object({ date: z.string().refine(calendarDate), provider: providerSchema,
+  sessionId: z.string().min(1).max(4096), aggregate: aggregateSchema })).refine(rows => {
+    const keys = rows.map(r => JSON.stringify([r.date, r.provider, r.sessionId]));
+    return new Set(keys).size === keys.length;
+  });
+
 // Optional history is a separate trust boundary: bad history cannot invalidate a legacy dashboard.
 export function decodeHistory(value: unknown): UsageHistory | null {
   const result = historySchema.safeParse(value);
-  return result.success ? result.data : null;
+  if (!result.success) return null;
+  const ledger = sessionDaysSchema.safeParse((value as Record<string, unknown>).sessionDays);
+  return { ...result.data, ...(ledger.success && ledger.data.every(r => result.data.providers.includes(r.provider)) ? { sessionDays: ledger.data } : {}) };
 }
 
 export function historyView(snapshot: UsageSnapshot, provider: 'all' | 'codex' | 'claude', start: string, end: string): { aggregate: Aggregate; days: { date: string; aggregate: Aggregate }[] } | null {
@@ -147,4 +155,58 @@ export function compareHistory(snapshot: UsageSnapshot, provider: 'all' | 'codex
     }
   }
   return { currentRange: { ...range }, previousRange, summary: comparisonRow('all', current.aggregate, previous.aggregate, fresh), providers, models };
+}
+
+export interface SessionUsageRange {
+  sessions: { sessionId: string; provider: UsageProvider; aggregate: Aggregate }[];
+  aggregate: Aggregate;
+  reconciled: boolean;
+  reconciliationIssue?: 'tokens' | 'pricing';
+}
+function aggregateTokensMatch(a: Aggregate, b: Aggregate): boolean {
+  const tokens = (x: Aggregate['tokens'], y: Aggregate['tokens']) => Object.keys(x).every(k => x[k as keyof typeof x] === y[k as keyof typeof y]);
+  return tokens(a.tokens, b.tokens) && a.models.length === b.models.length && a.models.every(m => {
+    const other = b.models.find(n => n.name === m.name); return !!other && tokens(m.tokens, other.tokens);
+  });
+}
+function aggregatesMatch(a: Aggregate, b: Aggregate): boolean {
+  const close = (x: number, y: number) => Math.abs(x - y) <= Math.max(1e-10, Math.max(x, y) * 1e-9);
+  const usage = (x: Omit<Aggregate, 'models'>, y: Omit<Aggregate, 'models'>) =>
+    Object.keys(x.tokens).every(k => x.tokens[k as keyof typeof x.tokens] === y.tokens[k as keyof typeof y.tokens])
+    && x.cost.status === y.cost.status && close(x.cost.knownCostUSD, y.cost.knownCostUSD)
+    && (x.cost.amountUSD === null ? y.cost.amountUSD === null : y.cost.amountUSD !== null && close(x.cost.amountUSD, y.cost.amountUSD));
+  return usage(a, b) && a.models.length === b.models.length && a.models.every(m => {
+    const other = b.models.find(n => n.name === m.name); return !!other && usage(m, other);
+  });
+}
+/** Exact inclusive calendar-day projection. null means unsupported/unavailable; [] means supported empty.
+ * Never attributes by lastActivity. Callers must display a warning when reconciled is false. */
+export function sessionUsageForRange(snapshot: UsageSnapshot, provider: 'all' | UsageProvider, start: string, end: string): SessionUsageRange | null {
+  const view = historyView(snapshot, provider, start, end), history = decodeHistory(snapshot.history);
+  if (!view || !history?.sessionDays) return null;
+  const ids = new Set(snapshot.sessions.map(s => JSON.stringify([s.provider ?? 'codex', s.id])));
+  if (history.sessionDays.some(r => !ids.has(JSON.stringify([r.provider, r.sessionId])))) return null;
+  const rows = history.sessionDays.filter(r => r.date >= start && r.date <= end && (provider === 'all' || r.provider === provider));
+  const groups = new Map<string, typeof rows>();
+  for (const row of rows) {
+    const key = JSON.stringify([row.provider, row.sessionId]), group = groups.get(key) ?? [];
+    group.push(row); groups.set(key, group);
+  }
+  const sessions = [...groups.values()].map(group => ({ sessionId: group[0]!.sessionId, provider: group[0]!.provider,
+    aggregate: sumAggregates(group.map(r => r.aggregate)) })).sort((a, b) => a.provider.localeCompare(b.provider) || a.sessionId.localeCompare(b.sessionId));
+  const bucket = (values: {date: string; provider: UsageProvider; aggregate: Aggregate}[]) => {
+    const result = new Map<string, Aggregate[]>();
+    for (const row of values) { const key = JSON.stringify([row.date, row.provider]), group = result.get(key) ?? []; group.push(row.aggregate); result.set(key, group); }
+    return new Map([...result].map(([k, values]) => [k, sumAggregates(values)]));
+  };
+  const expected = bucket(history.days.filter(d => d.date >= start && d.date <= end && (provider === 'all' || d.provider === provider)));
+  const actual = bucket(rows), keys = new Set([...expected.keys(), ...actual.keys()]);
+  let reconciled = true, tokensMatch = true;
+  for (const key of keys) {
+    const a = expected.get(key) ?? sumAggregates([]), b = actual.get(key) ?? sumAggregates([]);
+    if (!aggregatesMatch(a, b)) reconciled = false;
+    if (!aggregateTokensMatch(a, b)) tokensMatch = false;
+  }
+  return { sessions, aggregate: sumAggregates(sessions.map(s => s.aggregate)), reconciled,
+    ...(!reconciled ? { reconciliationIssue: tokensMatch ? 'pricing' as const : 'tokens' as const } : {}) };
 }

@@ -322,3 +322,181 @@
  }
  
  impl ModelBreakdown {
+--- a/rust/adapters/codex/src/aggregate.rs
++++ b/rust/adapters/codex/src/aggregate.rs
+@@ -852,6 +852,15 @@
+     kind: AgentReportKind,
+     timezone: Option<&str>,
+ ) -> Result<BTreeMap<String, CodexGroup>> {
++    aggregate_events_inner(events, kind, timezone, false)
++}
++
++/// Same global response deduplication and tier merge as ordinary reports, keyed by day+session.
++pub fn aggregate_session_days(events: &[CodexTokenUsageEvent], timezone: Option<&str>) -> Result<BTreeMap<String, CodexGroup>> {
++    aggregate_events_inner(events, AgentReportKind::Session, timezone, true)
++}
++
++fn aggregate_events_inner(events: &[CodexTokenUsageEvent], kind: AgentReportKind, timezone: Option<&str>, session_days: bool) -> Result<BTreeMap<String, CodexGroup>> {
+     let mut groups = BTreeMap::new();
+     let mut seen_compaction_responses = FxHashSet::default();
+     let mut compaction_tiers = FxHashMap::default();
+@@ -892,7 +901,7 @@
+             AgentReportKind::Daily => date,
+             AgentReportKind::Weekly => week_start(&date, WeekDay::Monday).unwrap_or(date),
+             AgentReportKind::Monthly => date[..7].to_string(),
+-            AgentReportKind::Session => event.session_id.clone(),
++            AgentReportKind::Session => if session_days { format!("{}\0{}", date, event.session_id) } else { event.session_id.clone() },
+         };
+         let group = groups.entry(period).or_insert_with(CodexGroup::default);
+         let model = crate::model_aliases::resolve_model_name(model);
+--- a/rust/adapters/codex/src/lib.rs
++++ b/rust/adapters/codex/src/lib.rs
+@@ -18,7 +18,7 @@
+ 
+ use crate::{PricingMap, Result, cli::AgentCommandArgs, log_level, print_json_or_jq, wants_json};
+ 
+-pub use aggregate::{aggregate_events, filter_events_by_date, load_groups};
++pub use aggregate::{aggregate_events, aggregate_session_days, filter_events_by_date, load_groups};
+ #[doc(hidden)]
+ pub use loader::load_codex_events_from_directory;
+ pub use loader::load_codex_events_with_detection;
+--- a/rust/crates/ccusage-adapter-all/src/loader.rs
++++ b/rust/crates/ccusage-adapter-all/src/loader.rs
+@@ -41,11 +41,12 @@
+     shared: &SharedArgs,
+ ) -> Result<AllSectionsLoadResult> {
+     let pricing = load_pricing(shared);
++    let (daily_sources, session_sources, session_days) = load_session_day_sources(shared, &pricing)?;
+     let daily_base = needs_daily_family(kinds)
+-        .then(|| load_base_rows(AgentReportKind::Daily, shared, &pricing))
++        .then(|| load_base_rows_inner(AgentReportKind::Daily, shared, &pricing, Some(&daily_sources)))
+         .transpose()?;
+     let session_base = needs_session(kinds)
+-        .then(|| load_base_rows(AgentReportKind::Session, shared, &pricing))
++        .then(|| load_base_rows_inner(AgentReportKind::Session, shared, &pricing, Some(&session_sources)))
+         .transpose()?;
+ 
+     let daily_detected_agents = daily_base
+@@ -75,6 +76,7 @@
+ 
+     Ok(AllSectionsLoadResult {
+         sections,
++        session_days,
+         daily_detected_agents,
+         session_detected_agents,
+     })
+@@ -102,6 +104,10 @@
+     shared: &SharedArgs,
+     pricing: &PricingMap,
+ ) -> Result<AllLoadResult> {
++    load_base_rows_inner(load_kind, shared, pricing, None)
++}
++
++fn load_base_rows_inner(load_kind: AgentReportKind, shared: &SharedArgs, pricing: &PricingMap, preloaded: Option<&[AgentRows; 2]>) -> Result<AllLoadResult> {
+     let mut progress = crate::progress::UsageLoadProgress::new(
+         crate::log_level() != Some(0)
+             && crate::progress::should_show_usage_load_progress(
+@@ -118,13 +124,13 @@
+             index: 0,
+             agent: BUILT_IN_AGENT_NAMES[0],
+             progress_agent: crate::progress::UsageLoadAgent("Claude"),
+-            load: Box::new(|| load_claude_rows(load_kind, &loader_shared)),
++            load: Box::new(|| match preloaded { Some(rows) => Ok(rows[0].clone()), None => load_claude_rows(load_kind, &loader_shared) }),
+         },
+         AgentLoadSpec {
+             index: 1,
+             agent: BUILT_IN_AGENT_NAMES[1],
+             progress_agent: crate::progress::UsageLoadAgent("Codex"),
+-            load: Box::new(|| load_codex_rows(load_kind, &loader_shared, pricing)),
++            load: Box::new(|| match preloaded { Some(rows) => Ok(rows[1].clone()), None => load_codex_rows(load_kind, &loader_shared, pricing) }),
+         },
+         AgentLoadSpec {
+             index: 2,
+@@ -1636,3 +1642,40 @@
+         );
+     }
+ }
++
++// Load each supported source exactly once, preserving canonical identity/replay decisions.
++fn load_session_day_sources(shared: &SharedArgs, pricing: &PricingMap) -> Result<([AgentRows; 2], [AgentRows; 2], Vec<(String, AllRow)>)> {
++    let mut ledger = Vec::new();
++    let mut entries = claude::load_entries(shared, None)?;
++    let claude_detected = !entries.is_empty();
++    let mut lifetime = summarize_entry_sessions(&entries)?;
++    filter_session_summaries(&mut lifetime, shared);
++    let claude_sessions = AgentRows { rows: summary_rows("claude", lifetime, false), detected: claude_detected };
++    filter_loaded_entries_by_date(&mut entries, shared);
++    let mut groups = BTreeMap::<(String, String, String), SessionAccumulator>::new();
++    for entry in &entries {
++        groups.entry((entry.date.clone(), entry.project_path.to_string(), entry.session_id.to_string())).or_default().add_entry(entry);
++    }
++    let mut claude_day_rows = Vec::new();
++    for ((date, _, _), group) in groups {
++        let rows = summary_rows("claude", vec![group.into_summary()?], false);
++        for row in rows {
++            ledger.push((date.clone(), row.clone()));
++            claude_day_rows.push(AllRow { period: date.clone(), ..row });
++        }
++    }
++    let claude_daily = AgentRows { rows: claude_day_rows, detected: claude_detected };
++    let (mut events, detected) = codex::load_codex_events_with_detection(shared)?;
++    let speed = codex::resolve_codex_speed(CodexSpeed::Auto);
++    let sessions = codex::aggregate_events(&events, AgentReportKind::Session, shared.timezone.as_deref())?;
++    let codex_sessions = AgentRows { rows: sessions.iter().map(|(id,g)| codex_group_row(id,g,pricing,speed,shared.mode)).collect(), detected };
++    codex::filter_events_by_date(&mut events, shared)?;
++    let daily = codex::aggregate_events(&events, AgentReportKind::Daily, shared.timezone.as_deref())?;
++    let codex_daily = AgentRows { rows: daily.iter().map(|(d,g)| codex_group_row(d,g,pricing,speed,shared.mode)).collect(), detected };
++    for (key, group) in codex::aggregate_session_days(&events, shared.timezone.as_deref())? {
++        let (date, session) = key.split_once('\0').expect("internal ledger key");
++        ledger.push((date.to_string(), codex_group_row(session,&group,pricing,speed,shared.mode)));
++    }
++    ledger.sort_by(|(a,x),(b,y)| (a,x.agent,&x.period).cmp(&(b,y.agent,&y.period)));
++    Ok(([claude_daily, codex_daily], [claude_sessions, codex_sessions], ledger))
++}
+--- a/rust/crates/ccusage-adapter-all/src/types.rs
++++ b/rust/crates/ccusage-adapter-all/src/types.rs
+@@ -28,6 +28,7 @@
+ 
+ pub(super) struct AllSectionsLoadResult {
+     pub(super) sections: Vec<(AgentReportKind, Vec<AllRow>)>,
++    pub(super) session_days: Vec<(String, AllRow)>,
+     pub(super) daily_detected_agents: Vec<&'static str>,
+     pub(super) session_detected_agents: Vec<&'static str>,
+ }
+@@ -43,6 +44,7 @@
+     }
+ }
+ 
++#[derive(Clone)]
+ pub(super) struct AgentRows {
+     pub(super) rows: Vec<AllRow>,
+     pub(super) detected: bool,
+--- a/rust/crates/ccusage-adapter-all/src/lib.rs
++++ b/rust/crates/ccusage-adapter-all/src/lib.rs
+@@ -45,6 +45,7 @@
+         if wants_json(&shared) {
+             return report::print_sections_report_json(
+                 &result.sections,
++                &result.session_days,
+                 kind,
+                 include_agents,
+                 shared.jq.as_deref(),
+--- a/rust/crates/ccusage-adapter-all/src/report.rs
++++ b/rust/crates/ccusage-adapter-all/src/report.rs
+@@ -62,12 +62,16 @@
+ 
+ pub(super) fn print_sections_report_json(
+     sections: &[(AgentReportKind, Vec<AllRow>)],
++    session_days: &[(String, AllRow)],
+     command_kind: AgentReportKind,
+     include_agents: bool,
+     jq: Option<&str>,
+     no_cost: bool,
+ ) -> Result<()> {
+     let mut report = sections_report_json(sections, command_kind, include_agents);
++    report.fields.push(("sessionDays", Value::Array(session_days.iter().map(|(date,row)| {
++        let mut value = row_json(row, false); value["date"] = json!(date); value
++    }).collect())));
+     if no_cost {
+         report.strip_costs();
+     }

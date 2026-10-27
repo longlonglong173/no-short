@@ -34,6 +34,14 @@ public struct AppLocalization: Sendable {
         }.joined()
     }
     public static let catalog: [String: [String]] = [
+  "Giá theo phiên chưa khớp tổng ngày do giá chưa đầy đủ. Token theo ngày vẫn chính xác; chi phí từng phiên là phần đã biết.": ["Session prices differ from daily totals because pricing is incomplete. Daily tokens remain exact; session costs show known amounts.", "由于定价不完整，会话费用与每日总额不同。每日令牌数仍准确；会话费用显示已知部分。"],
+  "Các phiên đóng góp trong ngày": ["Contributing sessions for this day", "当天有用量的会话"],
+  "Runtime chưa hỗ trợ phân bổ usage theo phiên/ngày. Cập nhật runtime để xem chi tiết.": ["This runtime does not support session/day attribution. Update the runtime to view details.", "此运行时不支持按会话和日期归属用量。请更新运行时以查看详情。"],
+  "Không thể đối soát phân bổ phiên với tổng ngày. Chi tiết phiên chưa khả dụng.": ["Session allocation does not match daily totals. Session details are unavailable.", "会话归属用量与每日总量不一致。会话详情暂不可用。"],
+  "Không có phiên đóng góp trong ngày này.": ["No contributing sessions for this day.", "当天没有贡献用量的会话。"],
+  "Chi tiết usage trong ngày · %@": ["Usage details for this day · %@", "当天用量详情 · %@"],
+  "Đóng chi tiết phiên": ["Close session details", "关闭会话详情"],
+
   "Bộ đọc chưa cung cấp nguồn giá model Codex. Cập nhật runtime No Short Usage rồi thử lại.": ["The reader does not supply Codex model price provenance. Update the No Short Usage runtime and retry.", "读取器未提供 Codex 模型价格来源。请更新 No Short Usage 运行时后重试。"],
   "Cấu hình đơn giá đã thay đổi khi đọc log. Làm mới để tính theo cấu hình mới.": ["Pricing configuration changed while reading logs. Refresh to use the new configuration.", "读取日志期间定价配置发生变化。请刷新以使用新配置。"],
   "Đơn giá…": ["Pricing…", "价格…"],

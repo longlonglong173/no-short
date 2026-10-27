@@ -43,6 +43,7 @@ struct UsageHistoryView: View {
                     } else {
                         dailyChart(projection)
                     }
+                    if model.selectedDay != nil { sessions }
                     models
                 } else {
                     Text(model.l("Lịch sử chưa khả dụng cho nguồn này. Làm mới bằng runtime hỗ trợ lịch sử."))
@@ -152,6 +153,36 @@ struct UsageHistoryView: View {
                 }
             }.accessibilityIdentifier("history-day")
         }
+    }
+    private var sessions: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(model.l("Các phiên đóng góp trong ngày")).font(.headline)
+            if let usage = model.sessionUsage {
+                if usage.reconciliationIssue == "tokens" {
+                    warning(model.l("Không thể đối soát phân bổ phiên với tổng ngày. Chi tiết phiên chưa khả dụng."))
+                } else {
+                    if !usage.reconciled { warning(model.l("Giá theo phiên chưa khớp tổng ngày do giá chưa đầy đủ. Token theo ngày vẫn chính xác; chi phí từng phiên là phần đã biết.")) }
+                    ForEach(usage.sessions) { row in
+                        VStack(alignment: .leading, spacing: 5) {
+                            Button(model.sessionTitle(row.sessionId)) { model.selectSession(row.sessionId) }
+                                .buttonStyle(.link).accessibilityIdentifier("history-session-" + row.sessionId)
+                            Text(row.provider.rawValue + " · " + UsagePresentation.number(row.aggregate.tokens.total) + " tokens · " + UsagePresentation.money(row.aggregate.cost))
+                                .font(.system(size: 12)).foregroundStyle(.secondary)
+                        }
+                    }
+                    if usage.sessions.isEmpty { Text(model.l("Không có phiên đóng góp trong ngày này.")).foregroundStyle(.secondary) }
+                    if let selected = model.selectedSessionUsage {
+                        Text(model.sessionTitle(selected.sessionId)).font(.headline)
+                        Text(model.l("Chi tiết usage trong ngày · %@", model.selectedDay ?? ""))
+                        Text(UsagePresentation.money(selected.aggregate.cost) + " · " + UsagePresentation.number(selected.aggregate.tokens.total) + " tokens")
+                        Button(model.l("Đóng chi tiết phiên")) { model.selectSession(nil) }.buttonStyle(.link)
+                    }
+                }
+            } else {
+                Text(model.l("Runtime chưa hỗ trợ phân bổ usage theo phiên/ngày. Cập nhật runtime để xem chi tiết."))
+                    .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+            }
+        }.accessibilityIdentifier("history-sessions")
     }
     private var models: some View {
         VStack(alignment: .leading, spacing: 12) {

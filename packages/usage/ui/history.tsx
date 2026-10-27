@@ -2,7 +2,7 @@ import { PricingOrigin } from './pricing';
 import { useEffect, useMemo, useState } from 'react';
 import { ExportControls, type DownloadFile } from './export';
 import { ComparisonPanel } from './comparison';
-import { comparisonIsStale, compareHistory, historyRange, historyView, type HistoryPreset, type DateRange } from '../src/history';
+import { comparisonIsStale, compareHistory, historyRange, historyView, sessionUsageForRange, type HistoryPreset, type DateRange } from '../src/history';
 import type { UsageSnapshot, Aggregate } from '../src/types';
 import { useTranslation } from './language';
 import { costText, tokenText, type ProviderFilter } from './model';
@@ -29,6 +29,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     document.addEventListener('visibilitychange', syncClock);
     return () => { clearInterval(timer); document.removeEventListener('visibilitychange', syncClock); };
   }, [comparisonEnabled]);
+  const [selectedSession, setSelectedSession] = useState<string | null>(null);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const range = historyRange(preset, now, snapshot.timeZone, custom);
   const active = range ?? lastValid.range;
@@ -36,7 +37,11 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
   useEffect(() => { setSelectedDay(null); }, [provider, active.start, active.end]);
   const view = useMemo(() => !range && lastValid.timeZone !== snapshot.timeZone ? null : historyView(snapshot, provider, active.start, active.end), [snapshot, provider, active.start, active.end, !!range, lastValid.timeZone]);
   useEffect(() => { if (selectedDay && !view?.days.some(day => day.date === selectedDay)) setSelectedDay(null); }, [view, selectedDay]);
-  const detail: Aggregate | undefined = selectedDay ? view?.days.find(d => d.date === selectedDay)?.aggregate : view?.aggregate;
+  useEffect(() => { setSelectedSession(null); }, [selectedDay, provider, active.start, active.end, snapshot]);
+  const sessionUsage = selectedDay ? sessionUsageForRange(snapshot, provider, selectedDay, selectedDay) : null;
+  const sessionDetail = sessionUsage && sessionUsage.reconciliationIssue !== 'tokens' ? sessionUsage.sessions.find(s => s.sessionId === selectedSession) : undefined;
+  const sessionTitle = (id: string) => snapshot.sessions.find(s => s.id === id)?.title ?? id;
+  const detail: Aggregate | undefined = sessionDetail?.aggregate ?? (selectedDay ? view?.days.find(d => d.date === selectedDay)?.aggregate : view?.aggregate);
   const money = (a: Aggregate) => costText(a.cost, language);
   const max = (view?.days ?? []).reduce((max, day) => Math.max(max, day.aggregate.cost.knownCostUSD), .01);
   const hasClaude = Array.isArray(snapshot.history?.providers) && snapshot.history.providers.includes('claude');
@@ -70,6 +75,20 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
       {!view.days.length ? <p className="muted">{l('Chưa có usage trong khoảng thời gian này.')}</p> : null}
       <div className="section-heading"><h2>{selectedDay ?? l('Toàn khoảng')}</h2>{selectedDay ? <button className="text-button" onClick={() => setSelectedDay(null)}>{l('Toàn khoảng')}</button> : null}</div>
       <p className="history-scope">{l('Ngày thiếu giá: cột gạch chéo, không phải chi phí bằng 0.')}</p>
+      {selectedDay ? <section data-testid="history-sessions">
+        <h3>{l('Các phiên đóng góp trong ngày')}</h3>
+        {!sessionUsage ? <p className="notice" data-testid="history-sessions-unavailable">{l('Runtime chưa hỗ trợ phân bổ usage theo phiên/ngày. Cập nhật runtime để xem chi tiết.')}</p>
+          : sessionUsage.reconciliationIssue === 'tokens' ? <p role="alert" className="notice" data-testid="history-sessions-mismatch">{l('Không thể đối soát phân bổ phiên với tổng ngày. Chi tiết phiên chưa khả dụng.')}</p>
+          : <>{!sessionUsage.reconciled ? <p role="alert" className="notice" data-testid="history-sessions-mismatch">{l('Giá theo phiên chưa khớp tổng ngày do giá chưa đầy đủ. Token theo ngày vẫn chính xác; chi phí từng phiên là phần đã biết.')}</p> : null}<ul className="history-session-list">{sessionUsage.sessions.map(row => <li key={row.provider + row.sessionId}>
+            <button className="text-button" aria-pressed={selectedSession === row.sessionId} onClick={() => setSelectedSession(row.sessionId)}>{sessionTitle(row.sessionId)}</button>
+            <span>{row.provider === 'claude' ? 'Claude Code' : 'Codex'} · {tokenText(row.aggregate.tokens.total)} {l('Token')} · {money(row.aggregate)}{row.aggregate.cost.status === 'partial' ? ` ≥$${row.aggregate.cost.knownCostUSD.toFixed(2)}` : ''}</span>
+          </li>)}</ul>{!sessionUsage.sessions.length ? <p>{l('Không có phiên đóng góp trong ngày này.')}</p> : null}</>}
+        {sessionDetail ? <div data-testid="history-session-detail" className="history-session-detail">
+          <h3>{sessionTitle(sessionDetail.sessionId)}</h3><p>{l('Chi tiết usage trong ngày · %@', selectedDay)} · {money(sessionDetail.aggregate)} · {tokenText(sessionDetail.aggregate.tokens.total)} {l('Token')}</p>
+          {sessionDetail.aggregate.models.map(model => <p key={model.name}>{model.name} · {model.tokens.total.toLocaleString(language)} {l('Token')} · {costText(model.cost, language)}<PricingOrigin pricing={model.pricing}/></p>)}
+          <button className="text-button" onClick={() => setSelectedSession(null)}>{l('Đóng chi tiết phiên')}</button>
+        </div> : null}
+      </section> : null}
       {detail ? <div className="history-table" data-testid="history-models" tabIndex={0} role="region" aria-label={l('Bảng model lịch sử')}>
         <table><thead><tr>{['Model', 'Input', 'Output', 'Cache read', 'Cache write', 'Tổng', 'Chi phí'].map(label => <th key={label}>{l(label)}</th>)}</tr></thead>
           <tbody>{detail.models.map((model, index) => <tr key={`${model.name}:${index}`}><td>{model.name}<PricingOrigin pricing={model.pricing}/></td>{[model.tokens.input, model.tokens.output, model.tokens.cacheRead, model.tokens.cacheWrite, model.tokens.total].map((n, i) => <td key={i}>{n.toLocaleString(language)}</td>)}<td>{costText(model.cost, language)}{model.cost.status === 'partial' ? ` ≥$${model.cost.knownCostUSD.toFixed(2)}` : ''}</td></tr>)}</tbody>
