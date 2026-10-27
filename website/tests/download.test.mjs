@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip';
+const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.7.1/NoShortUsage-0.7.1-arm64.zip';
 for (const page of ['index.html', 'usage.html']) {
   test(`${page} links directly to the current experimental app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
@@ -45,7 +45,7 @@ test('release labels and versioned guidance match the shipped 0.7.0 artifact', (
 test('tagged technical guides describe this release rather than sending users to an older app', () => {
   const native = readFileSync(new URL('../../docs/no-short-usage-menubar.md', import.meta.url), 'utf8');
   const plugin = readFileSync(new URL('../../docs/no-short-usage.md', import.meta.url), 'utf8');
-  assert.ok(native.includes('releases/tag/v0.7.0'));
-  assert.ok(native.includes('NoShortUsage-0.7.0-arm64.zip'));
+  assert.ok(native.includes('releases/tag/v0.7.1'));
+  assert.ok(native.includes('NoShortUsage-0.7.1-arm64.zip'));
   assert.doesNotMatch(native + plugin, /unreleased source|not yet in v0\.4\.3 downloads/);
 });
