@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.0 — Experimental (2026-10-27)
+
+- NS-20: preserve logical session identity when merging log roots. Distinct sessions with matching timestamps/tokens remain separate; copied events in the same logical session are deduplicated. Build the checksum-locked patched ccusage reader from pinned source for both architectures.
+- NS-16: show pricing provenance and unknown-price coverage; configure/reset local provider/model rates in the native app. Reprice snapshots, history and exports consistently, distinguishing explicit zero from unknown prices.
+- NS-17: compare the selected History range with the preceding equal-length range, including provider/model token and estimated-cost changes and cache-read ratio. Handle zero baselines, incomplete prices and stale data explicitly.
+- NS-18: drill from a day to exact contributing session/day usage and session details, without lifetime-cost attribution or changing pin/follow state.
+- NS-13: group History by projects or explicit parent/child work, using trustworthy metadata and exact temporal contributions. Keep unresolved groups and privacy-safe exports; do not infer Claude lineage.
+- NS-19: add default-off anomaly analysis and a labelled end-of-month cost scenario from observed priced days, with insufficient-basis states and separate notification opt-in/deduplication.
+- Keep schema v1, ccusage 20.0.34, English/Vietnamese/Simplified Chinese and the existing owner-signed Apple Silicon update channel. The native download remains ad-hoc signed and not Apple-notarized; Intel runtime/device and NS-05 acceptance remain separate.
+
 ## 0.6.1 — Experimental (2026-10-26)
 
 - NS-15: show the running app version, latest verified update status, last check time and update action in the main popover. Share state with About/menu and preserve a known update after cancellation.

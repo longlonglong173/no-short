@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "no-short",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Local Codex and Claude Code usage estimates, with a macOS menu bar app and Codex panel. Built by Long.",
   "author": {
     "name": "Long",

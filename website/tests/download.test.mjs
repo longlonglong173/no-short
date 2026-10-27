@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.6.1/NoShortUsage-0.6.1-arm64.zip';
+const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip';
 for (const page of ['index.html', 'usage.html']) {
   test(`${page} links directly to the current experimental app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
@@ -26,17 +26,17 @@ test('repository installation link matches the website download', () => {
 });
 
 
-test('release labels and versioned guidance match the shipped 0.6.1 artifact', () => {
+test('release labels and versioned guidance match the shipped 0.7.0 artifact', () => {
   const index = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
   const guide = readFileSync(new URL('../usage.html', import.meta.url), 'utf8');
   const translations = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
-  assert.match(index, /v0\.6\.1 · Experimental/);
-  assert.match(index, /Version 0\.6\.1: app version and daily update notices/);
-  assert.match(guide, /blob\/v0\.6\.1\/PRIVACY\.md/);
-  assert.match(guide, /blob\/v0\.6\.1\/docs\/no-short-usage-menubar\.md/);
+  assert.match(index, /v0\.7\.0 · Experimental/);
+  assert.match(index, /Version 0\.7\.0: pricing, period comparison, project\/session history and usage insights/);
+  assert.match(guide, /blob\/v0\.7\.0\/PRIVACY\.md/);
+  assert.match(guide, /blob\/v0\.7\.0\/docs\/no-short-usage-menubar\.md/);
   assert.doesNotMatch(index + guide + translations, /0\.4\.3/);
-  assert.match(translations, /v0\.6\.1 · Thử nghiệm/);
-  assert.match(translations, /v0\.6\.1 · 实验版/);
+  assert.match(translations, /v0\.7\.0 · Thử nghiệm/);
+  assert.match(translations, /v0\.7\.0 · 实验版/);
   assert.match(index, /Experimental app\. macOS may block its first launch/);
   assert.match(guide, /not notarized by Apple/);
   assert.match(guide, /Intel/);
@@ -45,7 +45,7 @@ test('release labels and versioned guidance match the shipped 0.6.1 artifact', (
 test('tagged technical guides describe this release rather than sending users to an older app', () => {
   const native = readFileSync(new URL('../../docs/no-short-usage-menubar.md', import.meta.url), 'utf8');
   const plugin = readFileSync(new URL('../../docs/no-short-usage.md', import.meta.url), 'utf8');
-  assert.ok(native.includes('releases/tag/v0.6.1'));
-  assert.ok(native.includes('NoShortUsage-0.6.1-arm64.zip'));
+  assert.ok(native.includes('releases/tag/v0.7.0'));
+  assert.ok(native.includes('NoShortUsage-0.7.0-arm64.zip'));
   assert.doesNotMatch(native + plugin, /unreleased source|not yet in v0\.4\.3 downloads/);
 });

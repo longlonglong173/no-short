@@ -26,7 +26,7 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**The signed-update bootstrap for Apple Silicon is [v0.6.1](https://github.com/longlonglong173/no-short/releases/tag/v0.6.1).** Download `NoShortUsage-0.6.1-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.6.1.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**The current Experimental Apple Silicon release is [v0.7.0](https://github.com/longlonglong173/no-short/releases/tag/v0.7.0).** Download `NoShortUsage-0.7.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.7.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -344,7 +344,7 @@ A configured Apple Silicon build uses **Check for Updates → review version/not
 
 Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
 
-**Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install0.6.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
+**Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install 0.7.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
 
 See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#native-app-updates).
 
@@ -354,4 +354,12 @@ The main popover always shows its running version and update status, including i
 
 Daily information-only checks are on by default, with an on/off toggle in About and Settings. The app stores the last attempt across restarts and waits24hours between automatic attempts, including failures; manual checks remain available. Checks pause while sleeping, terminating, updating or doing cache maintenance. There is no separate daemon.
 
-To test0.6.0 →0.6.1, open the installed [0.6.0](https://github.com/longlonglong173/no-short/releases/tag/v0.6.0) (`NoShortUsage-0.6.0-arm64.zip`), choose About → Check for Updates, then confirm Install Update and Install and Relaunch. After relaunch the popover should showv0.6.1. Existing0.5.0 users still need one manual bootstrap.
+To update 0.6.0 or 0.6.1 → 0.7.0, choose About → Check for Updates after the 0.7.0 signed feed is deployed, then confirm Install Update and Install and Relaunch. Check that the popover shows v0.7.0 after relaunch. Users of 0.5.0 or earlier install the new ZIP manually once.
+
+## History and pricing additions — 0.7.0
+
+History can compare with the preceding equal-length period, show exact sessions contributing to a selected day, and group by project or recorded parent/child work. Project metadata can be unresolved; it is not guessed. These modes retain the provider/date scope, pricing uncertainty and export privacy protections.
+
+The native pricing settings show provenance and let you save/reset exact provider/model input/output/cache rates. A zero custom rate differs from unknown pricing. The same selected rates apply to history and export, including historical repricing. The panel can inspect the shared pricing basis.
+
+Usage anomaly/month scenario analysis is off by default and uses observed, fully priced days. It explains insufficient basis rather than inventing missing usage. Notification permission is a separate opt-in; forecasts are API-equivalent scenarios, not invoices or subscription quotas. See [0.7.0 release details](releases/0.7.0.md).

@@ -71,7 +71,7 @@ có yêu cầu của người dùng.
 
 ### NS-16 — Nguồn giá và đơn giá tùy chỉnh
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #41](https://github.com/longlonglong173/no-short/pull/41). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #41](https://github.com/longlonglong173/no-short/pull/41) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P1
 - **Phụ thuộc:** NS-20 cung cấp build ccusage có bản vá nguồn để bổ sung tín hiệu fallback đáng tin cậy; NS-06, NS-09 và NS-10 để đồng bộ giá giữa bảng model, lịch sử và export.
 - **Nội dung:** Hiển thị nguồn đơn giá, thời điểm cập nhật và model thiếu giá; cho đặt và khôi phục đơn giá riêng cho model/endpoint tùy chỉnh. Ghi rõ cơ sở giá đang được áp dụng.
@@ -80,7 +80,7 @@ có yêu cầu của người dùng.
 
 ### NS-13 — Thống kê theo dự án và nhóm phiên cha–con
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #45](https://github.com/longlonglong173/no-short/pull/45). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #45](https://github.com/longlonglong173/no-short/pull/45) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P1 (nâng từ P3 ngày 2026-10-27)
 - **Phụ thuộc:** Xác minh metadata thực tế và chốt thiết kế trước khi triển khai; NS-09, NS-10 cho khoảng ngày và export; NS-20 và ledger chính xác của NS-18 trước khi nghiệm thu tổng. Nhóm theo chế độ dự án/công việc, giữ cùng bộ lọc provider/ngày, không bổ sung bộ chọn một dự án riêng.
 - **Nội dung:** Thống kê chi phí/token theo dự án và tổng hợp một công việc gồm phiên chính cùng các tác vụ con. Giữ một task hiện có, chia thành hai mốc nghiệm thu riêng.
@@ -91,7 +91,7 @@ có yêu cầu của người dùng.
 
 ### NS-20 — Độ đúng khi gộp nhiều nguồn log
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #40](https://github.com/longlonglong173/no-short/pull/40). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #40](https://github.com/longlonglong173/no-short/pull/40) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P1
 - **Phụ thuộc:** Không; tiếp nhận vấn đề còn mở được ghi nhận trong NS-08, không phụ thuộc việc mở lại tối ưu metadata.
 - **Nội dung:** Tái hiện và xử lý việc ccusage gộp nhầm sự kiện giữa hai phiên khi timestamp và số token giống nhau, đồng thời giữ loại trùng bản sao cùng sự kiện trên nhiều nguồn. Ghi rõ phương án xử lý, định danh sự kiện sử dụng và giới hạn còn lại.
@@ -189,7 +189,7 @@ có yêu cầu của người dùng.
 
 ### NS-17 — So sánh hai khoảng thời gian
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #42](https://github.com/longlonglong173/no-short/pull/42). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #42](https://github.com/longlonglong173/no-short/pull/42) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-09.
 - **Nội dung:** So sánh khoảng đã chọn với kỳ trước cùng độ dài; hiển thị chênh lệch token/chi phí theo provider, model và thay đổi tỷ lệ cache.
@@ -198,7 +198,7 @@ có yêu cầu của người dùng.
 
 ### NS-18 — Truy từ ngày tới các phiên đóng góp
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #43](https://github.com/longlonglong173/no-short/pull/43). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #43](https://github.com/longlonglong173/no-short/pull/43) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-09 cho chọn ngày; NS-20 trước khi nghiệm thu tổng. Phối hợp NS-10 nếu bổ sung export theo phiên/ngày.
 - **Nội dung:** Chọn một ngày trên lịch sử để xem các phiên đóng góp usage trong ngày đó và mở chi tiết từng phiên.
@@ -207,18 +207,18 @@ có yêu cầu của người dùng.
 
 ### NS-19 — Bất thường và dự báo ngân sách
 
-- [ ] **Trạng thái:** Đã triển khai và review; chờ chủ dự án merge [PR #44](https://github.com/longlonglong173/no-short/pull/44). CI được theo dõi trong PR.
+- [ ] **Trạng thái:** Đã merge [PR #44](https://github.com/longlonglong173/no-short/pull/44) ngày 2026-10-27; chuẩn bị phát hành 0.7.0. Nghiệm thu thiết bị vẫn theo NS-05.
 - **Ưu tiên:** P2
 - **Phụ thuộc:** NS-11, NS-16, NS-17 và NS-20.
 - **Nội dung:** Cảnh báo mức sử dụng tăng bất thường và dự báo chi phí API quy đổi cuối tháng; giải thích lịch sử, khoảng tính và cơ sở giá được dùng.
 - **Tiêu chí nghiệm thu:** Mặc định tắt; thông báo macOS vẫn chỉ bật theo lựa chọn rõ ràng. Nêu quy tắc xác định bất thường, mức lịch sử tối thiểu và công thức dự báo trong thiết kế trước triển khai. Thiếu lịch sử/giá hoặc dữ liệu cũ phải hiện chưa đủ căn cứ, không đưa dự báo chính xác giả. Chống báo lặp qua refresh/khởi động lại và không che lỗi đọc usage. Kiểm tra đầu/cuối tháng, đổi nguồn/múi giờ/provider/giá, lịch sử có ngày trống, mức tăng đột biến và quyền thông báo bị từ chối.
 - **Bằng chứng:** Phân tích mặc định tắt, mẫu bảy ngày quan sát có giá đầy đủ, cảnh báo trung vị và kịch bản cuối tháng; chống lặp/permission riêng; tràn số đã được review lại. Tip `9537578`; [thiết kế và kiểm chứng NS-19](https://github.com/longlonglong173/no-short/blob/9537578b113c704a40d1e87925cd46539509fc1e/docs/tasks/NS-19.md). Chỉ là bằng chứng source/local/CI; chưa phát hành hoặc nghiệm thu app cài đặt, host thực tế hay Intel.
 
-## Bàn giao các PR — chờ chủ dự án merge
+## Bàn giao các PR — đã merge, chuẩn bị 0.7.0
 
 - [PR #39 — backlog](https://github.com/longlonglong173/no-short/pull/39).
 - Thứ tự ghép đã kiểm chứng: [#40 / NS-20](https://github.com/longlonglong173/no-short/pull/40) → [#41 / NS-16](https://github.com/longlonglong173/no-short/pull/41) → [#42 / NS-17](https://github.com/longlonglong173/no-short/pull/42) → [#43 / NS-18](https://github.com/longlonglong173/no-short/pull/43) → [#45 / NS-13](https://github.com/longlonglong173/no-short/pull/45) → [#44 / NS-19](https://github.com/longlonglong173/no-short/pull/44).
-- Các PR có base theo nhánh phụ thuộc; sau khi merge PR cha, kiểm tra base PR tiếp theo về `main` trước khi merge. Mỗi PR giữ phạm vi task riêng. Phụ thuộc quyết định thứ tự thực hiện trước mức ưu tiên.
+- Chủ dự án đã merge cả sáu PR và backlog #39 vào `main` ngày 2026-10-27. Bản 0.7.0 được chuẩn bị theo [release record](releases/0.7.0.md); source merge không tự thay app đang cài hay chứng minh nghiệm thu thiết bị.
 - Candidate cuối `035405335e4fb7d98afe2db58faed8c81d82f7ec` ghép sạch cả sáu task. Các lượt kiểm chứng rộng đạt 204 Usage không skip; 236 Swift (gồm một probe tổng hợp), 19 script; 43 browser. Phần sửa CSS có bốn kiểm tra browser trên source sửa thực tế. Sau lần tách view SwiftUI cuối, 16 test native của worker và hai probe native độc lập qua; 12 ảnh render trước/sau giống hệt byte/pixel. Không cộng kiểm tra lặp thành test riêng hoặc coi mọi lượt chạy là trên cùng một head. CI Swift 6.0 của NS-18 và NS-13 đã qua ở head tương ứng; PR cuối NS-19 đặt trực tiếp trên NS-13 để CI kiểm chứng đúng cây kết hợp cả sáu task. Trạng thái các head theo dõi trực tiếp trong PR.
 - Bản 0.6.1 đã phát hành vẫn giữ nguyên. Source mới cần build/phát hành runtime mới; không thay app đang cài. Các gate NS-05 vẫn theo dõi riêng, không được đánh dấu đạt từ test source hoặc cross-build.
 
