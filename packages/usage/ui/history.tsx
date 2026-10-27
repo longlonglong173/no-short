@@ -1,7 +1,8 @@
 import { PricingOrigin } from './pricing';
 import { useEffect, useMemo, useState } from 'react';
 import { ExportControls, type DownloadFile } from './export';
-import { historyRange, historyView, type HistoryPreset, type DateRange } from '../src/history';
+import { ComparisonPanel } from './comparison';
+import { comparisonIsStale, compareHistory, historyRange, historyView, type HistoryPreset, type DateRange } from '../src/history';
 import type { UsageSnapshot, Aggregate } from '../src/types';
 import { useTranslation } from './language';
 import { costText, tokenText, type ProviderFilter } from './model';
@@ -14,6 +15,20 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
   const initial = historyRange('30d', now, snapshot.timeZone)!;
   const [custom, setCustom] = useState<DateRange>(initial);
   const [lastValid, setLastValid] = useState({ range: initial, timeZone: snapshot.timeZone });
+  const [comparisonEnabled, setComparisonEnabled] = useState(false);
+  const [comparisonNow, setComparisonNow] = useState(() => new Date());
+  useEffect(() => {
+    if (!comparisonEnabled) return;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const syncClock = () => {
+      clearInterval(timer);
+      setComparisonNow(new Date());
+      if (document.visibilityState === 'visible') timer = setInterval(() => setComparisonNow(new Date()), 1_000);
+    };
+    syncClock();
+    document.addEventListener('visibilitychange', syncClock);
+    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', syncClock); };
+  }, [comparisonEnabled]);
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const range = historyRange(preset, now, snapshot.timeZone, custom);
   const active = range ?? lastValid.range;
@@ -41,7 +56,7 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
     </div> : null}
     {!range ? <p role="alert" className="notice">{l('Khoảng ngày không hợp lệ. Chọn ngày bắt đầu không sau ngày kết thúc và không chọn tương lai.')}</p> : null}
     <p className="history-scope">{active.start} — {active.end} · {snapshot.timeZone}</p>
-    {snapshot.status === 'stale' || snapshot.status === 'error' ? <p className="notice" role="alert">{l('Dữ liệu cũ · đang chờ cập nhật')}</p> : null}
+    {snapshot.status === 'stale' || snapshot.status === 'error' || (comparisonEnabled && comparisonIsStale(snapshot, comparisonNow)) ? <p className="notice" role="alert">{l('Dữ liệu cũ · đang chờ cập nhật')}</p> : null}
     {!view ? <p data-testid="history-unavailable" className="notice">{l('Chưa có lịch sử tương thích. Cập nhật dữ liệu hoặc runtime; không suy ra lịch sử từ toàn phiên.')}</p> : <>
       <div className="history-summary"><strong data-testid="history-cost">{money(view.aggregate)}</strong><span>{l('Tổng trong khoảng đã chọn')}</span><span>{tokenText(view.aggregate.tokens.total)} {l('Token')}</span></div>
       {view.aggregate.cost.status !== 'estimated' ? <p className="history-price-note">{l('Phần đã biết: $%@ · Giá chưa đầy đủ, không phải $0.', view.aggregate.cost.knownCostUSD.toFixed(2))}</p> : null}
@@ -61,6 +76,8 @@ export function HistoryPanel({ snapshot, initialProvider, downloadFile }: { snap
         </table>
       </div> : null}
     </>}
+    <label className="comparison-toggle"><input type="checkbox" checked={comparisonEnabled} onChange={e => setComparisonEnabled(e.target.checked)}/>{l('So sánh với kỳ trước cùng độ dài')}</label>
+    {comparisonEnabled ? <ComparisonPanel value={view ? compareHistory(snapshot, provider, active, comparisonNow) : null}/> : null}
     <ExportControls snapshot={snapshot} provider={provider} range={active} available={!!view} downloadFile={downloadFile}/>
     <p className="history-scope">{l('Chỉ thống kê log còn trên máy; không phải toàn bộ lịch sử tài khoản.')} · {l('Nhận gần nhất')}: {new Intl.DateTimeFormat(language, { dateStyle: 'short', timeStyle: 'short', timeZone: snapshot.timeZone }).format(new Date(snapshot.generatedAt))}</p>
   </div>;

@@ -11,6 +11,8 @@ struct UsageHistoryView: View {
                 controls
                 exportControls
                 if model.preset == .custom { customDates }
+                Toggle(model.l("So sánh với kỳ trước cùng độ dài"), isOn: $model.comparisonEnabled)
+                    .toggleStyle(.checkbox).accessibilityIdentifier("history-comparison-toggle")
                 VStack(alignment: .leading, spacing: 5) {
                     Text(model.scopeLabel).fontWeight(.medium)
                     Text(model.updatedLabel)
@@ -29,6 +31,13 @@ struct UsageHistoryView: View {
                 if model.isLoading { ProgressView(model.l("Đang cập nhật…")).controlSize(.small) }
                 if let projection = model.projection {
                     summary(projection.aggregate)
+                    if model.comparisonEnabled {
+                        if let comparison = model.comparison {
+                            UsageComparisonView(value: comparison, language: model.language)
+                        } else {
+                            warning(model.l("Chưa có khoảng so sánh hợp lệ."))
+                        }
+                    }
                     if projection.days.isEmpty {
                         Text(model.l("Không có usage trong log hiện còn cho khoảng này.")).foregroundStyle(.secondary)
                     } else {
