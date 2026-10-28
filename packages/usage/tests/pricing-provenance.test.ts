@@ -107,6 +107,7 @@ test('adapter policy ignores a fresh unsafe same-reader cache without deleting o
   const oldDirectory = join(cacheDir, oldScope); await mkdir(oldDirectory, { recursive: true });
   const unsafe = buildSnapshot(fixture, { ...options, now: new Date() });
   unsafe.month.cost = { amountUSD: 999, knownCostUSD: 999, status: 'estimated' };
+  unsafe.history!.days = []; // A fresh unsafe cache must not hide the recorded history.
   const oldBytes = JSON.stringify(unsafe), markerBytes = JSON.stringify({ lastOnline: Date.now() });
   await writeFile(join(oldDirectory, 'snapshot.json'), oldBytes);
   await writeFile(join(oldDirectory, 'pricing-check.json'), markerBytes);
@@ -114,7 +115,8 @@ test('adapter policy ignores a fresh unsafe same-reader cache without deleting o
   await writeFile(binary, '#!/bin/sh\ncat <<\'REPORT\'\n' + JSON.stringify(fixture) + '\nREPORT\n', { mode: 0o700 });
   const service = createUsageService({ binary, roots, cacheDir, timeZone, pricingFile: join(root, 'missing.json') });
   const actual = await service.get();
-  expect(actual.month.cost.amountUSD).toBeCloseTo(.57, 8);
+  // The fixture's two historical days cost .10 + .47, regardless of today's month.
+  expect(actual.history?.days.reduce((total, day) => total + day.aggregate.cost.knownCostUSD, 0)).toBeCloseTo(.57, 8);
   expect(actual.sessions).toHaveLength(2);
   expect(usageCacheScope(roots, timeZone)).not.toBe(oldScope);
   expect(await readFile(join(oldDirectory, 'snapshot.json'), 'utf8')).toBe(oldBytes);
