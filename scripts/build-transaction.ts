@@ -1,5 +1,27 @@
+import { dlopen } from 'bun:ffi';
 import { mkdir, mkdtemp, readFile, writeFile, rename, lstat, rm, open } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+
+// Keep one inode for the lifetime of this workspace. Ownership belongs to the
+// open file description, not file contents or a PID that another writer can
+// observe stale. Closing our descriptor (including process death) releases only
+// our lock. Never unlink this path: doing so would create independent locks.
+function systemLocks() {
+  if (process.platform !== 'darwin' && process.platform !== 'linux') throw Error('Build transactions require macOS or Linux flock');
+  return dlopen(process.platform === 'darwin' ? '/usr/lib/libSystem.B.dylib' : 'libc.so.6', {
+    flock: { args: ['i32', 'i32'], returns: 'i32' },
+  } as const);
+}
+let locks: ReturnType<typeof systemLocks> | undefined;
+async function acquireBuildLock(path: string) {
+  const handle = await open(path, 'a+', 0o600);
+  try {
+    locks ??= systemLocks();
+    // LOCK_EX | LOCK_NB: contention and OS errors both fail closed.
+    if (locks.symbols.flock(handle.fd, 2 | 4) !== 0) throw Error(`Cannot acquire exclusive build lock: ${path}`);
+    return handle;
+  } catch (error) { await handle.close(); throw error; }
+}
 
 async function exists(path: string): Promise<boolean> {
   try { await lstat(path); return true; } catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return false; throw error; }
@@ -24,17 +46,7 @@ export async function buildTransaction<T extends Record<string, string>>(workspa
   workspace = resolve(workspace);
   await mkdir(workspace, { recursive: true });
   const lock = join(workspace, 'lock.json'), journalPath = join(workspace, 'promotion.json');
-  let handle;
-  try { handle = await open(lock, 'wx'); }
-  catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error;
-    const { pid } = JSON.parse(await readFile(lock, 'utf8'));
-    if (!Number.isSafeInteger(pid) || pid <= 0) throw Error(`Invalid build lock: ${lock}`);
-    try { process.kill(pid, 0); throw Error(`Build already running: ${pid}`); }
-    catch (alive) { if ((alive as NodeJS.ErrnoException).code !== 'ESRCH') throw alive; }
-    await rm(lock); handle = await open(lock, 'wx');
-  }
-  await handle.writeFile(JSON.stringify({ pid: process.pid })); await handle.close();
+  const handle = await acquireBuildLock(lock);
   const save = async (journal: Journal) => { await writeFile(journalPath + '.tmp', JSON.stringify(journal)); await rename(journalPath + '.tmp', journalPath); };
   try {
     if (await exists(journalPath)) {
@@ -63,5 +75,5 @@ export async function buildTransaction<T extends Record<string, string>>(workspa
     }
     // Keep backups; the next successful invocation need not delete prior evidence.
     await rm(journalPath);
-  } finally { await rm(lock); }
+  } finally { await handle.close(); }
 }
