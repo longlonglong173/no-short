@@ -1,5 +1,5 @@
 import { assertSafeBundleLinks, verifySparkleBundle } from './sparkle-bundle';
-import { readFile, readdir, lstat } from 'node:fs/promises';
+import { readFile, writeFile, readdir, lstat } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 
@@ -48,4 +48,10 @@ export async function verifyBundle(app: string, platform: string, runtime: Runti
     await run(['/usr/bin/codesign', '--verify', '--strict', file]);
   }
   await run(['/usr/bin/codesign', '--verify', '--deep', '--strict', app]);
+}
+
+export async function copyVerifiedRuntime(source: string, destination: string, expected: string) {
+  const bytes = await readFile(source);
+  if (sha(bytes) !== expected) throw new Error(`Source runtime checksum mismatch: ${source}; build Usage first`);
+  await writeFile(destination, bytes, {mode: 0o755});
 }
