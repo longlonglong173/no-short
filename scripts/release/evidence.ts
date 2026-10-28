@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -13,7 +14,7 @@ export async function command(args:string[],cwd:string,env:NodeJS.ProcessEnv=pro
 /** Supply all data roots, including optional settings, from one private fixture. */
 export async function isolatedEnvironment(directory:string):Promise<NodeJS.ProcessEnv> {
  for(const path of ['home','codex/sessions','claude/projects','cache','activity','context','xdg']) await mkdir(join(directory,path),{recursive:true,mode:0o700});
- return {...process.env,HOME:join(directory,'home'),CODEX_HOME:join(directory,'codex'),CLAUDE_CONFIG_DIR:join(directory,'claude'),NO_SHORT_USAGE_CLAUDE_ROOTS:join(directory,'claude'),NO_SHORT_USAGE_CACHE_DIR:join(directory,'cache'),NO_SHORT_USAGE_PRICING_FILE:join(directory,'pricing.json'),NO_SHORT_USAGE_ACTIVITY_DIR:join(directory,'activity'),NO_SHORT_USAGE_CONTEXT_DIR:join(directory,'context'),XDG_CACHE_HOME:join(directory,'xdg'),NO_SHORT_USAGE_OFFLINE:'1',TZ:'UTC'};
+ return {...process.env,HOME:join(directory,'home'),CFFIXED_USER_HOME:join(directory,'home'),CODEX_HOME:join(directory,'codex'),CLAUDE_CONFIG_DIR:join(directory,'claude'),NO_SHORT_USAGE_CLAUDE_ROOTS:join(directory,'claude'),NO_SHORT_USAGE_CACHE_DIR:join(directory,'cache'),NO_SHORT_USAGE_PRICING_FILE:join(directory,'pricing.json'),NO_SHORT_USAGE_ACTIVITY_DIR:join(directory,'activity'),NO_SHORT_USAGE_CONTEXT_DIR:join(directory,'context'),XDG_CACHE_HOME:join(directory,'xdg'),NO_SHORT_USAGE_OFFLINE:'1',TZ:'UTC'};
 }
 export async function sourceInputs(root:string,commit:string) {
  const files=(await command(['git','ls-tree','-r','--name-only',commit],root)).split('\n');
@@ -28,5 +29,6 @@ export async function assertFrozen(root:string,commit:string,allowManifest=false
  const untracked=await command(['git','ls-files','--others','--exclude-standard'],root);
  if(untracked)throw Error(`Uncommitted build inputs: ${untracked}`);
 }
+export async function assertCandidateWritable(directory:string){if(existsSync(join(directory,'signed-candidate.json')))throw Error('Signed candidate is immutable; choose a new candidate directory');}
 export async function json(path:string){return JSON.parse(await readFile(path,'utf8'));}
 export async function writeJson(path:string,value:unknown){await writeFile(path,JSON.stringify(value,null,2)+'\n');}

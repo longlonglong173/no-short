@@ -4,12 +4,14 @@ import { join, resolve } from 'node:path';
 import { buildTransaction } from './build-transaction';
 import { packageNative } from '../packages/usage-menubar/scripts/package-native';
 import { artifactNames, publicAssetNames, verifyRelease } from './verify-release-artifacts';
-import { command, assertFrozen, isolatedEnvironment, json, sha, sourceInputs, writeJson, type CommandResult } from './release/evidence';
+import { command, assertFrozen, assertCandidateWritable, isolatedEnvironment, json, sha, sourceInputs, writeJson, type CommandResult } from './release/evidence';
 /** Build from a committed detached clone, never alter the source checkout's outputs. */
 export async function prepareRelease(version:string,destination?:string) {
  const root=resolve(import.meta.dirname,'..');
  if(!/^\d+\.\d+\.\d+$/.test(version)||(await json(join(root,'package.json'))).version!==version)throw Error('Source version mismatch');
  if(process.env.NO_SHORT_EXPECTED_ARCH&&process.env.NO_SHORT_EXPECTED_ARCH!==process.arch)throw Error('Host architecture mismatch');
+ const target=resolve(destination??join(root,'.artifacts/release-recovery',`candidate-${version}-${process.arch}`));
+ await assertCandidateWritable(target);
  const commit=await command(['git','rev-parse','HEAD'],root);await assertFrozen(root,commit);
  if(Bun.version!=='1.3.13')throw Error('Release preparation requires pinned Bun 1.3.13');
  if(process.platform!=='darwin')throw Error('Release preparation requires macOS');
@@ -34,8 +36,9 @@ export async function prepareRelease(version:string,destination?:string) {
   console.log(`Preparing ${version}: ${script}`);await command(args,frozen,env,records);
   await assertFrozen(frozen,commit,true);await assertFrozen(root,commit);
  }
- const target=resolve(destination??join(owned,`candidate-${version}-${process.arch}`));
+
  await buildTransaction(join(owned,'candidate-transactions'),{candidate:target},async paths=>{
+  await assertCandidateWritable(target);
   await mkdir(paths.candidate);
   await cp(join(frozen,'packages/usage/runtime-manifest.json'),join(paths.candidate,'runtime-manifest.json'));
   for(const platform of ['darwin-arm64','darwin-x64'])await cp(join(frozen,'.artifacts/usage/releases',`no-short-usage-${platform}.tar.gz`),join(paths.candidate,`no-short-usage-${platform}.tar.gz`));
@@ -50,7 +53,7 @@ export async function prepareRelease(version:string,destination?:string) {
   const artifacts:Record<string,string>={};for(const name of artifactNames(version))artifacts[name]=sha(await readFile(join(paths.candidate,name)));
   await writeJson(join(paths.candidate,'candidate.json'),{schema:1,version,sourceBuildCommit:commit,phase:'unsigned-build',publicationReady:false,artifacts,publishAssets:publicAssetNames(version)});
   await verifyRelease(paths.candidate,version,{expectedArch:process.arch});
-  await assertFrozen(frozen,commit,true);await assertFrozen(root,commit);
+  await assertFrozen(frozen,commit,true);await assertFrozen(root,commit);await assertCandidateWritable(target);
  });
  console.log(`Unsigned Experimental candidate: ${target}. Owner archive/feed signing and acceptance remain required.`);
  return target;

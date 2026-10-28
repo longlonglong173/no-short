@@ -15,14 +15,17 @@ const jsonl=(rows:unknown[])=>rows.map(r=>JSON.stringify(r)).join('\n')+'\n';
 function coherent(s:any,start:string,end:string,known:number,status:string,provider:'all'|'codex'|'claude'='all') {
  const h=historyView(s,provider,start,end)!,d=sessionUsageForRange(s,provider,start,end)!,g=groupedUsage(s,provider,start,end)!;
  assert.ok(h&&d&&g,'Required history/session/project partitions');assert.equal(d.reconciled,true);assert.equal(g.reconciled,true);
+ const aggregate=h.aggregate;assert.ok(Math.abs(aggregate.models.reduce((v:any,m:any)=>v+m.cost.knownCostUSD,0)-known)<1e-8,'Model subtotal coherence');
  for(const a of [h.aggregate,d.aggregate,g.aggregate]) {assert.equal(a.cost.status,status);assert.ok(Math.abs(a.cost.knownCostUSD-known)<1e-8);assert.equal(a.cost.amountUSD,status==='estimated'?known:null);}
  for(const groupBy of ['project','work'] as const){const doc=createUsageExport(s,provider,start,end,{groupBy})!;assert.deepEqual(JSON.parse(serializeUsageExport(doc,'json')).aggregate.cost,h.aggregate.cost);assert.ok(serializeUsageExport(doc,'csv').includes('"aggregate"'));}
  for(const partition of [g.projects,g.works])assert.ok(Math.abs(partition.reduce((v:any,p:any)=>v+p.aggregate.cost.knownCostUSD,0)-known)<1e-8);
 }
 /** Both executables are mandatory paths extracted from the same final artifact. */
-export async function probeRuntime(directory:string,fixture:string,records:CommandResult[],label:string) {
+export async function probeRuntime(directory:string,fixture:string,records:CommandResult[],label:string,version?:string) {
  const env=await isolatedEnvironment(fixture),reader=join(directory,'ccusage'),helper=join(directory,'no-short-usage');
  env.NO_SHORT_USAGE_CCUSAGE=reader;
+ const helperVersion=await command([helper,'--version'],fixture,env,records);if(version)assert.ok(helperVersion.startsWith(`no-short-usage ${version} (`),'Extracted helper version identity');
+ assert.ok((await command([reader,'--version'],fixture,env,records)).includes('20.0.34'),'Pinned reader version identity');
  const codex=env.CODEX_HOME!,copy=join(fixture,'copied-codex');await mkdir(join(copy,'sessions'),{recursive:true});
  async function write(i:number,rows:unknown[]){await writeFile(join(codex,'sessions',`${ids[i]}.jsonl`),jsonl([header(ids[i]),...rows]));}
  async function snapshots() {
@@ -39,8 +42,10 @@ export async function probeRuntime(directory:string,fixture:string,records:Comma
  env.CODEX_HOME=codex;await rm(copy,{recursive:true});
  await write(0,[event(1000000)]);await write(1,[context,event(1000000)]);
  for(const s of await snapshots()) {coherent(s,'2026-10-17','2026-10-17',1.6875,'partial','codex');assert.equal(s.sessions.reduce((n:any,d:any)=>n+d.tokens.total,0),2200000);const models=s.history!.days.flatMap((d:any)=>d.aggregate.models);assert.ok(models.some((m:any)=>m.cost.status==='partial'||m.cost.status==='estimated'));}
+ await writeFile(join(env.NO_SHORT_USAGE_CLAUDE_ROOTS!,'projects','claude.jsonl'),jsonl([{timestamp:'2026-10-17T04:00:00Z',sessionId:'claude-s',requestId:'req',message:{id:'msg',model:'claude-sonnet-4-20250514',usage:{input_tokens:12,output_tokens:3}}}]));
+ for(const s of await snapshots()){coherent(s,'2026-10-17','2026-10-17',1.6875,'partial','codex');coherent(s,'2026-10-17','2026-10-17',0.000081,'estimated','claude');}
  await writeFile(env.NO_SHORT_USAGE_PRICING_FILE!,JSON.stringify({version:1,overrides:[{provider:'codex',model:'gpt-5',input:0,output:0,cacheRead:0,cacheWrite:0}]}));
- const zero=JSON.parse(await command([helper,'--snapshot'],fixture,{...env,NO_SHORT_USAGE_CACHE_DIR:join(fixture,'zero-cache')},records));coherent(zero,'2026-10-17','2026-10-17',0,'estimated','codex');
+ const zero=JSON.parse(await command([helper,'--snapshot'],fixture,{...env,NO_SHORT_USAGE_CACHE_DIR:join(fixture,'zero-cache')},records));coherent(zero,'2026-10-17','2026-10-17',0,'estimated','codex');coherent(zero,'2026-10-17','2026-10-17',0.000081,'estimated','claude');
  records.push({command:['required-runtime-probes',label,reader,helper],cwd:fixture,code:0,stdout:'collision=220; copied-session dedup; append/sessionDays=220+11; fallback known subtotal=1.6875; custom zero; provider/model/project/work/JSON/CSV coherence',stderr:''});
  return {label,checks:7,requiredSkips:0,reader,helper};
 }
@@ -60,10 +65,10 @@ export async function probePlugin(plugin:string,tar:string,fixture:string,record
  await writeFile(launcher,original.replace('/usr/bin/curl',`'${curl.replaceAll("'","'\\''")}'`));
  assert.equal(await command(['/bin/sh',launcher,'--version'],fixture,env,records),bundled);
  const cache=join(env.XDG_CACHE_HOME!,'no-short/runtime',manifest.version,`darwin-${process.arch}`);
- await probeRuntime(cache,join(fixture,'download-probes'),records,'plugin-downloaded');
+ const runtime=await probeRuntime(cache,join(fixture,'download-probes'),records,'plugin-downloaded',manifest.version);
  // A fresh cache must refuse altered bytes before extraction/execution.
  await rm(join(env.XDG_CACHE_HOME!,'no-short'),{recursive:true});
  await writeFile(tar+'.bad','tampered');await writeFile(curl,(await Bun.file(curl).text()).replace(tar,tar+'.bad'));
  let refused=false;try{await command(['/bin/sh',launcher,'--version'],fixture,env,records);}catch(e){refused=String(e).includes('Archive sai checksum');}assert.ok(refused,'Installer must reject tampered download');
- return {label:'plugin-launcher-bundled-and-controlled-download',checks:3,requiredSkips:0,transport:'disposable extracted launcher curl substitution; exact canonical URL and HTTPS flags asserted; production policy unchanged'};
+ return {label:'plugin-launcher-bundled-and-controlled-download',runtime,checks:10,requiredSkips:0,transport:'disposable extracted launcher curl substitution; exact canonical URL and HTTPS flags asserted; production policy unchanged'};
 }

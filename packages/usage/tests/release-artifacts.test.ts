@@ -58,3 +58,10 @@ test('development Intel app cannot enter the public asset allowlist',async()=>{
  expect(typeof publicAssetNames).toBe('function');
  expect(await verify({schema:1,version:'0.7.1',sourceBuildCommit:'a'.repeat(40),artifacts:Object.fromEntries(artifactNames('0.7.1').map((n:string)=>[n,'a'.repeat(64)])),publishAssets:[...publicAssetNames('0.7.1'),'host-app-darwin-x64.zip']})).toContain('Public release asset allowlist mismatch');
 });
+
+test('a sealed signed candidate cannot be overwritten by another prepare',async()=>{
+ const {assertCandidateWritable}=await import('../../../scripts/release/evidence') as any;
+ expect(typeof assertCandidateWritable).toBe('function');
+ const d=await mkdtemp(join(tmpdir(),'ns-signed-candidate-'));dirs.push(d);await assertCandidateWritable(d);
+ await writeFile(join(d,'signed-candidate.json'),'{}');await expect(assertCandidateWritable(d)).rejects.toThrow('Signed candidate is immutable');
+});
