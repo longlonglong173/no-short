@@ -13,6 +13,7 @@
 - Worktree: `/Users/long/.codex/worktrees/harden-release-0-7-2/no-short`; branch `codex/harden-release-0.7.2`; starting commit `6faed4e4992c66bf52568c3f249091318d1b2e78`.
 - Do not modify the original checkout, its untracked files, installed app, real provider logs, preferences or caches. Automated runs use synthetic data and private owned temporary paths.
 - Preserve snapshot/export schema v1, bundle ID, owner update key and pinned toolchains. No new product features or redesign.
+- Owner clarification during execution: migrate CI to macOS 15 and pin Xcode 16.4, rerunning compatibility checks; keep Bun/Rust/ccusage/Sparkle pins unchanged. macOS 14 remains the product minimum, with separate minimum-OS device acceptance. The macOS 14 hosted runner retires on 2026-11-02 ([GitHub notice](https://github.com/actions/runner-images/issues/13518)).
 - Public native app is ARM only; build/verify both runtime architectures and state which actually executed. Do not present Intel native app as accepted.
 - Every behavior fix gets RED/GREEN evidence. Required artifact tests cannot silently skip. All P0/P1 issues must be fixed before any release.
 - No production key in Git, logs, app, website or command arguments. Reuse the existing owner key via protected file/stdin; do not rotate/generate a replacement. Missing credentials block only dependent signing/publication, not independent work.
@@ -75,7 +76,7 @@
 - [ ] Prepare from clean committed build inputs in isolated staging. Reuse Task 3 commands and existing verifiers, avoiding another independent packaging implementation. Identify source build commit separately from later generated metadata/release commit; any build-input changes invalidate the candidate.
 - [ ] Execute the extracted readers and their paired compiled snapshot helpers on synthetic regressions, using explicit artifact paths rather than silently falling back to source runtime. Test packaged plugin runtime both bundled and controlled download/install paths. Do not bypass checksum/URL trust policy for production.
 - [ ] Validate actual archive bytes, contents, signatures, identities, source/runtime pins and licenses. Generate `SHA256SUMS` and `release-validation.json` with command/results, required skips, architecture/OS, toolchains, source/patch/pricing hashes, artifact hashes and manual acceptance limits.
-- [ ] Add source/Linux tests and macOS final-artifact gates to CI. Production signing secrets are never needed in PR CI; cryptographic negative tests use test keys. Require reader/helper tests after build, zero silently skipped required cases. Record host architecture instead of assuming x64 device acceptance.
+- [ ] Add source/Linux tests and macOS final-artifact gates to CI using `macos-15` ARM and `macos-15-intel`, pinning `/Applications/Xcode_16.4.app/Contents/Developer`. Exercise extracted paired runtime readers/helpers on each native host architecture; do not equate x64 CLI runtime success with Intel GUI/device acceptance. Production signing secrets are never needed in PR CI; cryptographic negative tests use test keys. Require reader/helper tests after build, zero silently skipped required cases. Record and assert the actual host architecture.
 - [ ] Run new integration/negative gates, full applicable suite, typecheck, browser, website and repository validation; commit and report for review.
 
 ### Task 5: Prove updater lifecycle and current product workflows
@@ -117,6 +118,7 @@
 
 ## Completion and handoff
 
+- Implement Task 7's independently actionable source/workflow readiness before Task 6 freezes final build inputs; actual Developer ID signing/notarization/device acceptance remains milestone 2 and depends on owner credentials/devices.
 - One independent review per task and one whole-branch review. Re-review fixes with their evidence; preserve progress and all material unresolved findings.
 - PRs/draft can be prepared under this authorization; public publish/merge and real installed-app replacement remain the owner's final actions.
 - Report completed source/artifact work separately from pending signatures, draft publication, live deployment and device/owner acceptance.
