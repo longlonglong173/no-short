@@ -48,12 +48,9 @@ import Vision
                         let request = VNRecognizeTextRequest()
                         request.recognitionLevel = .accurate
                         request.recognitionLanguages = ["en-US"]
-                        // Domain vocabulary improves recognition of the small pricing
-                        // status label without accepting misspellings or absent text.
-                        // The actual estimated-zero render below is the absence control.
-                        request.customWords = ["Partial", "pricing"]
                         try VNImageRequestHandler(cgImage: XCTUnwrap(bitmap.cgImage)).perform([request])
-                        let observations = request.results?.map { $0.topCandidates(5).map(\.string) } ?? []
+                        let nativeObservations = request.results ?? []
+                        let observations = nativeObservations.map { $0.topCandidates(5).map(\.string) }
                         let text = observations.flatMap { $0 }
                         if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
                             let evidence: [String: Any] = ["language": language.rawValue, "row": row.name, "theme": theme, "candidates": observations]
@@ -61,14 +58,77 @@ import Vision
                         }
                         if row.name == "partial-999999999.995" {
                             XCTAssertEqual(observations.filter { $0.contains { $0.contains("1,000,000,000.") && !$0.contains("...") && !$0.contains("…") } }.count, 3, "All three money values must be visible: \(text)")
-                        } else if row.name == "zero" {
-                            XCTAssertFalse(text.contains { $0.contains("Partial pricing") }, "Absence control must not hallucinate a missing-price label [\(theme)]: \(text)")
                         } else {
-                            XCTAssertTrue(text.contains { $0.contains("Partial pricing") }, "Zero known money still needs a missing-price label [\(language.rawValue)/\(row.name)/\(theme)]: \(text)")
+                            let caption = try pricingCaption(image: XCTUnwrap(bitmap.cgImage), observations: nativeObservations,
+                                stem: "ns23-\(language.rawValue)-\(row.name)-\(theme)")
+                            if row.name == "zero" {
+                                XCTAssertFalse(caption.contains { $0.contains("Partial pricing") }, "Actual priced-zero absence control must not hallucinate a missing-price label [\(theme)]: \(caption)")
+                            } else {
+                                XCTAssertTrue(caption.contains { $0.contains("Partial pricing") }, "Zero known money still needs an exactly recognized visible missing-price caption [\(language.rawValue)/\(row.name)/\(theme)]: \(caption); full view: \(text)")
+                            }
                         }
                     }
                 }
             }
         }
     }
+    func testRetainedHostedCaptionsHaveExactDedicatedRecognition() throws {
+        for theme in ["light", "dark"] {
+            let path=URL(fileURLWithPath:#filePath).deletingLastPathComponent().appendingPathComponent("Fixtures/money-caption-macos15-\(theme).png")
+            let image=try XCTUnwrap(NSImage(contentsOf:path)?.cgImage(forProposedRect:nil,context:nil,hints:nil))
+            let observations=try recognize(image)
+            let caption=try pricingCaption(image:image,observations:observations,stem:"hosted-reference-\(theme)")
+            XCTAssertTrue(caption.contains { $0.contains("Partial pricing") }, "Retained actual macOS15 caption must be visible and recognized exactly: \(caption)")
+        }
+    }
+
+    private func recognize(_ image:CGImage) throws -> [VNRecognizedTextObservation] {
+        let request=VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.recognitionLanguages=["en-US"]
+        try VNImageRequestHandler(cgImage:image).perform([request])
+        return request.results ?? []
+    }
+
+    /// The full view locates the actual caption; recognition then gets its own
+    /// glyph-sized region rather than relying on the tiny text in a whole panel.
+    /// No expected caption or spelling variants are supplied to Vision.
+    private func pricingCaption(image:CGImage,observations:[VNRecognizedTextObservation],stem:String) throws -> [String] {
+        let anchors=observations.filter { observation in
+            observation.topCandidates(5).contains { candidate in
+                candidate.string.lowercased().split(whereSeparator:{ !$0.isLetter }).contains("pricing")
+            }
+        }
+        var caption:[String]=[],region:[CGFloat]=[]
+        if anchors.count==1,let anchor=anchors.first {
+            let box=anchor.boundingBox,padding=box.height/2
+            let pixels=CGRect(x:(box.minX-padding)*CGFloat(image.width),y:(1-box.maxY-padding)*CGFloat(image.height),
+                width:(box.width+2*padding)*CGFloat(image.width),height:(box.height+2*padding)*CGFloat(image.height))
+                .integral.intersection(CGRect(x:0,y:0,width:image.width,height:image.height))
+            region=[pixels.minX,pixels.minY,pixels.width,pixels.height]
+            let crop=try XCTUnwrap(image.cropping(to:pixels))
+            // One fixed transform, selected from retained light/dark failure
+            // evidence. Never sweep scales until one happens to recognize text.
+            let context=try XCTUnwrap(CGContext(data:nil,width:crop.width*4,height:crop.height*4,bitsPerComponent:8,bytesPerRow:0,
+                space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
+            context.interpolationQuality = .high
+            context.draw(crop,in:CGRect(x:0,y:0,width:crop.width*4,height:crop.height*4))
+            let enlarged=try XCTUnwrap(context.makeImage())
+            caption=try recognize(enlarged).flatMap { $0.topCandidates(5).map(\.string) }
+            if let directory=ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+                let output=URL(fileURLWithPath:directory)
+                try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
+                try XCTUnwrap(NSBitmapImageRep(cgImage:enlarged).representation(using:.png,properties:[:])).write(to:output.appendingPathComponent(stem+"-caption.png"))
+            }
+        }
+        if let directory=ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+            let output=URL(fileURLWithPath:directory)
+            try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
+            let evidence:[String:Any]=["anchorCount":anchors.count,"regionPixels":region,"fixedScale":4,
+                "firstStageCandidates":observations.map { $0.topCandidates(5).map(\.string) },"captionCandidates":caption]
+            try JSONSerialization.data(withJSONObject:evidence,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent(stem+"-caption.json"))
+        }
+        return caption
+    }
+
 }
