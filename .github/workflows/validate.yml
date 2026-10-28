@@ -64,6 +64,7 @@ jobs:
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
       NO_SHORT_EXPECTED_ARCH: arm64
+      NO_SHORT_RENDER_DIR: ${{ github.workspace }}/.artifacts/native-render-evidence
     steps:
       - uses: actions/checkout@v4
         with:
@@ -84,6 +85,13 @@ jobs:
         run: bun scripts/release/run-isolated.ts bun run test:release-toolchains
       - name: Run the entire Swift and native script suite on the public native architecture
         run: bun scripts/release/run-isolated.ts npm run test:usage-menubar
+      - name: Retain native render evidence, including failing language, row, theme and OCR candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-render-evidence-${{ steps.identity.outputs.source_commit }}
+          path: .artifacts/native-render-evidence/
+          if-no-files-found: warn
       - name: Prepare unsigned frozen canonical ARM candidate with both runtime architectures
         run: bun run prepare:experimental-release "${{ steps.identity.outputs.version }}" "$PWD/.artifacts/candidate"
       - name: Required ARM final-artifact negative and runtime tests

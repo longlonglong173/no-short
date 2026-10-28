@@ -33,6 +33,11 @@ import Vision
                     host.layoutSubtreeIfNeeded()
                     let bitmap = try XCTUnwrap(host.bitmapImageRepForCachingDisplay(in: host.bounds))
                     host.cacheDisplay(in: host.bounds, to: bitmap)
+                    if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+                        let url = URL(fileURLWithPath: directory)
+                        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+                        try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: url.appendingPathComponent("ns23-\(language.rawValue)-\(row.name)-\(theme).png"))
+                    }
                     if language == .english && ["partial-zero", "partial-999999999.995"].contains(row.name) {
                         let request = VNRecognizeTextRequest()
                         request.recognitionLevel = .accurate
@@ -40,16 +45,15 @@ import Vision
                         try VNImageRequestHandler(cgImage: XCTUnwrap(bitmap.cgImage)).perform([request])
                         let observations = request.results?.map { $0.topCandidates(5).map(\.string) } ?? []
                         let text = observations.flatMap { $0 }
+                        if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+                            let evidence: [String: Any] = ["language": language.rawValue, "row": row.name, "theme": theme, "candidates": observations]
+                            try JSONSerialization.data(withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys]).write(to: URL(fileURLWithPath: directory).appendingPathComponent("ns23-\(language.rawValue)-\(row.name)-\(theme)-ocr.json"))
+                        }
                         if row.name == "partial-999999999.995" {
                             XCTAssertEqual(observations.filter { $0.contains { $0.contains("1,000,000,000.") && !$0.contains("...") && !$0.contains("…") } }.count, 3, "All three money values must be visible: \(text)")
                         } else {
-                            XCTAssertTrue(text.contains { $0.contains("Partial pricing") }, "Zero known money still needs a missing-price label: \(text)")
+                            XCTAssertTrue(text.contains { $0.contains("Partial pricing") }, "Zero known money still needs a missing-price label [\(language.rawValue)/\(row.name)/\(theme)]: \(text)")
                         }
-                    }
-                    if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
-                        let url = URL(fileURLWithPath: directory)
-                        try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
-                        try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to: url.appendingPathComponent("ns23-\(language.rawValue)-\(row.name)-\(theme).png"))
                     }
                 }
             }
