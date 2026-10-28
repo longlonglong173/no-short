@@ -44,7 +44,8 @@ jobs:
       - run: bun install --cwd packages/usage --frozen-lockfile
       - name: Install pinned Codex for plugin discovery regression
         run: npm install --prefix .artifacts/codex-cli --no-package-lock @openai/codex@0.147.0
-      - run: npm test
+      - name: Linux source and kernel transaction lock tests
+        run: bun scripts/release/run-isolated.ts npm test
         env:
           NO_SHORT_TEST_CODEX_CLI: ${{ github.workspace }}/.artifacts/codex-cli/node_modules/.bin/codex
       - run: npm run typecheck:usage
@@ -52,63 +53,58 @@ jobs:
       - run: cd packages/usage && bunx playwright install --with-deps chromium
       - run: npm run test:usage:browser
 
+  # Preserve required check names while building each host only once.
   usage-macos:
-    runs-on: macos-14
+    runs-on: macos-15
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      NO_SHORT_EXPECTED_ARCH: arm64
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+      - run: xcodebuild -version && swift --version && test "$(uname -m)" = arm64
       - run: bun install --cwd packages/usage --frozen-lockfile
-      - name: Set up pinned Rust reader toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.98.1
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - run: npm run build:usage
-      - name: Install pinned Codex for plugin discovery regression
-        run: npm install --prefix .artifacts/codex-cli --no-package-lock @openai/codex@0.147.0
-      - run: npm test
+      - name: Prepare unsigned frozen candidate and exercise extracted ARM runtime
+        run: bun run prepare:experimental-release "$(node -p 'require("./package.json").version')" "$PWD/.artifacts/candidate"
+      - name: Required final-artifact negative and runtime tests
+        run: NO_SHORT_RELEASE_VERSION="$(node -p 'require("./package.json").version')" bun scripts/release/run-isolated.ts bun run test:release-artifacts
         env:
-          NO_SHORT_TEST_CODEX_CLI: ${{ github.workspace }}/.artifacts/codex-cli/node_modules/.bin/codex
-          NO_SHORT_REQUIRE_PATCHED_CCUSAGE: '1'
-      - run: npm run smoke:usage
-      - run: npm run package:usage
+          NO_SHORT_RELEASE_CANDIDATE: ${{ github.workspace }}/.artifacts/candidate
       - uses: actions/upload-artifact@v4
         with:
           name: no-short-local-test-package
-          path: .artifacts/usage/releases/no-short-*.zip
-
+          path: .artifacts/candidate/
 
   usage-menubar-macos:
-    runs-on: macos-14
+    runs-on: macos-15-intel
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      NO_SHORT_EXPECTED_ARCH: x64
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Swift 6 toolchain
-        run: |
-          xcodebuild -version
-          swift --version
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+      - run: xcodebuild -version && swift --version && test "$(uname -m)" = x86_64
       - run: bun install --cwd packages/usage --frozen-lockfile
-      - name: Set up pinned Rust reader toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.98.1
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - run: bun run --cwd packages/usage build
-      - name: Verify patched native reader regressions
-        run: bun test packages/usage/tests/log-totals.test.ts packages/usage/tests/ccusage-build.test.ts
+      - run: bun scripts/release/run-isolated.ts npm run test:usage-menubar
+      - name: Prepare unsigned frozen candidate and exercise extracted Intel runtime
+        run: bun run prepare:experimental-release "$(node -p 'require("./package.json").version')" "$PWD/.artifacts/candidate"
+      - name: Required final-artifact negative and runtime tests
+        run: NO_SHORT_RELEASE_VERSION="$(node -p 'require("./package.json").version')" bun scripts/release/run-isolated.ts bun run test:release-artifacts
         env:
-          NO_SHORT_REQUIRE_PATCHED_CCUSAGE: '1'
-      - run: npm run test:usage-menubar
-      - run: npm run build:usage-menubar
-      - run: npm run smoke:usage-menubar
-      - run: npm run package:usage-menubar
+          NO_SHORT_RELEASE_CANDIDATE: ${{ github.workspace }}/.artifacts/candidate
       - uses: actions/upload-artifact@v4
         with:
           name: no-short-usage-menubar-local-builds
-          path: .artifacts/usage-menubar/releases/
+          path: .artifacts/candidate/
