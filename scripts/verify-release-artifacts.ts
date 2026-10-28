@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile, mkdtemp, rm, readdir, writeFile } from 'node:fs/promises';
 import { tmpdir, release } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -29,7 +30,7 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  if(options.expectedArch&&process.arch!==options.expectedArch)throw Error(`Host architecture mismatch: expected ${options.expectedArch}, actual ${process.arch}`);
  if(process.platform!=='darwin'||!['arm64','x64'].includes(process.arch))throw Error('Artifact runtime verification requires a native macOS host');
  const sealPath=join(candidate,'signed-candidate.json');
- const seal=await json(sealPath).catch(()=>null);
+ const seal=existsSync(sealPath)?await json(sealPath):null;
  if(seal&&!options.signedFeed)throw Error('Signed candidate is immutable; signed-feed verification required');
  const hashes:Record<string,string>={};
  for(const name of [...artifactNames(version),'candidate.json']) {
@@ -48,7 +49,7 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  if(source.patchSHA256!==lock.patch.sha256)throw Error('Source patch checksum mismatch');
  const build=await json(join(candidate,'build-evidence.json'));
  if(build.sourceBuildCommit!==meta.sourceBuildCommit||!Array.isArray(build.commands)||build.commands.some((c:any)=>c.code!==0))throw Error('Build command evidence incomplete');
- for(const name of ['build:usage','build:usage-menubar','package:usage','package:usage-menubar'])if(!build.commands.some((c:any)=>c.command.includes(name)))throw Error(`Missing required build command: ${name}`);
+ for(const name of ['build:usage','test','build:usage-menubar','package:usage','package:usage-menubar'])if(!build.commands.some((c:any)=>c.command.includes(name)))throw Error(`Missing required build command: ${name}`);
  const scratch=await mkdtemp(join(tmpdir(),'ns-final-artifacts-')),records:CommandResult[]=[],probes:any[]=[];
  try {
   for(const platform of ['darwin-arm64','darwin-x64']) {
@@ -88,9 +89,9 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
   }
   for(const [name,hash]of Object.entries(hashes))if(sha(await readFile(join(candidate,name)))!==hash)throw Error('Candidate changed during verification');
   const validation={schema:1,version,sourceBuildCommit:meta.sourceBuildCommit,metadataReleaseCommit:null,phase:signed?'owner-signed-experimental':'unsigned-build-validation',publicationReady:signed,host:{platform:process.platform,arch:process.arch,os:release()},toolchains:build.toolchains,source,artifactHashes:hashes,feedSHA256:feedHash,probes,requiredReaderHelperPairs:4,requiredRegressionFamilies:28,requiredBootstrapChecks:3,requiredSkips:0,commands:[...build.commands,...records],publishAssets:meta.publishAssets,developmentEvidence:['host-app-darwin-x64.zip (CI artifact only; not a release asset)'],manualAcceptanceLimits:['No publication performed','No macOS 14 device acceptance','No Intel GUI/device acceptance','No interactive/performance acceptance','No notarization claim']};
-  if(seal){if(!signed||seal.feedSHA256!==feedHash||JSON.stringify(seal.artifactHashes)!==JSON.stringify(hashes))throw Error('Signed candidate seal mismatch');return validation;}
+  if(seal){if(!signed||seal.feedSHA256!==feedHash||JSON.stringify(seal.artifactHashes)!==JSON.stringify(hashes)||seal.validationSHA256!==sha(await readFile(join(candidate,'release-validation.json'))))throw Error('Signed candidate seal mismatch');return validation;}
   await writeJson(join(candidate,'release-validation.json'),validation);
-  if(signed){await writeJson(sealPath,{sourceBuildCommit:meta.sourceBuildCommit,feedSHA256:feedHash,artifactHashes:hashes});hashes['signed-candidate.json']=sha(await readFile(sealPath));}
+  if(signed){await writeJson(sealPath,{sourceBuildCommit:meta.sourceBuildCommit,feedSHA256:feedHash,artifactHashes:hashes,validationSHA256:sha(await readFile(join(candidate,'release-validation.json')))});hashes['signed-candidate.json']=sha(await readFile(sealPath));}
   hashes['release-validation.json']=sha(await readFile(join(candidate,'release-validation.json')));
   await writeFile(join(candidate,'SHA256SUMS'),Object.entries(hashes).sort(([a],[b])=>a.localeCompare(b)).map(([n,h])=>`${h}  ${n}\n`).join(''));
   return validation;

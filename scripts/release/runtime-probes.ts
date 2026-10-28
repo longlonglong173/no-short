@@ -68,7 +68,7 @@ export async function probePlugin(plugin:string,tar:string,fixture:string,record
  const runtime=await probeRuntime(cache,join(fixture,'download-probes'),records,'plugin-downloaded',manifest.version);
  // A fresh cache must refuse altered bytes before extraction/execution.
  await rm(join(env.XDG_CACHE_HOME!,'no-short'),{recursive:true});
- await writeFile(tar+'.bad','tampered');await writeFile(curl,(await Bun.file(curl).text()).replace(tar,tar+'.bad'));
- let refused=false;try{await command(['/bin/sh',launcher,'--version'],fixture,env,records);}catch(e){refused=String(e).includes('Archive sai checksum');}assert.ok(refused,'Installer must reject tampered download');
+ const badArchive=join(fixture,'tampered.tar.gz');await writeFile(badArchive,'tampered');await writeFile(curl,(await Bun.file(curl).text()).replace(tar,badArchive));
+ let refused=false;try{await command(['/bin/sh',launcher,'--version'],fixture,env,records);}catch(e){refused=String(e).includes('Archive sai checksum');}assert.ok(refused,'Installer must reject tampered download');records[records.length-1]!.expectedFailure=true;
  return {label:'plugin-launcher-bundled-and-controlled-download',runtime,checks:10,requiredSkips:0,transport:'disposable extracted launcher curl substitution; exact canonical URL and HTTPS flags asserted; production policy unchanged'};
 }

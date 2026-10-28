@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 export const sha=(bytes:Uint8Array|string)=>createHash('sha256').update(bytes).digest('hex');
-export interface CommandResult {command:string[];cwd:string;code:number;stdout:string;stderr:string}
+export interface CommandResult {command:string[];cwd:string;code:number;stdout:string;stderr:string;expectedFailure?:boolean}
 export async function command(args:string[],cwd:string,env:NodeJS.ProcessEnv=process.env,records?:CommandResult[]) {
  const p=Bun.spawn(args,{cwd,env,stdout:'pipe',stderr:'pipe'});
  const [stdout,stderr,code]=await Promise.all([new Response(p.stdout).text(),new Response(p.stderr).text(),p.exited]);

@@ -28,10 +28,10 @@ export async function prepareRelease(version:string,destination?:string) {
  await mkdir(cache,{recursive:true});
  for(const name of ['source.tar.gz','pricing.json'])if(existsSync(join(warm,name)))await cp(join(warm,name),join(cache,name));
  if(existsSync(join(warm,'target')))await symlink(join(warm,'target'),join(cache,'target'),'dir');
- const env=await isolatedEnvironment(join(stage,'private-environment'));
+ const env=await isolatedEnvironment(join(stage,'private-environment'));env.NO_SHORT_REQUIRE_PATCHED_CCUSAGE='1';
  const toolchains:Record<string,string>={};
  for(const [name,args]of Object.entries({bun:[process.execPath,'--version'],rust:['rustc','--version'],swift:['swift','--version'],xcode:['xcodebuild','-version'],os:['sw_vers'],architecture:['uname','-m']}))toolchains[name]=await command(args,frozen,env,records);
- for(const script of ['build:usage','build:usage-menubar','smoke:usage','smoke:usage-menubar','package:usage','package:usage-menubar']) {
+ for(const script of ['build:usage','test','build:usage-menubar','smoke:usage','smoke:usage-menubar','package:usage','package:usage-menubar']) {
   const args=[process.execPath,'run',script];if(script==='build:usage-menubar'||script==='package:usage-menubar')args.push('--distribution');
   console.log(`Preparing ${version}: ${script}`);await command(args,frozen,env,records);
   await assertFrozen(frozen,commit,true);await assertFrozen(root,commit);
