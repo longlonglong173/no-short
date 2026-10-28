@@ -14,7 +14,7 @@ if(!version)throw Error('NO_SHORT_RELEASE_VERSION is required');
 const temps:string[]=[];afterEach(async()=>{for(const d of temps.splice(0))await rm(d,{recursive:true,force:true});});
 async function fixture(){const d=await mkdtemp(join(tmpdir(),'ns-artifact-negative-'));temps.push(d);await cp(source!,d,{recursive:true});return d;}
 async function rebind(d:string,name:string){const m=await json(join(d,'candidate.json'));m.artifacts[name]=sha(await readFile(join(d,name)));await writeJson(join(d,'candidate.json'),m);}
-test('mandatory final artifact runtime matrix passes without required skips',async()=>{const r=await verifyRelease(source!,version!);expect(r.requiredSkips).toBe(0);expect(r.requiredReaderHelperPairs).toBe(4);expect(r.publicationReady).toBe(false);},180000);
+test('mandatory final artifact runtime matrix passes without required skips',async()=>{const r=await verifyRelease(source!,version!);expect(r.requiredSkips).toBe(0);expect(r.requiredReaderHelperPairs).toBe(process.arch==='arm64'?4:3);expect(r.publicationReady).toBe(false);},180000);
 test('changing an archive invalidates the bound candidate',async()=>{const d=await fixture();await writeFile(join(d,'no-short-usage-darwin-arm64.tar.gz'),'changed');await expect(verifyRelease(d,version!)).rejects.toThrow('Candidate checksum mismatch');},30000);
 test('changing a generated manifest pin remains invalid after recomputing its file hash',async()=>{const d=await fixture();const m=await json(join(d,'runtime-manifest.json'));m.ccusagePatchRevision='old-reader';await writeJson(join(d,'runtime-manifest.json'),m);await rebind(d,'runtime-manifest.json');await expect(verifyRelease(d,version!)).rejects.toThrow('Runtime source pin mismatch');},30000);
 test('missing real reader execution evidence cannot satisfy build requirements',async()=>{const d=await fixture();const m=await json(join(d,'build-evidence.json'));m.commands=m.commands.filter((c:any)=>!c.command.includes('build:usage'));await writeJson(join(d,'build-evidence.json'),m);await rebind(d,'build-evidence.json');await expect(verifyRelease(d,version!)).rejects.toThrow('Missing required build command');},30000);
@@ -33,4 +33,21 @@ test('a final ZIP missing Sparkle is rejected even with a recomputed ZIP hash',a
 test('mismatched helper provenance is rejected in the extracted final ZIP',async()=>{
  const d=await tamperNative(async app=>{const path=join(app,'Contents/Resources/runtime-checksums.json'),m=await json(path);m.sourceBinaries.ccusage='0'.repeat(64);await writeJson(path,m);});
  await expect(verifyRelease(d,version!)).rejects.toThrow('Runtime provenance mismatch');
+},180000);
+
+test('re-signed native archive still requires the committed application license',async()=>{
+ const {command}=await import('./evidence');
+ const d=await tamperNative(async app=>{await rm(join(app,'Contents/Resources/LICENSE'));await command(['/usr/bin/codesign','--force','--sign','-',app],app);});
+ let message='';try{await verifyRelease(d,version!);}catch(e){message=String(e);}
+ expect(message).toContain('Native license mismatch');
+},180000);
+
+test('public allowlist export verifies with the same gate and complete SHA256SUMS',async()=>{
+ const {command}=await import('./evidence');const d=await mkdtemp(join(tmpdir(),'ns-public-export-'));temps.push(d);
+ const metadata=await json(join(source!,'candidate.json'));
+ for(const name of metadata.publishAssets)await cp(join(source!,name),join(d,name));
+ const result=await verifyRelease(d,version!);expect(result.requiredSkips).toBe(0);
+ await command(['/usr/bin/shasum','-a','256','-c','SHA256SUMS'],d);
+ await rm(join(d,'no-short-usage-darwin-x64.tar.gz'));
+ await expect(verifyRelease(d,version!)).rejects.toThrow();
 },180000);

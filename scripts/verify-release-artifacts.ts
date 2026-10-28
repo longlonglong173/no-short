@@ -16,9 +16,9 @@ export function verifyFeedSignature(bytes:Buffer,publicKey:string):boolean {
  const match=block.match(/^<!-- sparkle-signatures:\nedSignature: ([A-Za-z0-9+/=]+)\nlength: ([0-9]+)\n-->\n?$/);
  return !!match&&Number(match[2])===i&&verifyArchiveSignature(bytes.subarray(0,i),match[1]!,publicKey);
 }
-export function artifactNames(version:string){return ['host-app-darwin-x64.zip','runtime-manifest.json','source-provenance.json','build-evidence.json',`no-short-usage-darwin-arm64.tar.gz`,`no-short-usage-darwin-x64.tar.gz`,`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`].sort();}
-/** Explicit upload contract: Intel ZIP is public CI development evidence only. */
-export function publicAssetNames(version:string){return [`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`,'no-short-usage-darwin-arm64.tar.gz','no-short-usage-darwin-x64.tar.gz','runtime-manifest.json','SHA256SUMS','release-validation.json'].sort();}
+export function artifactNames(version:string){return ['runtime-manifest.json','source-provenance.json','build-evidence.json',`no-short-usage-darwin-arm64.tar.gz`,`no-short-usage-darwin-x64.tar.gz`,`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`].sort();}
+/** Every file in the candidate is a public upload asset; no development ZIPs. */
+export function publicAssetNames(version:string,signed=false){return [...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json',...(signed?['experimental-arm64.xml','signed-candidate.json']:[])].sort();}
 export async function verifyRelease(candidate:string,version:string,options:{signedFeed?:string;expectedArch?:string}={}) {
  candidate=resolve(candidate);const root=resolve(import.meta.dirname,'..');
  const meta=await json(join(candidate,'candidate.json'));
@@ -31,13 +31,13 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  if(process.platform!=='darwin'||!['arm64','x64'].includes(process.arch))throw Error('Artifact runtime verification requires a native macOS host');
  const sealPath=join(candidate,'signed-candidate.json');
  const seal=existsSync(sealPath)?await json(sealPath):null;
- if(seal&&!options.signedFeed)throw Error('Signed candidate is immutable; signed-feed verification required');
+ const signedFeed=options.signedFeed??(seal?join(candidate,'experimental-arm64.xml'):undefined);
  const hashes:Record<string,string>={};
  for(const name of [...artifactNames(version),'candidate.json']) {
   hashes[name]=sha(await readFile(join(candidate,name)));
   if(name!=='candidate.json'&&hashes[name]!==meta.artifacts[name])throw Error(`Candidate checksum mismatch: ${name}`);
  }
- const extra=(await readdir(candidate)).filter(n=>!([...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json','signed-candidate.json'].includes(n)));
+ const extra=(await readdir(candidate)).filter(n=>!([...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json',...(signedFeed?['signed-candidate.json','experimental-arm64.xml']:[])].includes(n)));
  if(extra.length)throw Error(`Unexpected candidate files: ${extra}`);
  const source=await json(join(candidate,'source-provenance.json'));
  if(source.sourceBuildCommit!==meta.sourceBuildCommit||JSON.stringify(source.inputs)!==JSON.stringify(await sourceInputs(root,meta.sourceBuildCommit)))throw Error('Source provenance mismatch');
@@ -64,10 +64,15 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
   }
   const zip=join(candidate,`NoShortUsage-${version}-arm64.zip`);await verifyNativeArchive(zip,'darwin-arm64',manifest,true);
   const native=join(scratch,'native');await extract(zip,native,'zip');
-  if(process.arch==='arm64')probes.push(await probeRuntime(join(native,'No Short Usage.app/Contents/Resources/runtime'),join(scratch,'app-fixture'),records,'app',version));
-  const intelZip=join(candidate,'host-app-darwin-x64.zip');await verifyNativeArchive(intelZip,'darwin-x64',manifest,false);
-  const intel=join(scratch,'intel-host-app');await extract(intelZip,intel,'zip');
-  if(process.arch==='x64')probes.push(await probeRuntime(join(intel,'No Short Usage.app/Contents/Resources/runtime'),join(scratch,'app-fixture'),records,'app-host-intel',version));
+  const app=join(native,'No Short Usage.app'),resources=join(app,'Contents/Resources');
+  for(const [name,sourcePath]of [['LICENSE','LICENSE'],['NOTICE.md','NOTICE.md'],['PROVIDER_ICONS.md','packages/usage-menubar/Resources/PROVIDER_ICONS.md']]) {
+   const bytes=await readFile(join(resources,name!)).catch(()=>null);
+   if(!bytes||sha(bytes)!==source.inputs[sourcePath!])throw Error(`Native license mismatch: ${name}`);
+  }
+  const nativeProvenance=await json(join(resources,'runtime-checksums.json'));
+  await runtimeFiles(join(resources,'runtime'),nativeProvenance.binaries);
+  if(sha(await readFile(join(resources,'runtime/THIRD_PARTY_NOTICES.txt')))!==sha(await readFile(join(scratch,'darwin-arm64/THIRD_PARTY_NOTICES.txt'))))throw Error('Native runtime license mismatch');
+  if(process.arch==='arm64')probes.push(await probeRuntime(join(resources,'runtime'),join(scratch,'app-fixture'),records,'app',version));
   const pluginDir=join(scratch,'plugin');await extract(join(candidate,`no-short-${version}.zip`),pluginDir,'zip','no-short/');const plugin=join(pluginDir,'no-short');
   for(const path of ['package.json','plugin.json','packages/usage/package.json'])if((await json(join(plugin,path))).version!==version)throw Error('Plugin version mismatch');
   if(sha(await readFile(join(plugin,'packages/usage/runtime-manifest.json')))!==hashes['runtime-manifest.json'])throw Error('Plugin runtime manifest mismatch');
@@ -78,21 +83,35 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
   for(const platform of ['darwin-arm64','darwin-x64'])await runtimeFiles(join(plugin,'packages/usage/runtime',platform),manifest.platforms[platform].binaries);
   probes.push(await probeRuntime(join(plugin,'packages/usage/runtime',`darwin-${process.arch}`),join(scratch,'plugin-fixture'),records,'plugin-bundled',version));
   probes.push(await probePlugin(plugin,join(candidate,`no-short-usage-darwin-${process.arch}.tar.gz`),join(scratch,'installer-fixture'),records));
-  if(probes.length!==4||probes.some(p=>p.requiredSkips!==0)||records.filter(r=>r.command[0]==='required-runtime-probes').length!==4)throw Error('Missing required real-reader/helper tests');
+  const requiredPairs=process.arch==='arm64'?4:3;
+  if(probes.length!==requiredPairs||probes.some(p=>p.requiredSkips!==0)||records.filter(r=>r.command[0]==='required-runtime-probes').length!==requiredPairs)throw Error('Missing required real-reader/helper tests');
   let signed=false,feedHash:string|undefined;
-  if(options.signedFeed) {
-   const feedBytes=await readFile(options.signedFeed),feed=feedBytes.toString('utf8'),channel=await loadUpdateChannel(undefined,'distribution');
+  if(signedFeed) {
+   const feedBytes=await readFile(signedFeed),feed=feedBytes.toString('utf8'),channel=await loadUpdateChannel(undefined,'distribution');
    const url=`https://github.com/longlonglong173/no-short/releases/download/v${version}/NoShortUsage-${version}-arm64.zip`;
    const signature=feed.match(/sparkle:edSignature="([^"]+)"/)?.[1];
    if(!channel||!verifyFeedSignature(feedBytes,channel.publicKey)||!signature||!feed.includes(`url="${url}"`)||!feed.includes(`length="${(await readFile(zip)).length}"`)||!feed.includes(`<sparkle:version>${version}</sparkle:version>`)||!verifyArchiveSignature(await readFile(zip),signature,channel.publicKey))throw Error('Owner-signed archive/feed verification failed');
-   feedHash=sha(feedBytes);if(sha(await readFile(options.signedFeed))!==feedHash)throw Error('Signed feed changed during verification');signed=true;
+   feedHash=sha(feedBytes);if(sha(await readFile(signedFeed))!==feedHash)throw Error('Signed feed changed during verification');signed=true;
   }
   for(const [name,hash]of Object.entries(hashes))if(sha(await readFile(join(candidate,name)))!==hash)throw Error('Candidate changed during verification');
-  const validation={schema:1,version,sourceBuildCommit:meta.sourceBuildCommit,metadataReleaseCommit:null,phase:signed?'owner-signed-experimental':'unsigned-build-validation',publicationReady:signed,host:{platform:process.platform,arch:process.arch,os:release()},toolchains:build.toolchains,source,artifactHashes:hashes,feedSHA256:feedHash,probes,requiredReaderHelperPairs:4,requiredRegressionFamilies:28,requiredBootstrapChecks:3,requiredSkips:0,commands:[...build.commands,...records],publishAssets:meta.publishAssets,developmentEvidence:['host-app-darwin-x64.zip (CI artifact only; not a release asset)'],manualAcceptanceLimits:['No publication performed','No macOS 14 device acceptance','No Intel GUI/device acceptance','No interactive/performance acceptance','No notarization claim']};
-  if(seal){if(!signed||seal.feedSHA256!==feedHash||JSON.stringify(seal.artifactHashes)!==JSON.stringify(hashes)||seal.validationSHA256!==sha(await readFile(join(candidate,'release-validation.json'))))throw Error('Signed candidate seal mismatch');return validation;}
+  const validation={schema:1,version,sourceBuildCommit:meta.sourceBuildCommit,metadataReleaseCommit:null,phase:signed?'owner-signed-experimental':'unsigned-build-validation',publicationReady:signed,host:{platform:process.platform,arch:process.arch,os:release()},toolchains:build.toolchains,source,artifactHashes:hashes,feedSHA256:feedHash,probes,requiredReaderHelperPairs:requiredPairs,requiredRegressionFamilies:requiredPairs*7,requiredBootstrapChecks:3,requiredSkips:0,commands:[...build.commands,...records],publishAssets:publicAssetNames(version,signed),scope:{nativeApp:'ARM archive structure/provenance/signatures/update configuration/licenses',nativeAppExecuted:process.arch==='arm64',runtimeExecuted:`darwin-${process.arch}`,crossArchitectureExecution:false},manualAcceptanceLimits:['No publication performed','No macOS 14 device acceptance','No Intel GUI/device acceptance','No interactive/performance acceptance','No notarization claim']};
+  if(seal){
+   if(!signed||seal.feedSHA256!==feedHash||JSON.stringify(seal.artifactHashes)!==JSON.stringify(hashes)||seal.validationSHA256!==sha(await readFile(join(candidate,'release-validation.json'))))throw Error('Signed candidate seal mismatch');
+   const allHashes={...hashes,'experimental-arm64.xml':feedHash!,'release-validation.json':seal.validationSHA256,'signed-candidate.json':sha(await readFile(sealPath))};
+   const expected=Object.entries(allHashes).sort(([a],[b])=>a.localeCompare(b)).map(([n,h])=>`${h}  ${n}\n`).join('');
+   if(await readFile(join(candidate,'SHA256SUMS'),'utf8')!==expected)throw Error('Signed candidate checksum evidence changed');
+   return validation;
+  }
   await writeJson(join(candidate,'release-validation.json'),validation);
-  if(signed){await writeJson(sealPath,{sourceBuildCommit:meta.sourceBuildCommit,feedSHA256:feedHash,artifactHashes:hashes,validationSHA256:sha(await readFile(join(candidate,'release-validation.json')))});hashes['signed-candidate.json']=sha(await readFile(sealPath));}
+  const baseHashes={...hashes};
   hashes['release-validation.json']=sha(await readFile(join(candidate,'release-validation.json')));
+  if(signed){
+   const canonicalFeed=join(candidate,'experimental-arm64.xml');
+   if(resolve(signedFeed!)!==canonicalFeed)await writeFile(canonicalFeed,await readFile(signedFeed!));
+   if(sha(await readFile(canonicalFeed))!==feedHash)throw Error('Signed feed changed during finalization');
+   await writeJson(sealPath,{sourceBuildCommit:meta.sourceBuildCommit,feedSHA256:feedHash,artifactHashes:baseHashes,validationSHA256:hashes['release-validation.json']});
+   hashes['experimental-arm64.xml']=feedHash!;hashes['signed-candidate.json']=sha(await readFile(sealPath));
+  }
   await writeFile(join(candidate,'SHA256SUMS'),Object.entries(hashes).sort(([a],[b])=>a.localeCompare(b)).map(([n,h])=>`${h}  ${n}\n`).join(''));
   return validation;
  }finally{await rm(scratch,{recursive:true,force:true});}

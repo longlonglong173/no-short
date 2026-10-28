@@ -2,7 +2,6 @@ import { cp, mkdir, mkdtemp, readFile, symlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { buildTransaction } from './build-transaction';
-import { packageNative } from '../packages/usage-menubar/scripts/package-native';
 import { artifactNames, publicAssetNames, verifyRelease } from './verify-release-artifacts';
 import { command, assertFrozen, assertCandidateWritable, isolatedEnvironment, json, sha, sourceInputs, writeJson, type CommandResult } from './release/evidence';
 /** Build from a committed detached clone, never alter the source checkout's outputs. */
@@ -44,10 +43,6 @@ export async function prepareRelease(version:string,destination?:string) {
   for(const platform of ['darwin-arm64','darwin-x64'])await cp(join(frozen,'.artifacts/usage/releases',`no-short-usage-${platform}.tar.gz`),join(paths.candidate,`no-short-usage-${platform}.tar.gz`));
   await cp(join(frozen,'.artifacts/usage/releases',`no-short-${version}.zip`),join(paths.candidate,`no-short-${version}.zip`));
   await cp(join(frozen,'.artifacts/usage-menubar/releases',`NoShortUsage-${version}-arm64.zip`),join(paths.candidate,`NoShortUsage-${version}-arm64.zip`));
-  const runtime=await json(join(paths.candidate,'runtime-manifest.json'));
-  const hostPackages=join(stage,'host-app-packages');
-  await packageNative({builds:join(frozen,'.artifacts/usage-menubar'),releases:hostPackages,runtime,distribution:false});
-  await cp(join(hostPackages,`no-short-usage-menubar-${version}-darwin-x64.zip`),join(paths.candidate,'host-app-darwin-x64.zip'));
   await writeJson(join(paths.candidate,'source-provenance.json'),{sourceBuildCommit:commit,inputs:await sourceInputs(root,commit),sourceLock:lock,patchSHA256:sha(await readFile(join(frozen,'packages/usage',lock.patch.file)))});
   await writeJson(join(paths.candidate,'build-evidence.json'),{sourceBuildCommit:commit,toolchains,commands:records});
   const artifacts:Record<string,string>={};for(const name of artifactNames(version))artifacts[name]=sha(await readFile(join(paths.candidate,name)));
