@@ -26,7 +26,11 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-**The current Experimental Apple Silicon release is [v0.7.0](https://github.com/longlonglong173/no-short/releases/tag/v0.7.0).** Download `NoShortUsage-0.7.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.7.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+0.7.1 is not recommended while its data and updater packaging regressions are repaired. Verified 0.7.0 is the temporary Apple Silicon download. Mixed known/fallback model costs may show unknown and omit a known subtotal; they are not complete estimates. See the [recovery record](releases/0.7.1-recovery.md).
+
+Keep an installed 0.7.1 copy while recovery is prepared; do not downgrade automatically. The updater-less 0.7.1 ZIP will need one manual reinstall of the verified recovery release. Compatible 0.6.0–0.7.0 apps use the signed update channel with confirmation. The MCP plugin updates separately.
+
+**The temporary verified Experimental Apple Silicon download is [v0.7.0](https://github.com/longlonglong173/no-short/releases/tag/v0.7.0).** Download `NoShortUsage-0.7.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.7.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
