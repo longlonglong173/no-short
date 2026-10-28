@@ -21,6 +21,7 @@ export async function extract(archive:string,destination:string,kind:'tar'|'zip'
  await command(kind==='tar'?['/usr/bin/tar','-xzf',archive,'-C',destination,'--no-same-owner']:['/usr/bin/ditto','-x','-k',archive,destination],destination);
 }
 export async function runtimeFiles(directory:string,binaries:Record<string,string>) {
+ if(Object.keys(binaries??{}).sort().join(',')!=='ccusage,no-short-usage'||Object.values(binaries).some(h=>!/^([0-9a-f]{64})$/.test(h)))throw Error('Runtime binary manifest mismatch');
  const names=(await readdir(directory)).sort();
  if(names.join(',')!==['THIRD_PARTY_NOTICES.txt','ccusage','no-short-usage'].join(','))throw Error('Runtime contents mismatch');
  for(const [name,hash]of Object.entries(binaries)) {

@@ -36,3 +36,25 @@ test('frozen input guard rejects a tracked modification and an untracked build i
  await writeFile(join(d,'input.txt'),'modified');await expect(assertFrozen(d,commit)).rejects.toThrow('Build inputs changed');
  await writeFile(join(d,'input.txt'),'committed');await writeFile(join(d,'injected.ts'),'not committed');await expect(assertFrozen(d,commit)).rejects.toThrow('Uncommitted build inputs');
 });
+
+test('signed-feed boundary requires the pinned key and unchanged whole feed bytes',async()=>{
+ const {generateKeyPairSync,sign}=await import('node:crypto');
+ const {verifyFeedSignature}=await import('../../../scripts/verify-release-artifacts') as any;
+ expect(typeof verifyFeedSignature).toBe('function');
+ const {publicKey,privateKey}=generateKeyPairSync('ed25519');const pub=(publicKey.export({format:'der',type:'spki'}) as Buffer).subarray(-32).toString('base64');
+ const xml=Buffer.from('<?xml version="1.0"?><rss><channel>fixture</channel></rss>\n');
+ const signature=sign(null,xml,privateKey).toString('base64');
+ const signed=Buffer.concat([xml,Buffer.from(`<!-- sparkle-signatures:\nedSignature: ${signature}\nlength: ${xml.length}\n-->\n`)]);
+ expect(verifyFeedSignature(signed,pub)).toBe(true);
+ expect(verifyFeedSignature(xml,pub)).toBe(false);
+ expect(verifyFeedSignature(Buffer.from(signed.toString().replace('fixture','changed')),pub)).toBe(false);
+ expect(verifyFeedSignature(Buffer.concat([signed,Buffer.from('<item>injection</item>')]),pub)).toBe(false);
+ const other=generateKeyPairSync('ed25519').publicKey.export({format:'der',type:'spki'}) as Buffer;
+ expect(verifyFeedSignature(signed,other.subarray(-32).toString('base64'))).toBe(false);
+});
+
+test('development Intel app cannot enter the public asset allowlist',async()=>{
+ const {artifactNames,publicAssetNames}=await import('../../../scripts/verify-release-artifacts') as any;
+ expect(typeof publicAssetNames).toBe('function');
+ expect(await verify({schema:1,version:'0.7.1',sourceBuildCommit:'a'.repeat(40),artifacts:Object.fromEntries(artifactNames('0.7.1').map((n:string)=>[n,'a'.repeat(64)])),publishAssets:[...publicAssetNames('0.7.1'),'host-app-darwin-x64.zip']})).toContain('Public release asset allowlist mismatch');
+});
