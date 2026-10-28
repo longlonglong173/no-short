@@ -19,7 +19,7 @@ export function verifyFeedSignature(bytes:Buffer,publicKey:string):boolean {
 export function artifactNames(version:string){return ['LICENSE','runtime-manifest.json','source-provenance.json','build-evidence.json',`no-short-usage-darwin-arm64.tar.gz`,`no-short-usage-darwin-x64.tar.gz`,`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`].sort();}
 /** Every file in the candidate is a public upload asset; no development ZIPs. */
 export function publicAssetNames(version:string,signed=false){return [...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json',...(signed?['experimental-arm64.xml','signed-candidate.json']:[])].sort();}
-export async function verifyRelease(candidate:string,version:string,options:{signedFeed?:string;expectedArch?:string}={}) {
+export async function verifyRelease(candidate:string,version:string,options:{signedFeed?:string;expectedArch?:string;expectedSourceCommit?:string}={}) {
  candidate=resolve(candidate);const root=resolve(import.meta.dirname,'..');
  const meta=await json(join(candidate,'candidate.json'));
  if(meta.schema!==1||meta.version!==version||!/^\d+\.\d+\.\d+$/.test(version))throw Error('Candidate version mismatch');
@@ -27,6 +27,8 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  if(Object.keys(meta.artifacts??{}).sort().join(',')!==artifactNames(version).join(','))throw Error('Candidate artifact set mismatch');
  if(JSON.stringify(meta.publishAssets)!==JSON.stringify(publicAssetNames(version)))throw Error('Public release asset allowlist mismatch');
  if(!/^[0-9a-f]{40}$/.test(meta.sourceBuildCommit))throw Error('Invalid source build commit');
+ if(options.expectedSourceCommit&&!/^[0-9a-f]{40}$/.test(options.expectedSourceCommit))throw Error('Invalid expected source build commit');
+ if(options.expectedSourceCommit&&meta.sourceBuildCommit!==options.expectedSourceCommit)throw Error('Candidate source build commit mismatch');
  if(options.expectedArch&&process.arch!==options.expectedArch)throw Error(`Host architecture mismatch: expected ${options.expectedArch}, actual ${process.arch}`);
  if(process.platform!=='darwin'||!['arm64','x64'].includes(process.arch))throw Error('Artifact runtime verification requires a native macOS host');
  const sealPath=join(candidate,'signed-candidate.json');
@@ -117,4 +119,4 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
   return validation;
  }finally{await rm(scratch,{recursive:true,force:true});}
 }
-if(import.meta.main){const [candidate,version,...args]=process.argv.slice(2);if(!candidate||!version)throw Error('Usage: verify-release-artifacts.ts CANDIDATE VERSION [--signed-feed PATH] [--expected-arch arm64|x64]');const option=(name:string)=>{const i=args.indexOf(name);return i<0?undefined:args[i+1];};const result=await verifyRelease(candidate,version,{signedFeed:option('--signed-feed'),expectedArch:option('--expected-arch')});console.log(`${result.phase}: ${result.requiredReaderHelperPairs} extracted reader/helper pairs; zero required skips. Publication ready: ${result.publicationReady}`);}
+if(import.meta.main){const [candidate,version,...args]=process.argv.slice(2);if(!candidate||!version)throw Error('Usage: verify-release-artifacts.ts CANDIDATE VERSION [--signed-feed PATH] [--expected-arch arm64|x64] [--expected-source-commit SHA]');for(let i=0;i<args.length;i+=2){if(!['--signed-feed','--expected-arch','--expected-source-commit'].includes(args[i]!)||!args[i+1]||args[i+1]!.startsWith('--'))throw Error('Invalid verifier option or missing value');}const option=(name:string)=>{const i=args.indexOf(name);return i<0?undefined:args[i+1];};const result=await verifyRelease(candidate,version,{signedFeed:option('--signed-feed'),expectedArch:option('--expected-arch'),expectedSourceCommit:option('--expected-source-commit')});console.log(`${result.phase}: ${result.requiredReaderHelperPairs} extracted reader/helper pairs; zero required skips. Publication ready: ${result.publicationReady}`);}

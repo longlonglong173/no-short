@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { buildTransaction } from './build-transaction';
 import { artifactNames, publicAssetNames, verifyRelease } from './verify-release-artifacts';
-import { command, assertFrozen, assertCandidateWritable, isolatedEnvironment, json, sha, sourceInputs, writeJson, type CommandResult } from './release/evidence';
+import { command, assertPinnedRustVersions, assertFrozen, assertCandidateWritable, isolatedEnvironment, json, sha, sourceInputs, writeJson, type CommandResult } from './release/evidence';
 /** Build from a committed detached clone, never alter the source checkout's outputs. */
 export async function prepareRelease(version:string,destination?:string) {
  const root=resolve(import.meta.dirname,'..');
@@ -29,7 +29,8 @@ export async function prepareRelease(version:string,destination?:string) {
  if(existsSync(join(warm,'target')))await symlink(join(warm,'target'),join(cache,'target'),'dir');
  const env=await isolatedEnvironment(join(stage,'private-environment'));env.NO_SHORT_REQUIRE_PATCHED_CCUSAGE='1';
  const toolchains:Record<string,string>={};
- for(const [name,args]of Object.entries({bun:[process.execPath,'--version'],rust:['rustc','--version'],swift:['swift','--version'],xcode:['xcodebuild','-version'],os:['sw_vers'],architecture:['uname','-m']}))toolchains[name]=await command(args,frozen,env,records);
+ for(const [name,args]of Object.entries({bun:[process.execPath,'--version'],rust:['rustc','--version'],cargo:['cargo','--version'],swift:['swift','--version'],xcode:['xcodebuild','-version'],os:['sw_vers'],architecture:['uname','-m']}))toolchains[name]=await command(args,frozen,env,records);
+ assertPinnedRustVersions(toolchains.rust!,toolchains.cargo!);
  for(const script of ['build:usage','test','build:usage-menubar','smoke:usage','smoke:usage-menubar','package:usage','package:usage-menubar']) {
   const args=[process.execPath,'run',script];if(script==='build:usage-menubar'||script==='package:usage-menubar')args.push('--distribution');
   console.log(`Preparing ${version}: ${script}`);await command(args,frozen,env,records);
@@ -45,7 +46,7 @@ export async function prepareRelease(version:string,destination?:string) {
   await cp(join(frozen,'.artifacts/usage/releases',`no-short-${version}.zip`),join(paths.candidate,`no-short-${version}.zip`));
   await cp(join(frozen,'.artifacts/usage-menubar/releases',`NoShortUsage-${version}-arm64.zip`),join(paths.candidate,`NoShortUsage-${version}-arm64.zip`));
   await writeJson(join(paths.candidate,'source-provenance.json'),{sourceBuildCommit:commit,inputs:await sourceInputs(root,commit),sourceLock:lock,patchSHA256:sha(await readFile(join(frozen,'packages/usage',lock.patch.file)))});
-  await writeJson(join(paths.candidate,'build-evidence.json'),{sourceBuildCommit:commit,toolchains,commands:records});
+  await writeJson(join(paths.candidate,'build-evidence.json'),{sourceBuildCommit:commit,toolchains,toolchainEnvironment:{cargoHome:env.CARGO_HOME,rustupHome:env.RUSTUP_HOME,rustupToolchain:env.RUSTUP_TOOLCHAIN},commands:records});
   const artifacts:Record<string,string>={};for(const name of artifactNames(version))artifacts[name]=sha(await readFile(join(paths.candidate,name)));
   await writeJson(join(paths.candidate,'candidate.json'),{schema:1,version,sourceBuildCommit:commit,phase:'unsigned-build',publicationReady:false,artifacts,publishAssets:publicAssetNames(version)});
   await verifyRelease(paths.candidate,version,{expectedArch:process.arch});

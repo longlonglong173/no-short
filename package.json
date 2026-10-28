@@ -21,7 +21,8 @@
     "test:usage-menubar:update-e2e": "bun packages/usage-menubar/scripts/update-e2e.ts",
     "prepare:experimental-release": "bun scripts/prepare-experimental-release.ts",
     "verify:release-artifacts": "bun scripts/verify-release-artifacts.ts",
-    "test:release-artifacts": "bun test scripts/release/artifacts.integration.test.ts"
+    "test:release-artifacts": "bun test scripts/release/artifacts.integration.test.ts",
+    "test:release-toolchains": "bun test scripts/release/toolchain.integration.test.ts"
   },
   "repository": {
     "type": "git",

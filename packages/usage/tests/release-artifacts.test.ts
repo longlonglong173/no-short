@@ -5,10 +5,10 @@ import { join, resolve } from 'node:path';
 const root=resolve(import.meta.dirname,'../../..');
 const dirs:string[]=[];
 afterEach(async()=>{for(const d of dirs.splice(0))await rm(d,{recursive:true,force:true});});
-async function verify(metadata:unknown,version='0.7.1') {
+async function verify(metadata:unknown,version='0.7.1',args:string[]=[]) {
  const d=await mkdtemp(join(tmpdir(),'ns-release-negative-'));dirs.push(d);
  await writeFile(join(d,'candidate.json'),JSON.stringify(metadata));
- const p=Bun.spawn([process.execPath,join(root,'scripts/verify-release-artifacts.ts'),d,version],{stdout:'pipe',stderr:'pipe'});
+ const p=Bun.spawn([process.execPath,join(root,'scripts/verify-release-artifacts.ts'),d,version,...args],{stdout:'pipe',stderr:'pipe'});
  const [out,err,code]=await Promise.all([new Response(p.stdout).text(),new Response(p.stderr).text(),p.exited]);
  expect(code).not.toBe(0); return out+err;
 }
@@ -69,4 +69,10 @@ test('a sealed signed candidate cannot be overwritten by another prepare',async(
 test('standalone source license is part of the public candidate rather than only nested in archives',async()=>{
  const {artifactNames,publicAssetNames}=await import('../../../scripts/verify-release-artifacts');
  expect(artifactNames('0.7.1')).toContain('LICENSE');expect(publicAssetNames('0.7.1')).toContain('LICENSE');
+});
+
+test('same-version candidate from another source commit cannot satisfy a cross-host handoff',async()=>{
+ const {artifactNames,publicAssetNames}=await import('../../../scripts/verify-release-artifacts');
+ const metadata={schema:1,version:'0.7.1',sourceBuildCommit:'a'.repeat(40),artifacts:Object.fromEntries(artifactNames('0.7.1').map(n=>[n,'a'.repeat(64)])),publishAssets:publicAssetNames('0.7.1')};
+ expect(await verify(metadata,'0.7.1',['--expected-source-commit','b'.repeat(40)])).toContain('Candidate source build commit mismatch');
 });
