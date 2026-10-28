@@ -2,10 +2,10 @@ import { open, readdir } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
-import { projectMetadata } from './project-metadata';
-import { decodeGrouping, mergeGrouping } from './grouping-types';
+import { projectMetadata } from './project-metadata.ts';
+import { decodeGrouping, mergeGrouping } from './grouping-types.ts';
 import type { SessionMetadata } from './types.ts';
-import { MetadataFileCache, type MetadataOptions, type CachedMetadata } from './metadata-file-cache';
+import { MetadataFileCache, type MetadataOptions, type CachedMetadata } from './metadata-file-cache.ts';
 
 const missing = (e: unknown) => ['ENOENT', 'ENOTDIR'].includes((e as NodeJS.ErrnoException).code ?? '');
 async function firstLine(path: string): Promise<string> {
