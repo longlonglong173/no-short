@@ -51,7 +51,7 @@ import Vision
                         // Domain vocabulary improves recognition of the small pricing
                         // status label without accepting misspellings or absent text.
                         // The actual estimated-zero render below is the absence control.
-                        request.customWords = ["Partial pricing"]
+                        request.customWords = ["Partial", "pricing"]
                         try VNImageRequestHandler(cgImage: XCTUnwrap(bitmap.cgImage)).perform([request])
                         let observations = request.results?.map { $0.topCandidates(5).map(\.string) } ?? []
                         let text = observations.flatMap { $0 }
