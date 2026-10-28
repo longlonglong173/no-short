@@ -39,6 +39,7 @@ export async function prepareRelease(version:string,destination?:string) {
  await buildTransaction(join(owned,'candidate-transactions'),{candidate:target},async paths=>{
   await assertCandidateWritable(target);
   await mkdir(paths.candidate);
+  await cp(join(frozen,'LICENSE'),join(paths.candidate,'LICENSE'));
   await cp(join(frozen,'packages/usage/runtime-manifest.json'),join(paths.candidate,'runtime-manifest.json'));
   for(const platform of ['darwin-arm64','darwin-x64'])await cp(join(frozen,'.artifacts/usage/releases',`no-short-usage-${platform}.tar.gz`),join(paths.candidate,`no-short-usage-${platform}.tar.gz`));
   await cp(join(frozen,'.artifacts/usage/releases',`no-short-${version}.zip`),join(paths.candidate,`no-short-${version}.zip`));

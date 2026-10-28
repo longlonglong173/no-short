@@ -29,6 +29,10 @@ export async function runtimeFiles(directory:string,binaries:Record<string,strin
   const path=join(directory,name),stat=await lstat(path);
   if(!stat.isFile()||stat.isSymbolicLink()||!(stat.mode&0o111)||sha(await readFile(path))!==hash)throw Error(`Runtime checksum/provenance mismatch: ${name}`);
  }
+ const expectedLicense=await readFile(new URL('./licenses/ccusage-20.0.34-LICENSE.txt',import.meta.url));
+ // Exact upstream apps/ccusage/LICENSE from SHA-locked source revision
+ // d7555844929ad76ec97a113d1d51c31de92bee35; require the whole grant and disclaimer.
+ if(sha(expectedLicense)!=='ffa4dd2d15c2e9f87d21367a007593002366c308d90b4a666d5bd43f57df7563')throw Error('Pinned upstream license mismatch');
  const notices=await readFile(join(directory,'THIRD_PARTY_NOTICES.txt'),'utf8');
- for(const text of ['MIT License','Copyright (c) 2025 ryoppippi','The above copyright notice and this permission notice shall be included'])if(!notices.includes(text))throw Error('Incomplete runtime license');
+ if(!notices.includes(expectedLicense.toString('utf8')))throw Error('Incomplete runtime license');
 }

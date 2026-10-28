@@ -16,7 +16,7 @@ export function verifyFeedSignature(bytes:Buffer,publicKey:string):boolean {
  const match=block.match(/^<!-- sparkle-signatures:\nedSignature: ([A-Za-z0-9+/=]+)\nlength: ([0-9]+)\n-->\n?$/);
  return !!match&&Number(match[2])===i&&verifyArchiveSignature(bytes.subarray(0,i),match[1]!,publicKey);
 }
-export function artifactNames(version:string){return ['runtime-manifest.json','source-provenance.json','build-evidence.json',`no-short-usage-darwin-arm64.tar.gz`,`no-short-usage-darwin-x64.tar.gz`,`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`].sort();}
+export function artifactNames(version:string){return ['LICENSE','runtime-manifest.json','source-provenance.json','build-evidence.json',`no-short-usage-darwin-arm64.tar.gz`,`no-short-usage-darwin-x64.tar.gz`,`NoShortUsage-${version}-arm64.zip`,`no-short-${version}.zip`].sort();}
 /** Every file in the candidate is a public upload asset; no development ZIPs. */
 export function publicAssetNames(version:string,signed=false){return [...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json',...(signed?['experimental-arm64.xml','signed-candidate.json']:[])].sort();}
 export async function verifyRelease(candidate:string,version:string,options:{signedFeed?:string;expectedArch?:string}={}) {
@@ -47,6 +47,7 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  if(manifest.version!==version||manifest.ccusageVersion!==lock.version||manifest.ccusagePatchRevision!==lock.patchRevision||manifest.ccusageSourceRevision!==lock.source.revision)throw Error('Runtime source pin mismatch');
  if(source.sourceLock?.source?.sha256!==lock.source.sha256||source.sourceLock?.patch?.sha256!==lock.patch.sha256||source.sourceLock?.pricing?.sha256!==lock.pricing.sha256)throw Error('Source/patch/pricing hash mismatch');
  if(source.patchSHA256!==lock.patch.sha256)throw Error('Source patch checksum mismatch');
+ if(hashes.LICENSE!==source.inputs.LICENSE)throw Error('Standalone license mismatch');
  const build=await json(join(candidate,'build-evidence.json'));
  if(build.sourceBuildCommit!==meta.sourceBuildCommit||!Array.isArray(build.commands)||build.commands.some((c:any)=>c.code!==0))throw Error('Build command evidence incomplete');
  for(const name of ['build:usage','test','build:usage-menubar','package:usage','package:usage-menubar'])if(!build.commands.some((c:any)=>c.command.includes(name)))throw Error(`Missing required build command: ${name}`);

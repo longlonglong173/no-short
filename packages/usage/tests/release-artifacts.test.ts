@@ -65,3 +65,8 @@ test('a sealed signed candidate cannot be overwritten by another prepare',async(
  const d=await mkdtemp(join(tmpdir(),'ns-signed-candidate-'));dirs.push(d);await assertCandidateWritable(d);
  await writeFile(join(d,'signed-candidate.json'),'{}');await expect(assertCandidateWritable(d)).rejects.toThrow('Signed candidate is immutable');
 });
+
+test('standalone source license is part of the public candidate rather than only nested in archives',async()=>{
+ const {artifactNames,publicAssetNames}=await import('../../../scripts/verify-release-artifacts');
+ expect(artifactNames('0.7.1')).toContain('LICENSE');expect(publicAssetNames('0.7.1')).toContain('LICENSE');
+});

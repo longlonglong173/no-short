@@ -51,3 +51,26 @@ test('public allowlist export verifies with the same gate and complete SHA256SUM
  await rm(join(d,'no-short-usage-darwin-x64.tar.gz'));
  await expect(verifyRelease(d,version!)).rejects.toThrow();
 },180000);
+
+test('a rehashed TAR with valid binary hashes still requires the complete upstream MIT block',async()=>{
+ const {extract}=await import('./archives');const {command}=await import('./evidence');
+ const d=await fixture(),archive=join(d,'no-short-usage-darwin-arm64.tar.gz'),unpacked=join(d,'unpacked');
+ await extract(archive,unpacked,'tar');
+ await writeFile(join(unpacked,'THIRD_PARTY_NOTICES.txt'),'MIT License\nCopyright (c) 2025 ryoppippi\nThe above copyright notice and this permission notice shall be included\n');
+ await command(['/usr/bin/tar','-czf',archive,'-C',unpacked,'ccusage','no-short-usage','THIRD_PARTY_NOTICES.txt'],d);await rm(unpacked,{recursive:true});
+ const m=await json(join(d,'runtime-manifest.json'));m.platforms['darwin-arm64'].sha256=sha(await readFile(archive));await writeJson(join(d,'runtime-manifest.json'),m);
+ await rebind(d,'no-short-usage-darwin-arm64.tar.gz');await rebind(d,'runtime-manifest.json');
+ await expect(verifyRelease(d,version!)).rejects.toThrow('Incomplete runtime license');
+},180000);
+test('a rehashed final plugin with complete binaries but truncated upstream license is rejected',async()=>{
+ const {extract}=await import('./archives');const {command}=await import('./evidence');
+ const d=await fixture(),archive=join(d,`no-short-${version}.zip`),unpacked=join(d,'unpacked');
+ await extract(archive,unpacked,'zip','no-short/');
+ for(const platform of ['darwin-arm64','darwin-x64'])await writeFile(join(unpacked,'no-short/packages/usage/runtime',platform,'THIRD_PARTY_NOTICES.txt'),'MIT License\nCopyright (c) 2025 ryoppippi\nThe above copyright notice and this permission notice shall be included\n');
+ await rm(archive);await command(['/usr/bin/zip','-qr',archive,'no-short'],unpacked);await rm(unpacked,{recursive:true});await rebind(d,`no-short-${version}.zip`);
+ await expect(verifyRelease(d,version!)).rejects.toThrow('Incomplete runtime license');
+},180000);
+test('standalone license cannot be replaced by another text after rehashing candidate metadata',async()=>{
+ const d=await fixture();await writeFile(join(d,'LICENSE'),'truncated license');await rebind(d,'LICENSE');
+ await expect(verifyRelease(d,version!)).rejects.toThrow('Standalone license mismatch');
+},30000);
