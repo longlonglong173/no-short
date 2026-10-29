@@ -1,11 +1,11 @@
 {
-  "version": "0.7.1",
+  "version": "0.7.2",
   "ccusageVersion": "20.0.34",
   "ccusagePatchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1-ns18-session-days-v1",
   "ccusageSourceRevision": "d7555844929ad76ec97a113d1d51c31de92bee35",
   "platforms": {
     "darwin-arm64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.1/no-short-usage-darwin-arm64.tar.gz",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.2/no-short-usage-darwin-arm64.tar.gz",
       "sha256": "58b86374bb3a5fe882ec1dc7574ebda2e5c19ae953b670d5ef27866d6acbcfae",
       "binaries": {
         "no-short-usage": "64c54289c7f400caaf4b476b7a7a2759ba1dd901d7ddff6dc665bc3b50094918",
@@ -13,7 +13,7 @@
       }
     },
     "darwin-x64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.1/no-short-usage-darwin-x64.tar.gz",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.2/no-short-usage-darwin-x64.tar.gz",
       "sha256": "ef740264845a83e8a62a95ebf913d5da6e88634bf891bbbe73dd9172f7e53b03",
       "binaries": {
         "no-short-usage": "10f716b688c9e8370209ec5787e72aa54d61b0afd03364fce7a9a6d7a1c1b972",

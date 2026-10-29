@@ -1,6 +1,6 @@
 {
   "name": "no-short",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "private": true,
   "description": "Local Codex and Claude Code usage estimates, with a macOS menu bar app and Codex panel. Built by Long.",
   "type": "module",

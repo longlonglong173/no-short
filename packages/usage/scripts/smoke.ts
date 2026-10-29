@@ -9,7 +9,7 @@ const cache = resolve(root, '.artifacts/usage/smoke-cache');
 const transport = new StdioClientTransport({ command: '/bin/sh', args: [resolve(root, 'scripts/launch-usage-mcp.sh')],
   env: { HOME: process.env.HOME!, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', NO_SHORT_USAGE_CACHE_DIR: cache, NO_SHORT_USAGE_OFFLINE: '1',
     ...(process.env.CODEX_HOME ? { CODEX_HOME: process.env.CODEX_HOME } : {}) }, stderr: 'pipe' });
-const client = new Client({ name: 'no-short-native-smoke', version: '0.7.1' });
+const client = new Client({ name: 'no-short-native-smoke', version: usageVersion });
 try {
   await client.connect(transport);
   if (client.getServerVersion()?.version !== usageVersion) throw new Error('Compiled MCP server version mismatch');
