@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const expected = 'https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip';
+// Public recommendations follow the owner-signed channel, which can remain on
+// the previous release while a private source candidate is being prepared.
+const signedFeed = readFileSync(new URL('../updates/experimental-arm64.xml', import.meta.url), 'utf8');
+const expected = /<enclosure\s+url="([^"]+)"/.exec(signedFeed)?.[1];
+assert.ok(expected, 'signed channel must identify the public download');
 for (const page of ['index.html', 'usage.html']) {
   test(`${page} links directly to the current experimental app download`, () => {
     const html = readFileSync(new URL(`../${page}`, import.meta.url), 'utf8');
@@ -20,9 +24,15 @@ for (const page of ['index.html', 'usage.html']) {
   });
 }
 
-test('repository installation link matches the website download', () => {
+test('packaged README primary download targets the source package version', () => {
+  const { version } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8'));
   const readme = readFileSync(new URL('../../README.md', import.meta.url), 'utf8');
-  assert.ok(readme.includes(`](${expected})`));
+  const downloadSection = /^## Download the macOS app\n([\s\S]*?)(?=^## )/m.exec(readme)?.[1];
+  assert.ok(downloadSection, 'README must expose its primary app installation section');
+  const downloads = [...downloadSection.matchAll(/\]\((https:\/\/[^)]+\.zip)\)/g)].map(match => match[1]);
+  assert.deepEqual(downloads, [
+    `https://github.com/longlonglong173/no-short/releases/download/v${version}/NoShortUsage-${version}-arm64.zip`
+  ]);
 });
 
 
