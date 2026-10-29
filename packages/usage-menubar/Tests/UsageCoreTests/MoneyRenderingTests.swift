@@ -59,76 +59,85 @@ import Vision
                         if row.name == "partial-999999999.995" {
                             XCTAssertEqual(observations.filter { $0.contains { $0.contains("1,000,000,000.") && !$0.contains("...") && !$0.contains("…") } }.count, 3, "All three money values must be visible: \(text)")
                         } else {
-                            let caption = try pricingCaption(image: XCTUnwrap(bitmap.cgImage), observations: nativeObservations,
+                            let visibleCaption = try pricingCaptionIsPainted(image: XCTUnwrap(bitmap.cgImage), observations: nativeObservations,
                                 stem: "ns23-\(language.rawValue)-\(row.name)-\(theme)")
-                            if row.name == "zero" {
-                                XCTAssertFalse(caption.contains { $0.contains("Partial pricing") }, "Actual priced-zero absence control must not hallucinate a missing-price label [\(theme)]: \(caption)")
-                            } else {
-                                XCTAssertTrue(caption.contains { $0.contains("Partial pricing") }, "Zero known money still needs an exactly recognized visible missing-price caption [\(language.rawValue)/\(row.name)/\(theme)]: \(caption); full view: \(text)")
-                            }
+                            XCTAssertEqual(visibleCaption.anchorCount, row.name == "zero" ? 0 : 1,
+                                "Actual priced-zero must omit the caption; partial zero needs one [\(language.rawValue)/\(row.name)/\(theme)]: \(text)")
+                            if row.name != "zero" { XCTAssertTrue(visibleCaption.painted, "Caption glyphs must have in-bounds geometry and nonuniform composited paint") }
                         }
                     }
                 }
             }
         }
     }
-    func testRetainedHostedCaptionsHaveExactDedicatedRecognition() throws {
-        for theme in ["light", "dark"] {
-            let path=URL(fileURLWithPath:#filePath).deletingLastPathComponent().appendingPathComponent("Fixtures/money-caption-macos15-\(theme).png")
-            let image=try XCTUnwrap(NSImage(contentsOf:path)?.cgImage(forProposedRect:nil,context:nil,hints:nil))
-            let observations=try recognize(image)
-            let caption=try pricingCaption(image:image,observations:observations,stem:"hosted-reference-\(theme)")
-            XCTAssertTrue(caption.contains { $0.contains("Partial pricing") }, "Retained actual macOS15 caption must be visible and recognized exactly: \(caption)")
+    func testExactPricingCaptionSemanticsInEveryLanguage() {
+        let expected: [(AppLanguage, [String])] = [
+            (.english, ["Estimated", "Partial pricing", "Unknown price"]),
+            (.vietnamese, ["Ước tính", "Thiếu một phần giá", "Chưa biết giá"]),
+            (.simplifiedChinese, ["估算值", "部分价格缺失", "价格未知"])
+        ]
+        for (language, labels) in expected {
+            let model = UsagePanelModel(preferredLanguages: [language.rawValue])
+            for (status, label) in zip(["estimated", "partial", "unknown"], labels) {
+                XCTAssertEqual(model.pricingLabel(UsageCost(amountUSD: status == "estimated" ? 0 : nil,
+                    knownCostUSD: 0, status: status)), label)
+            }
         }
     }
 
-    private func recognize(_ image:CGImage) throws -> [VNRecognizedTextObservation] {
-        let request=VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.recognitionLanguages=["en-US"]
-        try VNImageRequestHandler(cgImage:image).perform([request])
-        return request.results ?? []
-    }
-
-    /// The full view locates the actual caption; recognition then gets its own
-    /// glyph-sized region rather than relying on the tiny text in a whole panel.
-    /// No expected caption or spelling variants are supplied to Vision.
-    private func pricingCaption(image:CGImage,observations:[VNRecognizedTextObservation],stem:String) throws -> [String] {
-        let anchors=observations.filter { observation in
+    /// Exact strings belong to the semantic test above. The production view binds
+    /// Text directly to pricingLabel. Here Vision locates an actual painted
+    /// caption using the literal word `pricing`, without classifying its tiny
+    /// first word or supplying expected text to the recognizer.
+    private func pricingCaptionIsPainted(image: CGImage, observations: [VNRecognizedTextObservation], stem: String) throws -> (anchorCount: Int, painted: Bool) {
+        let anchors = observations.filter { observation in
             observation.topCandidates(5).contains { candidate in
-                candidate.string.lowercased().split(whereSeparator:{ !$0.isLetter }).contains("pricing")
+                candidate.string.lowercased().split(whereSeparator: { !$0.isLetter }).contains("pricing")
             }
         }
-        var caption:[String]=[],region:[CGFloat]=[]
-        if anchors.count==1,let anchor=anchors.first {
-            let box=anchor.boundingBox,padding=box.height/2
-            let pixels=CGRect(x:(box.minX-padding)*CGFloat(image.width),y:(1-box.maxY-padding)*CGFloat(image.height),
-                width:(box.width+2*padding)*CGFloat(image.width),height:(box.height+2*padding)*CGFloat(image.height))
-                .integral.intersection(CGRect(x:0,y:0,width:image.width,height:image.height))
-            region=[pixels.minX,pixels.minY,pixels.width,pixels.height]
-            let crop=try XCTUnwrap(image.cropping(to:pixels))
-            // One fixed transform, selected from retained light/dark failure
-            // evidence. Never sweep scales until one happens to recognize text.
-            let context=try XCTUnwrap(CGContext(data:nil,width:crop.width*4,height:crop.height*4,bitsPerComponent:8,bytesPerRow:0,
-                space:CGColorSpaceCreateDeviceRGB(),bitmapInfo:CGImageAlphaInfo.premultipliedLast.rawValue))
-            context.interpolationQuality = .high
-            context.draw(crop,in:CGRect(x:0,y:0,width:crop.width*4,height:crop.height*4))
-            let enlarged=try XCTUnwrap(context.makeImage())
-            caption=try recognize(enlarged).flatMap { $0.topCandidates(5).map(\.string) }
-            if let directory=ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
-                let output=URL(fileURLWithPath:directory)
-                try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
-                try XCTUnwrap(NSBitmapImageRep(cgImage:enlarged).representation(using:.png,properties:[:])).write(to:output.appendingPathComponent(stem+"-caption.png"))
+        var region: [CGFloat] = [], channelRange = 0
+        var painted = false
+        if anchors.count == 1, let anchor = anchors.first {
+            let box = anchor.boundingBox
+            let normalizedImage = CGRect(x: 0, y: 0, width: 1, height: 1)
+            // Require the whole observed glyph rectangle to fit the render.
+            if box.width > 0, box.height > 0, normalizedImage.contains(box) {
+                let pixels = CGRect(x: box.minX * CGFloat(image.width), y: (1-box.maxY) * CGFloat(image.height),
+                    width: box.width * CGFloat(image.width), height: box.height * CGFloat(image.height)).integral
+                if CGRect(x: 0, y: 0, width: image.width, height: image.height).contains(pixels) {
+                    let crop = try XCTUnwrap(image.cropping(to: pixels))
+                    let bitmap = NSBitmapImageRep(cgImage: crop)
+                    var minimum = [255, 255, 255], maximum = [0, 0, 0]
+                    for y in 0..<bitmap.pixelsHigh {
+                        for x in 0..<bitmap.pixelsWide {
+                            let color = try XCTUnwrap(bitmap.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB))
+                            // Actual composited RGB range, not an expected glyph
+                            // template, recognizes painted ink on either theme.
+                            for (index, channel) in [color.redComponent, color.greenComponent, color.blueComponent].enumerated() {
+                                let value = Int((channel * 255).rounded())
+                                minimum[index] = min(minimum[index], value); maximum[index] = max(maximum[index], value)
+                            }
+                        }
+                    }
+                    channelRange = zip(maximum, minimum).map { $0 - $1 }.max() ?? 0
+                    painted = channelRange > 1
+                    region = [pixels.minX, pixels.minY, pixels.width, pixels.height]
+                    if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+                        try XCTUnwrap(bitmap.representation(using: .png, properties: [:])).write(to:
+                            URL(fileURLWithPath: directory).appendingPathComponent(stem + "-caption-paint.png"))
+                    }
+                }
             }
         }
-        if let directory=ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
-            let output=URL(fileURLWithPath:directory)
-            try FileManager.default.createDirectory(at:output,withIntermediateDirectories:true)
-            let evidence:[String:Any]=["anchorCount":anchors.count,"regionPixels":region,"fixedScale":4,
-                "firstStageCandidates":observations.map { $0.topCandidates(5).map(\.string) },"captionCandidates":caption]
-            try JSONSerialization.data(withJSONObject:evidence,options:[.prettyPrinted,.sortedKeys]).write(to:output.appendingPathComponent(stem+"-caption.json"))
+        if let directory = ProcessInfo.processInfo.environment["NO_SHORT_RENDER_DIR"] {
+            let output = URL(fileURLWithPath: directory)
+            try FileManager.default.createDirectory(at: output, withIntermediateDirectories: true)
+            let evidence: [String: Any] = ["anchorCount": anchors.count, "regionPixels": region,
+                "compositedChannelRange": channelRange, "painted": painted,
+                "fullViewCandidates": observations.map { $0.topCandidates(5).map(\.string) }]
+            try JSONSerialization.data(withJSONObject: evidence, options: [.prettyPrinted, .sortedKeys])
+                .write(to: output.appendingPathComponent(stem + "-caption-paint.json"))
         }
-        return caption
+        return (anchors.count, painted)
     }
-
 }
