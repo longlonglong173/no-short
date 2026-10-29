@@ -34,6 +34,9 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  const sealPath=join(candidate,'signed-candidate.json');
  const seal=existsSync(sealPath)?await json(sealPath):null;
  const signedFeed=options.signedFeed??(seal?join(candidate,'experimental-arm64.xml'):undefined);
+ // The owner-signed public ARM app embeds ARM sourceBinaries only. It cannot
+ // authenticate x64 executable hashes from the external manifest.
+ if(signedFeed&&process.arch!=='arm64')throw Error('Owner-signed verification requires ARM execution; x64 runtime needs trusted-producer verification');
  const hashes:Record<string,string>={};
  for(const name of [...artifactNames(version),'candidate.json']) {
   hashes[name]=sha(await readFile(join(candidate,name)));
@@ -41,6 +44,16 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  }
  const extra=(await readdir(candidate)).filter(n=>!([...artifactNames(version),'candidate.json','SHA256SUMS','release-validation.json',...(signedFeed?['signed-candidate.json','experimental-arm64.xml']:[])].includes(n)));
  if(extra.length)throw Error(`Unexpected candidate files: ${extra}`);
+ const zip=join(candidate,`NoShortUsage-${version}-arm64.zip`);
+ // Authenticate downloaded owner-signed bytes before any packaged code runs.
+ let signed=false,feedHash:string|undefined;
+ if(signedFeed) {
+  const feedBytes=await readFile(signedFeed),feed=feedBytes.toString('utf8'),channel=await loadUpdateChannel(undefined,'distribution');
+  const url=`https://github.com/longlonglong173/no-short/releases/download/v${version}/NoShortUsage-${version}-arm64.zip`;
+  const signature=feed.match(/sparkle:edSignature="([^"]+)"/)?.[1];
+  if(!channel||!verifyFeedSignature(feedBytes,channel.publicKey)||!signature||!feed.includes(`url="${url}"`)||!feed.includes(`length="${(await readFile(zip)).length}"`)||!feed.includes(`<sparkle:version>${version}</sparkle:version>`)||!verifyArchiveSignature(await readFile(zip),signature,channel.publicKey))throw Error('Owner-signed archive/feed verification failed');
+  feedHash=sha(feedBytes);if(sha(await readFile(signedFeed))!==feedHash)throw Error('Signed feed changed during verification');signed=true;
+ }
  const source=await json(join(candidate,'source-provenance.json'));
  if(source.sourceBuildCommit!==meta.sourceBuildCommit||JSON.stringify(source.inputs)!==JSON.stringify(await sourceInputs(root,meta.sourceBuildCommit)))throw Error('Source provenance mismatch');
  const committed=async(path:string)=>JSON.parse(await command(['git','show',`${meta.sourceBuildCommit}:${path}`],root));
@@ -55,6 +68,9 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
  for(const name of ['build:usage','test','build:usage-menubar','package:usage','package:usage-menubar'])if(!build.commands.some((c:any)=>c.command.includes(name)))throw Error(`Missing required build command: ${name}`);
  const scratch=await mkdtemp(join(tmpdir(),'ns-final-artifacts-')),records:CommandResult[]=[],probes:any[]=[];
  try {
+  // Bind manifest ARM TAR/plugin hashes to the authenticated app sourceBinaries
+  // before the first runtime probe. This gate is static: it executes no app code.
+  await verifyNativeArchive(zip,'darwin-arm64',manifest,true);
   for(const platform of ['darwin-arm64','darwin-x64']) {
    const spec=manifest.platforms[platform],name=`no-short-usage-${platform}.tar.gz`;
    if(spec?.url!==`https://github.com/longlonglong173/no-short/releases/download/v${version}/${name}`||spec.sha256!==hashes[name])throw Error('Runtime archive URL/hash mismatch');
@@ -65,7 +81,6 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
    }
    if(platform===`darwin-${process.arch}`)probes.push(await probeRuntime(directory,join(scratch,'tar-fixture'),records,'tar',version));
   }
-  const zip=join(candidate,`NoShortUsage-${version}-arm64.zip`);await verifyNativeArchive(zip,'darwin-arm64',manifest,true);
   const native=join(scratch,'native');await extract(zip,native,'zip');
   const app=join(native,'No Short Usage.app'),resources=join(app,'Contents/Resources');
   for(const [name,sourcePath]of [['LICENSE','LICENSE'],['NOTICE.md','NOTICE.md'],['PROVIDER_ICONS.md','packages/usage-menubar/Resources/PROVIDER_ICONS.md']]) {
@@ -88,16 +103,9 @@ export async function verifyRelease(candidate:string,version:string,options:{sig
   probes.push(await probePlugin(plugin,join(candidate,`no-short-usage-darwin-${process.arch}.tar.gz`),join(scratch,'installer-fixture'),records));
   const requiredPairs=process.arch==='arm64'?4:3;
   if(probes.length!==requiredPairs||probes.some(p=>p.requiredSkips!==0)||records.filter(r=>r.command[0]==='required-runtime-probes').length!==requiredPairs)throw Error('Missing required real-reader/helper tests');
-  let signed=false,feedHash:string|undefined;
-  if(signedFeed) {
-   const feedBytes=await readFile(signedFeed),feed=feedBytes.toString('utf8'),channel=await loadUpdateChannel(undefined,'distribution');
-   const url=`https://github.com/longlonglong173/no-short/releases/download/v${version}/NoShortUsage-${version}-arm64.zip`;
-   const signature=feed.match(/sparkle:edSignature="([^"]+)"/)?.[1];
-   if(!channel||!verifyFeedSignature(feedBytes,channel.publicKey)||!signature||!feed.includes(`url="${url}"`)||!feed.includes(`length="${(await readFile(zip)).length}"`)||!feed.includes(`<sparkle:version>${version}</sparkle:version>`)||!verifyArchiveSignature(await readFile(zip),signature,channel.publicKey))throw Error('Owner-signed archive/feed verification failed');
-   feedHash=sha(feedBytes);if(sha(await readFile(signedFeed))!==feedHash)throw Error('Signed feed changed during verification');signed=true;
-  }
+  if(signedFeed&&sha(await readFile(signedFeed))!==feedHash)throw Error('Signed feed changed during verification');
   for(const [name,hash]of Object.entries(hashes))if(sha(await readFile(join(candidate,name)))!==hash)throw Error('Candidate changed during verification');
-  const validation={schema:1,version,sourceBuildCommit:meta.sourceBuildCommit,metadataReleaseCommit:null,phase:signed?'owner-signed-experimental':'unsigned-build-validation',publicationReady:signed,host:{platform:process.platform,arch:process.arch,os:release()},toolchains:build.toolchains,source,artifactHashes:hashes,feedSHA256:feedHash,probes,requiredReaderHelperPairs:requiredPairs,requiredRegressionFamilies:requiredPairs*7,requiredBootstrapChecks:3,requiredSkips:0,commands:[...build.commands,...records],publishAssets:publicAssetNames(version,signed),scope:{nativeApp:'ARM archive structure/provenance/signatures/update configuration/licenses',nativeAppExecuted:process.arch==='arm64',runtimeExecuted:`darwin-${process.arch}`,crossArchitectureExecution:false},manualAcceptanceLimits:['No publication performed','No macOS 14 device acceptance','No Intel GUI/device acceptance','No interactive/performance acceptance','No notarization claim']};
+  const validation={schema:1,version,sourceBuildCommit:meta.sourceBuildCommit,metadataReleaseCommit:null,phase:signed?'owner-signed-experimental':'unsigned-build-validation',publicationReady:signed,host:{platform:process.platform,arch:process.arch,os:release()},toolchains:build.toolchains,source,artifactHashes:Object.freeze({...hashes}),feedSHA256:feedHash,probes,requiredReaderHelperPairs:requiredPairs,requiredRegressionFamilies:requiredPairs*7,requiredBootstrapChecks:3,requiredSkips:0,commands:[...build.commands,...records],publishAssets:publicAssetNames(version,signed),scope:{nativeApp:'ARM archive structure/provenance/signatures/update configuration/licenses',nativeAppExecuted:process.arch==='arm64',runtimeExecuted:`darwin-${process.arch}`,crossArchitectureExecution:false},manualAcceptanceLimits:['No publication performed','No macOS 14 device acceptance','No Intel GUI/device acceptance','No interactive/performance acceptance','No notarization claim']};
   if(seal){
    if(!signed||seal.feedSHA256!==feedHash||JSON.stringify(seal.artifactHashes)!==JSON.stringify(hashes)||seal.validationSHA256!==sha(await readFile(join(candidate,'release-validation.json'))))throw Error('Signed candidate seal mismatch');
    const allHashes={...hashes,'experimental-arm64.xml':feedHash!,'release-validation.json':seal.validationSHA256,'signed-candidate.json':sha(await readFile(sealPath))};

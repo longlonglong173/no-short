@@ -303,7 +303,7 @@ Thread.sleep(forTimeInterval: 20)
         NO_SHORT_USAGE_CCUSAGE: join(base, 'must-not-start'), NO_SHORT_USAGE_CACHE_DIR: root, NO_SHORT_USAGE_OFFLINE: '1', TZ: 'UTC' },
     });
     const [stdout, stderr] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
-    expect(await child.exited).toBe(0); expect(stderr).toBe('');
+    expect(await child.exited, `Current-source snapshot CLI stderr:\n${stderr}`).toBe(0); expect(stderr).toBe('');
     const result = JSON.parse(stdout);
     expect(result.status).toBe('stale'); expect(result.notice).toBe(notice); expect(result.history).toEqual(original.history);
     expect(await readFile(path, 'utf8')).toBe(contents); expect((await stat(path)).mtimeMs).toBe(modified);

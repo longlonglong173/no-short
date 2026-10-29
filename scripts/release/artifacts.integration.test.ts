@@ -14,7 +14,7 @@ if(!version)throw Error('NO_SHORT_RELEASE_VERSION is required');
 const temps:string[]=[];afterEach(async()=>{for(const d of temps.splice(0))await rm(d,{recursive:true,force:true});});
 async function fixture(){const d=await mkdtemp(join(tmpdir(),'ns-artifact-negative-'));temps.push(d);await cp(source!,d,{recursive:true});return d;}
 async function rebind(d:string,name:string){const m=await json(join(d,'candidate.json'));m.artifacts[name]=sha(await readFile(join(d,name)));await writeJson(join(d,'candidate.json'),m);}
-test('mandatory final artifact runtime matrix passes without required skips',async()=>{const r=await verifyRelease(source!,version!);expect(r.requiredSkips).toBe(0);expect(r.requiredReaderHelperPairs).toBe(process.arch==='arm64'?4:3);expect(r.publicationReady).toBe(false);},180000);
+test('mandatory final artifact runtime matrix passes without required skips',async()=>{const r=await verifyRelease(await fixture(),version!);expect(r.requiredSkips).toBe(0);expect(r.requiredReaderHelperPairs).toBe(process.arch==='arm64'?4:3);expect(r.publicationReady).toBe(false);},180000);
 test('changing an archive invalidates the bound candidate',async()=>{const d=await fixture();await writeFile(join(d,'no-short-usage-darwin-arm64.tar.gz'),'changed');await expect(verifyRelease(d,version!)).rejects.toThrow('Candidate checksum mismatch');},30000);
 test('changing a generated manifest pin remains invalid after recomputing its file hash',async()=>{const d=await fixture();const m=await json(join(d,'runtime-manifest.json'));m.ccusagePatchRevision='old-reader';await writeJson(join(d,'runtime-manifest.json'),m);await rebind(d,'runtime-manifest.json');await expect(verifyRelease(d,version!)).rejects.toThrow('Runtime source pin mismatch');},30000);
 test('missing real reader execution evidence cannot satisfy build requirements',async()=>{const d=await fixture();const m=await json(join(d,'build-evidence.json'));m.commands=m.commands.filter((c:any)=>!c.command.includes('build:usage'));await writeJson(join(d,'build-evidence.json'),m);await rebind(d,'build-evidence.json');await expect(verifyRelease(d,version!)).rejects.toThrow('Missing required build command');},30000);
@@ -73,4 +73,54 @@ test('a rehashed final plugin with complete binaries but truncated upstream lice
 test('standalone license cannot be replaced by another text after rehashing candidate metadata',async()=>{
  const d=await fixture();await writeFile(join(d,'LICENSE'),'truncated license');await rebind(d,'LICENSE');
  await expect(verifyRelease(d,version!)).rejects.toThrow('Standalone license mismatch');
+},30000);
+
+test('returned validation hashes are an immutable snapshot matching serialized metadata',async()=>{
+ const d=await fixture(),result=await verifyRelease(d,version!);
+ expect(result.artifactHashes).toEqual((await json(join(d,'release-validation.json'))).artifactHashes);
+ expect(Object.isFrozen(result.artifactHashes)).toBe(true);
+},180000);
+
+async function markerCandidate() {
+ const {extract}=await import('./archives');const {command}=await import('./evidence');
+ const d=await fixture(),work=await mkdtemp(join(tmpdir(),'ns-auth-order-'));temps.push(work);
+ const marker=join(work,'executed'),archive=join(d,`no-short-usage-darwin-${process.arch}.tar.gz`),unpacked=join(work,'runtime');
+ await extract(archive,unpacked,'tar');
+ await writeFile(join(work,'marker.c'),`#include <stdio.h>\nint main(void){FILE *f=fopen("${marker}","w");if(f){fputs("executed",f);fclose(f);}puts("{}");return 0;}`);
+ await command(['/usr/bin/clang',join(work,'marker.c'),'-o',join(unpacked,'ccusage')],work);
+ await command(['/usr/bin/codesign','--force','--sign','-',join(unpacked,'ccusage')],work);
+ const manifest=await json(join(d,'runtime-manifest.json'));
+ manifest.platforms[`darwin-${process.arch}`].binaries.ccusage=sha(await readFile(join(unpacked,'ccusage')));
+ await command(['/usr/bin/tar','-czf',archive,'-C',unpacked,'ccusage','no-short-usage','THIRD_PARTY_NOTICES.txt'],work);
+ manifest.platforms[`darwin-${process.arch}`].sha256=sha(await readFile(archive));await writeJson(join(d,'runtime-manifest.json'),manifest);
+ await rebind(d,`no-short-usage-darwin-${process.arch}.tar.gz`);await rebind(d,'runtime-manifest.json');
+ return {d,work,marker};
+}
+test('unauthenticated signed feed cannot execute any packaged reader',async()=>{
+ const {existsSync}=await import('node:fs');const {d,work,marker}=await markerCandidate(),feed=join(work,'invalid.xml');await writeFile(feed,'invalid owner signature');
+ let error='';try{await verifyRelease(d,version!,{signedFeed:feed});}catch(e){error=String(e);}
+ expect(existsSync(marker)).toBe(false);expect(error).toContain('Owner-signed archive/feed verification failed');
+},180000);
+test('TAR readers must bind to the owner app source binaries before execution',async()=>{
+ const {existsSync}=await import('node:fs');const {d,marker}=await markerCandidate();
+ let error='';try{await verifyRelease(d,version!);}catch(e){error=String(e);}
+ expect(existsSync(marker)).toBe(false);expect(error).toContain('Runtime provenance mismatch');
+},180000);
+
+
+test('signed x64 verification fails closed before any packaged execution',async()=>{
+ const {existsSync}=await import('node:fs');const {d,work,marker}=await markerCandidate(),feed=join(work,'invalid.xml');await writeFile(feed,'invalid owner signature');
+ // Branch simulation only. Real native Intel execution remains its separate CI gate.
+ const child=Bun.spawn([process.execPath,'-e',`Object.defineProperty(process,"arch",{value:"x64"}); const {verifyRelease}=await import("./scripts/verify-release-artifacts"); try{await verifyRelease(process.argv[1],process.argv[2],{signedFeed:process.argv[3]});process.exit(9);}catch(e){console.log(String(e));}` ,d,version!,feed],{cwd:process.cwd(),stdout:'pipe',stderr:'pipe'});
+ const out=await new Response(child.stdout).text();expect(await child.exited).toBe(0);
+ expect(out).toContain('Owner-signed verification requires ARM execution');expect(existsSync(marker)).toBe(false);
+},30000);
+
+test('actual ad-hoc candidate cannot enter the Developer ID notary workflow',async()=>{
+ const {prepareNotarizedRelease}=await import('../../packages/usage-menubar/scripts/release');const {extract}=await import('./archives');
+ const d=await mkdtemp(join(tmpdir(),'ns-adhoc-notary-negative-'));temps.push(d);
+ const builds=join(d,'builds'),releases=join(d,'distribution');await extract(join(source!,`NoShortUsage-${version}-arm64.zip`),join(builds,'darwin-arm64'),'zip');
+ const {mkdir}=await import('node:fs/promises');await mkdir(releases);await writeFile(join(releases,'previous.zip'),'previous complete distribution');
+ await expect(prepareNotarizedRelease({builds,releases,runtime:await json(join(source!,'runtime-manifest.json')),teamID:'ABCDEFGHIJ',profile:'test-only-do-not-contact-Apple',sourceCommit:(await json(join(source!,'candidate.json'))).sourceBuildCommit})).rejects.toThrow('Public distribution requires timestamped Developer ID');
+ expect(await readFile(join(releases,'previous.zip'),'utf8')).toBe('previous complete distribution');
 },30000);

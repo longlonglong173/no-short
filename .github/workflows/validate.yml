@@ -60,7 +60,7 @@ jobs:
     outputs:
       version: ${{ steps.identity.outputs.version }}
       source_commit: ${{ steps.identity.outputs.source_commit }}
-      artifact_name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}
+      artifact_name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
       NO_SHORT_EXPECTED_ARCH: arm64
@@ -89,7 +89,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: native-render-evidence-${{ steps.identity.outputs.source_commit }}
+          name: native-render-evidence-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .artifacts/native-render-evidence/
           if-no-files-found: warn
       - name: Prepare unsigned frozen canonical ARM candidate with both runtime architectures
@@ -106,7 +106,7 @@ jobs:
           shasum -a 256 -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}
+          name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .artifacts/candidate/
 
   usage-menubar-macos:
@@ -149,6 +149,8 @@ jobs:
           for(const platform of ["darwin-arm64","darwin-x64"]) await extract(`${process.cwd()}/.artifacts/canonical-arm-candidate/no-short-usage-${platform}.tar.gz`,`${process.cwd()}/packages/usage/runtime/${platform}`,"tar");
           await copyFile(".artifacts/canonical-arm-candidate/runtime-manifest.json","packages/usage/runtime-manifest.json");
           '
+      - name: Build embedded UI required by current-source CLI tests
+        run: bun run --cwd packages/usage build:ui
       - name: Full Intel source suite against the canonical extracted runtime
         run: bun scripts/release/run-isolated.ts npm test
         env:
@@ -172,5 +174,5 @@ jobs:
           shasum -a 256 -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: no-short-intel-verification-${{ needs.usage-macos.outputs.version }}-${{ needs.usage-macos.outputs.source_commit }}
+          name: no-short-intel-verification-${{ needs.usage-macos.outputs.version }}-${{ needs.usage-macos.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .artifacts/intel-verification-receipt.json

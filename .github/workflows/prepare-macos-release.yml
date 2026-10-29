@@ -14,11 +14,11 @@ concurrency:
 jobs:
   prepare:
     if: github.ref == 'refs/heads/main'
-    runs-on: macos-14
+    runs-on: macos-15
     timeout-minutes: 60
     environment: macos-release
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -27,15 +27,31 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+      - name: Bind preparation to the actual source head and toolchains
+        id: identity
+        run: |
+          printf 'version=%s\nsource_commit=%s\n' "$(node -p 'require("./package.json").version')" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          test "$(xcodebuild -version | head -1)" = 'Xcode 16.4'
+          test "$(uname -m)" = arm64
+          swift --version
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.98.1
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
       - name: Validate and test before accessing signing credentials
         run: |
           test -f LICENSE
           npm run validate
           node --test website/tests/*.test.mjs
           bun install --cwd packages/usage --frozen-lockfile
-          npm test
+          bun scripts/release/run-isolated.ts bun run test:release-toolchains
+          bun -e 'import {loadUpdateChannel} from "./packages/usage-menubar/scripts/update-channel"; await loadUpdateChannel(undefined,"distribution");'
+          bun scripts/release/run-isolated.ts npm run build:usage
+          NO_SHORT_REQUIRE_PATCHED_CCUSAGE=1 bun scripts/release/run-isolated.ts npm test
           npm run typecheck:usage
-          npm run test:usage-menubar
+          bun scripts/release/run-isolated.ts npm run test:usage-menubar
+          git diff --exit-code -- . ':!packages/usage/runtime-manifest.json'
+          test "$(git rev-parse HEAD)" = '${{ steps.identity.outputs.source_commit }}'
       - name: Import Developer ID and notary credentials into a temporary keychain
         env:
           CERTIFICATE_BASE64: ${{ secrets.MACOS_CERTIFICATE_BASE64 }}
@@ -50,6 +66,7 @@ jobs:
           for name in CERTIFICATE_BASE64 CERTIFICATE_PASSWORD NOTARY_KEY NOTARY_KEY_ID NOTARY_ISSUER_ID SIGN_IDENTITY APPLE_TEAM_ID; do
             test -n "${!name}" || { echo "Missing macos-release setting: $name"; exit 1; }
           done
+          [[ "$APPLE_TEAM_ID" =~ ^[A-Z0-9]{10}$ ]] || { echo "Invalid APPLE_TEAM_ID"; exit 1; }
           umask 077
           keychain="$RUNNER_TEMP/no-short-signing.keychain-db"
           keychain_password="$(openssl rand -hex 32)"
@@ -66,15 +83,16 @@ jobs:
           # The default keychain is used by notarytool's named profile lookup.
           security default-keychain -s "$keychain"
           printf 'NO_SHORT_SIGN_IDENTITY=%s\nNO_SHORT_APPLE_TEAM_ID=%s\nNO_SHORT_NOTARY_PROFILE=no-short-release\n' "$SIGN_IDENTITY" "$APPLE_TEAM_ID" >> "$GITHUB_ENV"
-      - name: Build, smoke-test, notarize, staple and verify exact ZIPs
+      - name: Build distribution configuration, verify both targets, notarize canonical ARM ZIP
         run: |
-          npm run build:usage
-          npm run build:usage-menubar
-          npm run smoke:usage-menubar
-          npm run release:usage-menubar
+          bun scripts/release/run-isolated.ts npm run build:usage-menubar -- --distribution
+          bun scripts/release/run-isolated.ts npm run smoke:usage-menubar
+          test "$(git rev-parse HEAD)" = '${{ steps.identity.outputs.source_commit }}'
+          git diff --exit-code -- . ':!packages/usage/runtime-manifest.json'
+          bun scripts/release/run-isolated.ts npm run release:usage-menubar
       - uses: actions/upload-artifact@v4
         with:
-          name: no-short-notarized-release-candidate
+          name: no-short-notarized-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .artifacts/usage-menubar/distribution/
           if-no-files-found: error
       - name: Remove temporary signing material
