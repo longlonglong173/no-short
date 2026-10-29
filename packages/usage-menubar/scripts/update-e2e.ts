@@ -35,10 +35,28 @@ export function assertNegativeEvidence(scenario:string,urls:string[],states:stri
  if(!paths.includes('/feed.xml'))throw Error('No feed request: rejection not exercised');
  const archiveExpected=['corrupt-archive','wrong-key','wrong-version','cancel-download'].includes(scenario);
  if(paths.includes('/update.zip')!==archiveExpected)throw Error('Incorrect rejection archive request boundary');
- const outcome=['cancel','cancel-download'].includes(scenario)?states.some(s=>s.startsWith('available('))&&states.at(-1)==='idle'
-  :['equal-version','older-version'].includes(scenario)?states.at(-1)==='current'
-  :states.at(-1)?.startsWith('failed(');
- if(!outcome)throw Error('No observed SDK refusal/cancel outcome');
+ // Match the SDK categories actually observed for these owned fixtures. Sparkle
+ // maps archive/key/version refusals to unexpected; retained CUA refusal evidence
+ // supplies their detailed diagnosis rather than inventing a verification state.
+ const expected:Record<string,string[]>={
+  network:['checking','failed(network)'],
+  'corrupt-feed':['checking','failed(verification)'],
+  'unsigned-feed':['checking','failed(verification)'],
+  'wrong-architecture':['checking','failed(verification)'],
+  'corrupt-archive':['checking','available','downloading','failed(unexpected)'],
+  'wrong-key':['checking','available','downloading','failed(unexpected)'],
+  'wrong-version':['checking','available','downloading','failed(unexpected)'],
+  cancel:['checking','available','idle'],
+  'cancel-download':['checking','available','downloading','idle'],
+  'equal-version':['checking','current'],
+  'older-version':['checking','current'],
+ };
+ const phases=states.map(state=>/^available\(version: "[^"]+"\)$/.test(state)?'available'
+  :state.replace(/^failed\(UsageCore\.NativeUpdateFailure\.(\w+)\)$/,'failed($1)'))
+  .filter((state,index,all)=>index===0||state!==all[index-1]);
+ const required=expected[scenario];
+ if(!required||phases.length!==required.length||phases.some((state,index)=>state!==required[index]))
+  throw Error(`Incorrect SDK refusal/cancel stages: expected ${JSON.stringify(required)}, observed ${JSON.stringify(phases)}`);
 }
 async function exec(args:string[],env?:Record<string,string|undefined>):Promise<string>{const p=Bun.spawn(args,{cwd:repo,env,stdout:'pipe',stderr:'pipe'});const[out,err,code]=await Promise.all([new Response(p.stdout).text(),new Response(p.stderr).text(),p.exited]);if(code)throw Error(`${args[0]} failed: ${err}`);return out.trim()}
 export async function runUpdateE2E({root,interactive,scenario="success",language="en",frameworkLanguage=language,allowSystemTestCache=false,prepareOnly=false,theme="dark",versionA="0.6.0",versionB="0.6.1",holdProbe=false}:{root:string;interactive:boolean;scenario?:string;language?:string;frameworkLanguage?:string;allowSystemTestCache?:boolean;prepareOnly?:boolean;theme?:string;versionA?:string;versionB?:string;holdProbe?:boolean}):Promise<void>{
