@@ -1,5 +1,7 @@
 # No Short Usage
 
+0.7.1 is not recommended while its data and updater packaging regressions are repaired. Verified 0.7.0 is the temporary Apple Silicon download. Mixed known/fallback model costs may show unknown and omit a known subtotal; they are not complete estimates. The MCP plugin updates through its host, separately from the native app. An updater-less 0.7.1 app requires one manual reinstall of the verified recovery release; do not automatically downgrade an existing installation. See the [recovery record](releases/0.7.1-recovery.md).
+
 No Short Usage provides the optional local usage panel in the **no-short** product repository. It estimates API-equivalent USD costs from retained Codex logs and explicitly configured Claude Code logs using **ccusage 20.0.34**. These amounts are **not** subscription charges, invoices, remaining quota, or credits deducted.
 
 ## Interface language

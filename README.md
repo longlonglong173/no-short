@@ -8,7 +8,9 @@ Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charg
 
 ## Download the macOS app
 
-[Download for Apple Silicon — experimental v0.7.0](https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip)
+0.7.1 is not recommended while its data and updater packaging regressions are repaired. Verified 0.7.0 is the temporary Apple Silicon download. Mixed known/fallback model costs may show unknown and omit a known subtotal; they are not complete estimates. See the [recovery record](docs/releases/0.7.1-recovery.md).
+
+[Temporary download for Apple Silicon — experimental v0.7.0](https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip)
 
 Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 
@@ -18,7 +20,9 @@ Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not avail
 
 This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The package passed local build, signature and runtime checks; installation on other downloaded/quarantined Macs and live source-editor interactions remain unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.7.0.md).
 
-Users of 0.5.0 or earlier install 0.7.0 manually once; users on 0.6.0 or later can use Check for Updates with confirmation. [Previous0.5.0 download](https://github.com/longlonglong173/no-short/releases/download/v0.5.0/NoShortUsage-0.5.0-arm64.zip).
+Keep an installed 0.7.1 copy while recovery is prepared; do not automatically downgrade. Updater-less 0.7.1 ZIPs require one manual reinstall of the verified recovery release; the app updater cannot retrofit itself. The MCP plugin updates separately.
+
+Users of 0.5.0 or earlier install 0.7.0 manually once; users on compatible 0.6.0–0.7.0 apps can use Check for Updates with confirmation. [Previous 0.5.0 download](https://github.com/longlonglong173/no-short/releases/download/v0.5.0/NoShortUsage-0.5.0-arm64.zip).
 
 ## Features
 
@@ -84,7 +88,7 @@ Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks
 
 Usage binaries are distributed through GitHub releases. Apple signing/notarization and OpenAI Plugin Directory review have separate status.
 
-Since0.6.1, the main popover shows the running version and last update-check status. Quiet daily checks only show in-app notices; downloads and installation require confirmation. Users already on 0.6.0 or 0.6.1 can install 0.7.0 through About → Check for Updates once its signed feed is deployed.
+Since 0.6.1, the main popover shows the running version and last update-check status. Quiet daily checks only show in-app notices; downloads and installation require confirmation. Users already on 0.6.0 or 0.6.1 can install 0.7.0 through About → Check for Updates once its signed feed is deployed.
 
 ## New in 0.7.0
 
