@@ -15,9 +15,9 @@ import AppKit
         now=now.addingTimeInterval(82800);relaunched.checkIfDue();XCTAssertEqual(driver.probes,2)
     }
     func testOffManualRetryAndMaintenanceRemainIndependent() throws {
-        let driver=DailyDriver();var safe=false
-        let c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{safe},makeDriver:{driver},installedVersion:"0.6.1")
-        c.checkIfDue();XCTAssertEqual(driver.probes,0);safe=true;c.setAutomaticChecksEnabled(false);c.checkIfDue();XCTAssertEqual(driver.probes,0)
+        let driver=DailyDriver();let gate=DailyCheckGate()
+        let c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{gate.safe},makeDriver:{driver},installedVersion:"0.6.1")
+        c.checkIfDue();XCTAssertEqual(driver.probes,0);gate.safe=true;c.setAutomaticChecksEnabled(false);c.checkIfDue();XCTAssertEqual(driver.probes,0)
         c.check();XCTAssertEqual(driver.installs,1);driver.onState?(.failed(.network));c.check();XCTAssertEqual(driver.installs,2)
         driver.onState?(.idle);c.setAutomaticChecksEnabled(true);c.checkIfDue();XCTAssertEqual(driver.probes,0,"Manual check also spaces automatic attempts")
     }
@@ -57,3 +57,5 @@ import AppKit
     func checkForUpdates() throws {installs+=1}
     func checkForUpdateInformation() throws {probes+=1}
 }
+
+@MainActor private final class DailyCheckGate { var safe=false }

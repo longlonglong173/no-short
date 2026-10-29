@@ -35,7 +35,16 @@ function provablyDead(pid: number): boolean {
 
 async function active(root: string): Promise<boolean> {
   try {
-    const rootStat = await lstat(root);
+    let rootStat: Stats;
+    try { rootStat = await lstat(root); }
+    catch (error) {
+      if (code(error) !== 'ENOENT') throw error;
+      // An ordinary reader can create the cache root after our first lookup.
+      // Inspect that new root and its guard, rather than treating existence alone
+      // as maintenance. Later disappearance remains conservative below.
+      try { rootStat = await lstat(root); }
+      catch (retryError) { if (code(retryError) === 'ENOENT') return false; throw retryError; }
+    }
     if (!rootStat.isDirectory() || rootStat.isSymbolicLink()) return true;
     const guard = join(root, '.maintenance.lock');
     let initial: Stats;

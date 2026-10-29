@@ -1,3 +1,4 @@
+import { buildTransaction } from '../../../scripts/build-transaction';
 import { usageVersion as version } from '../src/version';
 import { mkdir, readFile, writeFile, copyFile, chmod, readdir } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
@@ -8,8 +9,11 @@ import { prepareCcusageSource, buildPatchedCcusage } from './build-ccusage';
 
 const root = resolve(import.meta.dirname, '../../..');
 const usage = resolve(import.meta.dirname, '..');
-const output = join(root, '.artifacts/usage/releases');
-const runtimeRoot = join(usage, 'runtime');
+await buildTransaction(join(root, '.artifacts/usage/build-transactions'), {
+  runtime: join(usage, 'runtime'), releases: join(root, '.artifacts/usage/releases'), manifest: join(usage, 'runtime-manifest.json'),
+}, async stage => {
+const output = stage.releases;
+const runtimeRoot = stage.runtime;
 await mkdir(output, { recursive: true });
 async function run(args: string[], cwd = usage) {
   console.log('Running:', args.join(' '));
@@ -69,5 +73,6 @@ for (const platform of Object.keys(lock.platforms)) {
     sha256: hash(await readFile(join(output, name))), binaries: { 'no-short-usage': hash(await readFile(join(directory, 'no-short-usage'))), ccusage: hash(await readFile(join(directory, 'ccusage'))) } };
   console.log(`Built ${platform}; ${process.env.NO_SHORT_SIGN_IDENTITY ? 'Developer ID signed' : 'development signing only; not notarized'}`);
 }
-await writeFile(join(usage, 'runtime-manifest.json'), JSON.stringify({ version, ccusageVersion: lock.version, ccusagePatchRevision: sourceLock.patchRevision, ccusageSourceRevision: sourceLock.source.revision, platforms }, null, 2) + '\n');
-console.log(`Runtime artifacts: ${output}`);
+await writeFile(stage.manifest, JSON.stringify({ version, ccusageVersion: lock.version, ccusagePatchRevision: sourceLock.patchRevision, ccusageSourceRevision: sourceLock.source.revision, platforms }, null, 2) + '\n');
+});
+console.log(`Runtime artifacts: ${join(root, '.artifacts/usage/releases')}`);

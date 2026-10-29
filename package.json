@@ -18,7 +18,11 @@
     "package:usage-menubar": "bun packages/usage-menubar/scripts/package.ts",
     "release:usage-menubar": "bun packages/usage-menubar/scripts/release.ts",
     "prepare:usage-menubar:appcast": "bun packages/usage-menubar/scripts/appcast.ts",
-    "test:usage-menubar:update-e2e": "bun packages/usage-menubar/scripts/update-e2e.ts"
+    "test:usage-menubar:update-e2e": "bun packages/usage-menubar/scripts/update-e2e.ts",
+    "prepare:experimental-release": "bun scripts/prepare-experimental-release.ts",
+    "verify:release-artifacts": "bun scripts/verify-release-artifacts.ts",
+    "test:release-artifacts": "bun test scripts/release/artifacts.integration.test.ts",
+    "test:release-toolchains": "bun test scripts/release/toolchain.integration.test.ts"
   },
   "repository": {
     "type": "git",

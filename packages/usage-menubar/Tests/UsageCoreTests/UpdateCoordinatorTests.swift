@@ -29,9 +29,9 @@ import Sparkle
             let c=UpdateCoordinator(configuration:configuration,architecture:arch,mayCheck:{true},makeDriver:{ XCTFail("Unexpected driver");return FakeNativeDriver() })
             c.check(); XCTAssertFalse(c.hasInstallCapability)
         }
-        let driver=FakeNativeDriver();var maintenance=true
-        let c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{!maintenance},makeDriver:{driver})
-        c.check();XCTAssertEqual(driver.checks,0); maintenance=false;c.check();XCTAssertEqual(driver.checks,1)
+        let driver=FakeNativeDriver();let gate=MaintenanceCheckGate()
+        let c=UpdateCoordinator(configuration:try config(),architecture:"arm64",mayCheck:{!gate.maintenance},makeDriver:{driver})
+        c.check();XCTAssertEqual(driver.checks,0); gate.maintenance=false;c.check();XCTAssertEqual(driver.checks,1)
     }
     func testAboutUsesNativeWithoutGitHubAndRetainsUsageErrors() async throws {
         let driver=FakeNativeDriver()
@@ -53,3 +53,5 @@ import Sparkle
     func checkForUpdates() throws { checks+=1 }
     func checkForUpdateInformation() throws {}
 }
+
+@MainActor private final class MaintenanceCheckGate { var maintenance=true }

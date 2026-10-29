@@ -27,3 +27,29 @@ The wrapper always passes `--ed-key-file -` to pinned Sparkle tools and redacts 
 5. Test actual A→B consent, installed version/relaunch and preserved data on isolated app copies before enabling the public feed or claiming updater acceptance.
 
 Signed update archives/feeds do not replace Developer ID/notarization. Never disable Gatekeeper or distribution library validation. Existing NS-05 clean-machine, Intel, OS permissions/login and VoiceOver acceptance remain separate. Installing into protected locations may require macOS authorization; never collect passwords or implement an alternative privileged shell installer.
+
+## Isolated SDK acceptance
+
+Build the current runtime and native distribution resources first, then run the fixture harness with explicit lifecycle versions:
+
+```sh
+bun run build:usage
+bun run build:usage-menubar --distribution
+bun run test:usage-menubar:update-e2e --scenario=success --version-a=0.7.0 --version-b=0.7.2 --allow-system-test-cache
+```
+
+Use only the printed absolute fixture app path or its unique `dev.noshort.usage.updater-test.<uuid>` bundle ID for UI control. The cache flag authorizes a fresh test-ID-only SDK cache bridge; an existing path is never replaced. App/SDK preferences, sources, pricing, activity, context, exports and worker data use private fixture directories. Native OpenPanel services may additionally save window/bookmark metadata in the fresh test-ID preference domain outside that HOME; inspect and clean only that exact generated domain after GUI acceptance, preserving evidence first. Never remove a preexisting or installed-app preference domain. Worker sources must be canonical owned fixture paths; external paths and symlink escapes are rejected.
+
+The success case seeds settings only on A and waits for B to read A's selected alternate source (one 110-token Codex session), preserve source settings, locale, budgets, custom prices including zero and generated JSON/CSV exports, and match the complete payload bundle fingerprint. `maintenance` and `worker-drain` separately exercise deferred replacement. Negative scenarios require real request boundaries and recorded SDK outcomes before their finish marker is accepted; unchanged bytes alone are insufficient. `probe-network --hold-probe` retains a quiet informational failure for UI inspection before `finish-probe` permits the actual relaunch/cadence check.
+
+These versions belong to test bundle identities. The compiled helper retains its actual source version. A fixture's successful replacement is not acceptance of a byte-identical final production ZIP or the owner's installed app.
+
+Additional private acceptance runners:
+
+```sh
+bun packages/usage-menubar/scripts/update-e2e-preservation.integration.ts
+bun packages/usage-menubar/scripts/acceptance-performance.ts --supported-large
+bun packages/usage-menubar/scripts/acceptance-performance.ts --large
+```
+
+The supported large shape tests input scan volume below the native 16MiB report limit. The larger-output shape must preserve that limit and report a clear controlled refusal; it must not truncate sessions or ledger entries.

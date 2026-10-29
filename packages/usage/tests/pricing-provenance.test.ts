@@ -1,11 +1,14 @@
 import { afterEach, expect, test } from 'bun:test';
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runReport } from '../src/runner';
 import { buildSnapshot } from '../src/adapter';
-import { createUsageService } from '../src/service';
+import { createUsageService, usageCacheScope } from '../src/service';
+import { ccusagePatchRevision } from '../src/version';
+import fixture from './fixtures/unified.json';
 
 const binary = process.env.NO_SHORT_USAGE_CCUSAGE ?? new URL(`../runtime/darwin-${process.arch}/ccusage`, import.meta.url).pathname;
 const dirs: string[] = [];
@@ -52,11 +55,76 @@ test('legacy nonempty Codex reports produce a clear localized runtime-update err
   const unsupported = { agent: 'codex', period: 'old-session', inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheCreationTokens: 0,
     totalTokens: 2, totalCost: .1, modelBreakdowns: [{ modelName: 'known-model', inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, cacheCreationTokens: 0, cost: .1 }] };
   const raw = { session: [unsupported], daily: [], totals: {} };
-  expect(buildSnapshot(raw, options).status).toBe('ready');
   expect(buildSnapshot({ session: [], daily: [], totals: {} }, options).status).toBe('empty');
   const root = await mkdtemp(join(tmpdir(), 'ns16-unsupported-')); dirs.push(root);
   const binary = join(root, 'old-reader');
   await writeFile(binary, '#!/bin/sh\ncat <<\'REPORT\'\n' + JSON.stringify(raw) + '\nREPORT\n', { mode: 0o700 });
   const s = await createUsageService({ binary, roots: [join(root, 'logs')], cacheDir: join(root, 'cache'), timeZone: 'UTC', pricingFile: join(root, 'missing.json') }).get();
-  expect(s.status).toBe('ready');
+  expect(s.status).toBe('error');
+  expect(s.notice).toBe('Bộ đọc chưa cung cấp nguồn giá model Codex. Cập nhật runtime No Short Usage rồi thử lại.');
+  expect(s.today.cost.amountUSD).toBeNull();
+  expect(s.history).toBeUndefined();
+  expect(() => buildSnapshot(raw, options)).toThrow('REPORT_PRICING_UNSUPPORTED');
+});
+
+// Missing validation would promote guessed raw costs into complete estimates.
+for (const location of ['session', 'daily-source', 'daily-direct'] as const) {
+  test.each([undefined, null, 'false', 'true', 0, 1])(`Codex ${location} rejects nonboolean fallback provenance %s`, flag => {
+    const row = structuredClone(fixture.session[0]) as any;
+    row.modelBreakdowns[0].isFallback = flag;
+    const daily = { ...row, period: '2026-10-17' };
+    const raw = { session: location === 'session' ? [row] : [],
+      daily: location === 'daily-source' ? [{ ...daily, agent: 'all', agents: [row] }] : location === 'daily-direct' ? [daily] : [], totals: {} };
+    expect(() => buildSnapshot(raw, options)).toThrow('REPORT_PRICING_UNSUPPORTED');
+  });
+  test.each(['tokens', 'cost', 'token-parts'])(`Codex ${location} rejects populated rows without model breakdowns (%s)`, populated => {
+    const row = { agent: 'codex', period: 'session', inputTokens: populated === 'token-parts' ? 1 : 0,
+      outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0, totalTokens: populated === 'tokens' ? 1 : 0,
+      totalCost: populated === 'cost' ? .1 : 0, modelBreakdowns: [] };
+    const daily = { ...row, period: '2026-10-17' };
+    expect(() => buildSnapshot({ session: location === 'session' ? [row] : [],
+      daily: location === 'daily-source' ? [{ ...daily, agent: 'all', agents: [row] }] : location === 'daily-direct' ? [daily] : [], totals: {} }, options)).toThrow('REPORT_PRICING_UNSUPPORTED');
+  });
+}
+
+test('empty Codex rows remain valid and Claude model rows need no fallback flag', () => {
+  const empty = { agent: 'codex', period: 'empty', inputTokens: 0, outputTokens: 0, cacheReadTokens: 0, cacheCreationTokens: 0,
+    totalTokens: 0, totalCost: 0, modelBreakdowns: [] };
+  const report = { session: [empty], daily: [{ ...empty, period: '2026-10-17' }], totals: {} };
+  expect(buildSnapshot(report, options).today.cost).toEqual({ amountUSD: 0, knownCostUSD: 0, status: 'estimated' });
+  const claude = structuredClone(fixture.session[0]) as any; claude.agent = 'claude';
+  for (const model of claude.modelBreakdowns) delete model.isFallback;
+  const snapshot = buildSnapshot({ session: [claude], daily: [{ ...claude, period: '2026-10-17' }], totals: {} }, { ...options, providers: ['claude'] });
+  expect(snapshot.sessions[0].cost).toEqual({ amountUSD: .42, knownCostUSD: .42, status: 'estimated' });
+  expect(snapshot.today.cost).toEqual(snapshot.sessions[0].cost);
+});
+
+test('adapter policy ignores a fresh unsafe same-reader cache without deleting old snapshots or pricing markers', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'ns-policy-cache-')); dirs.push(root);
+  const roots = [join(root, 'logs')], timeZone = 'UTC', cacheDir = join(root, 'cache');
+  const oldScope = createHash('sha256').update(JSON.stringify({ roots, timeZone, ccusage: '20.0.34', reader: ccusagePatchRevision,
+    schema: 1, history: 1, grouping: 1 })).digest('hex').slice(0, 24);
+  const oldDirectory = join(cacheDir, oldScope); await mkdir(oldDirectory, { recursive: true });
+  const unsafe = buildSnapshot(fixture, { ...options, now: new Date() });
+  unsafe.month.cost = { amountUSD: 999, knownCostUSD: 999, status: 'estimated' };
+  unsafe.history!.days = []; // A fresh unsafe cache must not hide the recorded history.
+  const oldBytes = JSON.stringify(unsafe), markerBytes = JSON.stringify({ lastOnline: Date.now() });
+  await writeFile(join(oldDirectory, 'snapshot.json'), oldBytes);
+  await writeFile(join(oldDirectory, 'pricing-check.json'), markerBytes);
+  const binary = join(root, 'reader');
+  await writeFile(binary, '#!/bin/sh\ncat <<\'REPORT\'\n' + JSON.stringify(fixture) + '\nREPORT\n', { mode: 0o700 });
+  const service = createUsageService({ binary, roots, cacheDir, timeZone, pricingFile: join(root, 'missing.json') });
+  const actual = await service.get();
+  // The fixture's two historical days cost .10 + .47, regardless of today's month.
+  expect(actual.history?.days.reduce((total, day) => total + day.aggregate.cost.knownCostUSD, 0)).toBeCloseTo(.57, 8);
+  expect(actual.sessions).toHaveLength(2);
+  expect(usageCacheScope(roots, timeZone)).not.toBe(oldScope);
+  expect(await readFile(join(oldDirectory, 'snapshot.json'), 'utf8')).toBe(oldBytes);
+  expect(await readFile(join(oldDirectory, 'pricing-check.json'), 'utf8')).toBe(markerBytes);
+});
+
+test.each([null, 'false', 'true', 0, 1])('Claude still rejects malformed optional fallback flag %s', flag => {
+  const row = structuredClone(fixture.session[0]) as any;
+  row.agent = 'claude'; row.modelBreakdowns[0].isFallback = flag;
+  expect(() => buildSnapshot({ session: [row], daily: [], totals: {} }, { ...options, providers: ['claude'] })).toThrow('REPORT_INVALID');
 });

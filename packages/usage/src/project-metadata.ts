@@ -2,7 +2,7 @@ import { realpath, stat } from 'node:fs/promises';
 import { basename, isAbsolute, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import type { SessionGrouping } from './grouping-types';
+import type { SessionGrouping } from './grouping-types.ts';
 /** Resolve recorded metadata only; never inspect messages or derive cwd from a title. */
 export async function projectMetadata(cwd?: string): Promise<SessionGrouping['project']> {
   if (!cwd || !isAbsolute(cwd) || cwd.length > 4096 || /[\u0000-\u001f]/.test(cwd)) return;

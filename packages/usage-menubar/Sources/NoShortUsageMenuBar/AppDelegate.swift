@@ -77,6 +77,7 @@ import UsageCore
         aboutModel.onChange = { [weak self] in
             guard let self else { return }
             #if NO_SHORT_UPDATER_E2E
+            UpdaterE2ESupport.recordUpdateState(aboutModel.nativeState)
             if aboutModel.nativeState == .installing { UpdaterE2ESupport.holdMaintenanceIfRequested(controller) }
             #endif
             renderUpdateState()
@@ -114,7 +115,7 @@ import UsageCore
         startMonitoring(); render(); controller.resume(); scheduleUpdateChecks()
         #if NO_SHORT_UPDATER_E2E
         UpdaterE2ESupport.recordLaunch()
-        if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == "0.6.0" {
+        if Bundle.main.object(forInfoDictionaryKey:"CFBundleVersion") as? String == Bundle.main.object(forInfoDictionaryKey:"NS14InitialVersion") as? String {
             DispatchQueue.main.asyncAfter(deadline:.now()+0.5) {
                 if Bundle.main.object(forInfoDictionaryKey:"NS14ProbeOnly") as? Bool == true { self.showPanel() }
                 else { self.showAbout(check:true) }
@@ -143,6 +144,9 @@ import UsageCore
     private func render() {
         let presentation = UsagePresentation.make(snapshot: controller.snapshot, stale: controller.isStale, loading: controller.isLoading, now: Date(), language: panelModel.language)
         panelModel.update(snapshot: controller.snapshot, source: controller.source.displayName, isLoading: controller.isLoading, isStale: controller.isStale, notice: controller.notice, loginState: login.state)
+        #if NO_SHORT_UPDATER_E2E
+        UpdaterE2ESupport.recordSnapshot(controller.snapshot,source:controller.source)
+        #endif
         panelModel.applyActivities(activityStore.events())
         insights.update(snapshot: controller.snapshot, source: controller.source.displayName, isStale: controller.isStale)
         renderInsightState()
@@ -425,7 +429,16 @@ import UsageCore
         guard !terminating, let controller else { return terminating ? .terminateLater : .terminateNow }
         updateTimer?.invalidate();firstUpdateCheck?.cancel()
         terminating = true; diagnosticsTask?.cancel(); contextTask?.cancel(); panel.close(); activityMonitor?.stop()
-        Task { await controller.shutdown(); sender.reply(toApplicationShouldTerminate: true) }
+        #if NO_SHORT_UPDATER_E2E
+        try? Data(String(Date().timeIntervalSince1970).utf8).write(to:UpdaterE2ESupport.root.appendingPathComponent("termination-start"),options:.atomic)
+        #endif
+        Task {
+            await controller.shutdown()
+            #if NO_SHORT_UPDATER_E2E
+            try? Data(String(Date().timeIntervalSince1970).utf8).write(to:UpdaterE2ESupport.root.appendingPathComponent("termination-drained"),options:.atomic)
+            #endif
+            sender.reply(toApplicationShouldTerminate:true)
+        }
         return .terminateLater
     }
     func applicationWillTerminate(_ notification: Notification) {

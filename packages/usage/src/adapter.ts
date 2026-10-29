@@ -1,4 +1,4 @@
-import { decodeGrouping } from './grouping-types';
+import { decodeGrouping } from './grouping-types.ts';
 import { z } from 'zod';
 import { customCost, mergedPricing, type PricingConfig } from './pricing.ts';
 import type { Aggregate, Cost, ModelUsage, SessionMetadata, SessionUsage, Tokens, UsageSnapshot, UsageProvider, UsageHistory } from './types.ts';
@@ -6,7 +6,7 @@ export interface SnapshotOptions { now: Date; timeZone: string; metadata: Map<st
 
 const count = z.number().finite().nonnegative();
 const tokenFields = { inputTokens: count, outputTokens: count, cacheReadTokens: count, cacheCreationTokens: count, totalTokens: count.optional() };
-const modelSchema = z.object({ ...tokenFields, modelName: z.string().min(1), cost: count, missingPricing: z.boolean().optional(), isFallback: z.boolean().optional() });
+const modelSchema = z.object({ ...tokenFields, modelName: z.string().min(1), cost: count, missingPricing: z.boolean().optional(), isFallback: z.unknown().optional() });
 const usageSchema = z.object({ ...tokenFields, totalTokens: count, totalCost: count, modelBreakdowns: z.array(modelSchema) });
 const rowSchema = usageSchema.extend({ agent: z.string(), period: z.string(), metadata: z.object({ lastActivity: z.string().datetime().optional() }).optional() });
 const dailySchema = rowSchema.extend({ agents: z.array(usageSchema.extend({ agent: z.string() })).optional() });
@@ -21,8 +21,14 @@ function tokens(row: z.infer<typeof modelSchema> | UsageRow): Tokens {
     total: row.totalTokens ?? row.inputTokens + row.outputTokens + row.cacheReadTokens + row.cacheCreationTokens };
 }
 function aggregate(row: UsageRow, unpriced: Set<string>, provider: UsageProvider, options: SnapshotOptions): Aggregate {
-  if (provider === 'codex' && (!row.modelBreakdowns.length && row.totalTokens > 0)) {
-    return { tokens: tokens(row), models: [], cost: { amountUSD: null, knownCostUSD: 0, status: 'unknown' } };
+  // Validate provenance per provider before applying any custom prices. Legacy
+  // Codex readers can attach guessed costs to a model without identifying them.
+  if (provider === 'codex' && (row.modelBreakdowns.some(m => typeof m.isFallback !== 'boolean')
+    || (!row.modelBreakdowns.length && (Object.values(tokens(row)).some(n => n > 0) || row.totalCost > 0)))) {
+    throw new Error('REPORT_PRICING_UNSUPPORTED');
+  }
+  if (provider === 'claude' && row.modelBreakdowns.some(m => m.isFallback !== undefined && typeof m.isFallback !== 'boolean')) {
+    throw new Error('REPORT_INVALID');
   }
   let repriced = false;
   const parts: ModelUsage[] = row.modelBreakdowns.map(m => {

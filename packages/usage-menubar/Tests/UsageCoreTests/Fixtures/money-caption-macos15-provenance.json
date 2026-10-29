@@ -1,0 +1,14 @@
+{
+  "light": {
+    "origin": "Actual retained MoneyRenderingTests en/partial-zero screenshot, macOS15 ARM/Xcode16.4",
+    "sourceCommit": "70a07ef70391315539145b7b34747f42691d2a05",
+    "githubRunID": "40737706616",
+    "sha256": "e67a8acfbceb3c35f7cb058a53cab2a6b416c32a29b70af1aed2229171131a77"
+  },
+  "dark": {
+    "origin": "Actual retained MoneyRenderingTests en/partial-zero screenshot, macOS15 ARM/Xcode16.4",
+    "sourceCommit": "8d63ce356d81e21a3f24b994d50918c07b4c0d22",
+    "githubRunID": "40736575968",
+    "sha256": "54814ae03e4a3dafc3d96cf39b94813c9f62acd5f91350b8cdb4c608ac3704b9"
+  }
+}

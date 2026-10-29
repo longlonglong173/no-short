@@ -3,6 +3,8 @@ import { mkdir, mkdtemp, readFile, readdir, rm, stat, symlink, utimes, writeFile
 import { existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import * as filesystem from 'node:fs/promises';
+import { assertNoCacheMaintenance } from '../src/cache-maintenance';
 import { SnapshotStore } from '../src/cache';
 import { buildSnapshot } from '../src/adapter';
 import { createUsageService, usageCacheScope } from '../src/service';
@@ -32,6 +34,53 @@ async function guardAt(root: string, owner: unknown, old = false) {
 }
 const liveOwner = () => ({ pid: process.pid, token: 'native-owner-token', timestamp: Date.now() });
 const deadOwner = () => ({ pid: deadPID, token: 'abandoned-owner-token', timestamp: Date.now() - 120_000 });
+
+// Schedule a real filesystem mutation after the kernel reports the initial missing
+// root. The production inspection still runs unchanged; no private source copy.
+test.each(['ordinary', 'guard', 'symlink'] as const)('initial root creation interleaving: %s', async kind => {
+  const { root, base } = await setup();
+  const realLstat = filesystem.lstat;
+  let scheduled = false;
+  const probe = spyOn(filesystem, 'lstat').mockImplementation((async (...args: Parameters<typeof filesystem.lstat>) => {
+    try { return await realLstat(...args); }
+    catch (error) {
+      if (!scheduled && args[0] === root && (error as NodeJS.ErrnoException).code === 'ENOENT') {
+        scheduled = true;
+        if (kind === 'ordinary') await mkdir(root);
+        else if (kind === 'guard') await guardAt(root, liveOwner());
+        else { const outside = join(base, 'outside'); await mkdir(outside); await symlink(outside, root); }
+      }
+      throw error;
+    }
+  }) as typeof filesystem.lstat);
+  try {
+    if (kind === 'ordinary') await expect(assertNoCacheMaintenance(root)).resolves.toBeUndefined();
+    else await expect(assertNoCacheMaintenance(root)).rejects.toMatchObject({ code: 'CACHE_MAINTENANCE' });
+    expect(scheduled).toBe(true);
+  } finally { probe.mockRestore(); }
+});
+
+test('an absent root is allowed but disappearance after inspection remains fenced', async () => {
+  const { root } = await setup();
+  await expect(assertNoCacheMaintenance(root)).resolves.toBeUndefined();
+  await guardAt(root, deadOwner(), true);
+  const realLstat = filesystem.lstat;
+  let scheduled = false;
+  const probe = spyOn(filesystem, 'lstat').mockImplementation((async (...args: Parameters<typeof filesystem.lstat>) => {
+    if (!scheduled && args[0] === join(root, '.maintenance.lock')) {
+      scheduled = true;
+      // Guard has been inspected, then disappears during its final revalidation.
+      const result = await realLstat(...args);
+      await rm(join(root, '.maintenance.lock'), { recursive: true });
+      return result;
+    }
+    return realLstat(...args);
+  }) as typeof filesystem.lstat);
+  try {
+    await expect(assertNoCacheMaintenance(root)).rejects.toMatchObject({ code: 'CACHE_MAINTENANCE' });
+    expect(scheduled).toBe(true);
+  } finally { probe.mockRestore(); }
+});
 
 test('active maintenance marks a fresh cached snapshot stale without loading or touching cache/guard files', async () => {
   const { root, scope, guard } = await setup(); await mkdir(scope, { recursive: true });
@@ -208,7 +257,7 @@ test('parallel ordinary readers still share one scan and atomic cache when maint
   const load = async () => { calls++; await Bun.sleep(70); return snapshot(); };
   const a = new SnapshotStore(scope, load, { maintenanceRoot: root }); const b = new SnapshotStore(scope, load, { maintenanceRoot: root });
   const values = await Promise.all([a.get(), b.get(), a.get()]);
-  expect(calls).toBe(1); expect(values.every(value => value.status === 'ready')).toBe(true);
+  expect(calls).toBe(1); expect(values.map(value => ({ status: value.status, notice: value.notice }))).toEqual(Array(3).fill({ status: 'ready', notice: undefined }));
   expect(values.map(value => value.generatedAt)).toEqual([values[0].generatedAt, values[0].generatedAt, values[0].generatedAt]);
   expect(existsSync(join(scope, 'scan.lock'))).toBe(false);
 });
@@ -254,7 +303,7 @@ Thread.sleep(forTimeInterval: 20)
         NO_SHORT_USAGE_CCUSAGE: join(base, 'must-not-start'), NO_SHORT_USAGE_CACHE_DIR: root, NO_SHORT_USAGE_OFFLINE: '1', TZ: 'UTC' },
     });
     const [stdout, stderr] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text()]);
-    expect(await child.exited).toBe(0); expect(stderr).toBe('');
+    expect(await child.exited, `Current-source snapshot CLI stderr:\n${stderr}`).toBe(0); expect(stderr).toBe('');
     const result = JSON.parse(stdout);
     expect(result.status).toBe('stale'); expect(result.notice).toBe(notice); expect(result.history).toEqual(original.history);
     expect(await readFile(path, 'utf8')).toBe(contents); expect((await stat(path)).mtimeMs).toBe(modified);

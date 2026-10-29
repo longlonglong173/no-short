@@ -44,7 +44,8 @@ jobs:
       - run: bun install --cwd packages/usage --frozen-lockfile
       - name: Install pinned Codex for plugin discovery regression
         run: npm install --prefix .artifacts/codex-cli --no-package-lock @openai/codex@0.147.0
-      - run: npm test
+      - name: Linux source and kernel transaction lock tests
+        run: bun scripts/release/run-isolated.ts npm test
         env:
           NO_SHORT_TEST_CODEX_CLI: ${{ github.workspace }}/.artifacts/codex-cli/node_modules/.bin/codex
       - run: npm run typecheck:usage
@@ -52,63 +53,126 @@ jobs:
       - run: cd packages/usage && bunx playwright install --with-deps chromium
       - run: npm run test:usage:browser
 
+  # Preserve required check names. ARM produces one canonical payload; Intel
+  # validates those exact downloaded bytes, never an independently rebuilt set.
   usage-macos:
-    runs-on: macos-14
+    runs-on: macos-15
+    outputs:
+      version: ${{ steps.identity.outputs.version }}
+      source_commit: ${{ steps.identity.outputs.source_commit }}
+      artifact_name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      NO_SHORT_EXPECTED_ARCH: arm64
+      NO_SHORT_RENDER_DIR: ${{ github.workspace }}/.artifacts/native-render-evidence
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - name: Bind candidate to the actual source head
+        id: identity
+        run: printf 'version=%s\nsource_commit=%s\n' "$(node -p 'require("./package.json").version')" "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+      - run: test "$(xcodebuild -version | head -1)" = 'Xcode 16.4' && swift --version && test "$(uname -m)" = arm64
       - run: bun install --cwd packages/usage --frozen-lockfile
-      - name: Set up pinned Rust reader toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.98.1
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - run: npm run build:usage
-      - name: Install pinned Codex for plugin discovery regression
-        run: npm install --prefix .artifacts/codex-cli --no-package-lock @openai/codex@0.147.0
-      - run: npm test
+      - name: Verify actual pinned Rust survives private HOME and detached source
+        run: bun scripts/release/run-isolated.ts bun run test:release-toolchains
+      - name: Run the entire Swift and native script suite on the public native architecture
+        run: bun scripts/release/run-isolated.ts npm run test:usage-menubar
+      - name: Retain native render evidence, including failing language, row, theme and OCR candidates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-render-evidence-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/native-render-evidence/
+          if-no-files-found: warn
+      - name: Prepare unsigned frozen canonical ARM candidate with both runtime architectures
+        run: bun run prepare:experimental-release "${{ steps.identity.outputs.version }}" "$PWD/.artifacts/candidate"
+      - name: Required ARM final-artifact negative and runtime tests
+        run: bun scripts/release/run-isolated.ts bun run test:release-artifacts
         env:
-          NO_SHORT_TEST_CODEX_CLI: ${{ github.workspace }}/.artifacts/codex-cli/node_modules/.bin/codex
-          NO_SHORT_REQUIRE_PATCHED_CCUSAGE: '1'
-      - run: npm run smoke:usage
-      - run: npm run package:usage
+          NO_SHORT_RELEASE_CANDIDATE: ${{ github.workspace }}/.artifacts/candidate
+          NO_SHORT_RELEASE_VERSION: ${{ steps.identity.outputs.version }}
+      - name: Verify final source binding and canonical checksums
+        run: |
+          bun run verify:release-artifacts .artifacts/candidate "${{ steps.identity.outputs.version }}" --expected-arch arm64 --expected-source-commit "$(git rev-parse HEAD)"
+          cd .artifacts/candidate
+          shasum -a 256 -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: no-short-local-test-package
-          path: .artifacts/usage/releases/no-short-*.zip
-
+          name: no-short-experimental-${{ steps.identity.outputs.version }}-${{ steps.identity.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/candidate/
 
   usage-menubar-macos:
-    runs-on: macos-14
+    needs: usage-macos
+    runs-on: macos-15-intel
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.2.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode_16.4.app/Contents/Developer
+      NO_SHORT_EXPECTED_ARCH: x64
     steps:
       - uses: actions/checkout@v4
-      - name: Verify Swift 6 toolchain
-        run: |
-          xcodebuild -version
-          swift --version
+        with:
+          ref: ${{ needs.usage-macos.outputs.source_commit }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.13
+      - run: test "$(xcodebuild -version | head -1)" = 'Xcode 16.4' && swift --version && test "$(uname -m)" = x86_64
       - run: bun install --cwd packages/usage --frozen-lockfile
-      - name: Set up pinned Rust reader toolchain
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
         with:
           toolchain: 1.98.1
           targets: aarch64-apple-darwin,x86_64-apple-darwin
-      - run: bun run --cwd packages/usage build
-      - name: Verify patched native reader regressions
-        run: bun test packages/usage/tests/log-totals.test.ts packages/usage/tests/ccusage-build.test.ts
+      - name: Verify actual pinned Rust survives private HOME and detached source
+        run: bun scripts/release/run-isolated.ts bun run test:release-toolchains
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.usage-macos.outputs.artifact_name }}
+          path: .artifacts/canonical-arm-candidate
+      - name: Verify original canonical bytes and make disposable Intel verification copy
+        run: |
+          cd .artifacts/canonical-arm-candidate
+          shasum -a 256 -c SHA256SUMS
+          cd ../..
+          cp -R .artifacts/canonical-arm-candidate .artifacts/intel-candidate-verification
+          bun run verify:release-artifacts .artifacts/intel-candidate-verification "${{ needs.usage-macos.outputs.version }}" --expected-arch x64 --expected-source-commit "$(git rev-parse HEAD)"
+      - name: Materialize the verified canonical runtime for full source-reader tests
+        run: |
+          bun -e '
+          import {extract} from "./scripts/release/archives";
+          import {copyFile} from "node:fs/promises";
+          for(const platform of ["darwin-arm64","darwin-x64"]) await extract(`${process.cwd()}/.artifacts/canonical-arm-candidate/no-short-usage-${platform}.tar.gz`,`${process.cwd()}/packages/usage/runtime/${platform}`,"tar");
+          await copyFile(".artifacts/canonical-arm-candidate/runtime-manifest.json","packages/usage/runtime-manifest.json");
+          '
+      - name: Build embedded UI required by current-source CLI tests
+        run: bun run --cwd packages/usage build:ui
+      - name: Full Intel source suite against the canonical extracted runtime
+        run: bun scripts/release/run-isolated.ts npm test
         env:
           NO_SHORT_REQUIRE_PATCHED_CCUSAGE: '1'
-      - run: npm run test:usage-menubar
-      - run: npm run build:usage-menubar
-      - run: npm run smoke:usage-menubar
-      - run: npm run package:usage-menubar
+      - name: Required Intel final-artifact negative and paired runtime tests on the same payload
+        run: bun scripts/release/run-isolated.ts bun run test:release-artifacts
+        env:
+          NO_SHORT_RELEASE_CANDIDATE: ${{ github.workspace }}/.artifacts/intel-candidate-verification
+          NO_SHORT_RELEASE_VERSION: ${{ needs.usage-macos.outputs.version }}
+      - name: Save a separate Intel verification receipt and recheck original ARM set unchanged
+        env:
+          NO_SHORT_CANONICAL_ARTIFACT: ${{ needs.usage-macos.outputs.artifact_name }}
+        run: |
+          bun -e '
+          import {sha} from "./scripts/release/evidence";
+          const validation=await Bun.file(".artifacts/intel-candidate-verification/release-validation.json").json();
+          const canonicalSHA256SUMS=sha(new Uint8Array(await Bun.file(".artifacts/canonical-arm-candidate/SHA256SUMS").arrayBuffer()));
+          await Bun.write(".artifacts/intel-verification-receipt.json",JSON.stringify({...validation,workflow:{runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,eventCommit:process.env.GITHUB_SHA,canonicalArtifact:process.env.NO_SHORT_CANONICAL_ARTIFACT,canonicalSHA256SUMS}},null,2)+"\n");
+          '
+          cd .artifacts/canonical-arm-candidate
+          shasum -a 256 -c SHA256SUMS
       - uses: actions/upload-artifact@v4
         with:
-          name: no-short-usage-menubar-local-builds
-          path: .artifacts/usage-menubar/releases/
+          name: no-short-intel-verification-${{ needs.usage-macos.outputs.version }}-${{ needs.usage-macos.outputs.source_commit }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/intel-verification-receipt.json

@@ -1,8 +1,8 @@
 import { lstat, mkdir, readFile, writeFile, rename, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { decodeGrouping } from './grouping-types';
-import type { SessionMetadata } from './types';
+import { decodeGrouping } from './grouping-types.ts';
+import type { SessionMetadata } from './types.ts';
 export interface MetadataOptions { cacheDir?: string; stats?: { hits: number; reads: number } }
 export interface CachedMetadata { id?: string; title?: string; kind: SessionMetadata['kind']; cwd?: string; grouping?: SessionMetadata['grouping'] }
 interface Entry { signature: string; value: CachedMetadata }

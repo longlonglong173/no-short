@@ -1,5 +1,5 @@
-import usagePackage from '../package.json';
-import ccusageLock from '../ccusage-lock.json';
+import usagePackage from '../package.json' with { type: 'json' };
+import ccusageLock from '../ccusage-lock.json' with { type: 'json' };
 import ccusageSourceLock from '../ccusage-source-lock.json' with { type: 'json' };
 
 // Build, CLI, MCP server and panel advertise the same package identity.
