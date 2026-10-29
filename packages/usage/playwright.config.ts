@@ -6,5 +6,5 @@ export default defineConfig({
   outputDir: '../../.artifacts/usage/browser-results', reporter: 'list',
   use: { locale: 'vi-VN', baseURL: 'http://127.0.0.1:5173', viewport: { width: 480, height: 1050 },
     launchOptions: existsSync(chrome) ? { executablePath: chrome } : {} },
-  webServer: { command: 'bun run dev', url: 'http://127.0.0.1:5173', reuseExistingServer: true, timeout: 20_000 },
+  webServer: { command: 'bun run dev', url: 'http://127.0.0.1:5173', reuseExistingServer: true, timeout: 20_000, stdout: 'pipe', stderr: 'pipe' },
 });

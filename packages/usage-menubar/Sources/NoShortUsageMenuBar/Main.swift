@@ -55,6 +55,9 @@ import Darwin
             existing.activate(options: []); return
         }
         let app = NSApplication.shared
+        #if NO_SHORT_UPDATER_E2E
+        app.appearance=NSAppearance(named:Bundle.main.object(forInfoDictionaryKey:"NS14Theme") as? String == "light" ? .aqua : .darkAqua)
+        #endif
         app.setActivationPolicy(.accessory)
         let delegate = AppDelegate(); app.delegate = delegate
         withExtendedLifetime(delegate) { app.run() }
