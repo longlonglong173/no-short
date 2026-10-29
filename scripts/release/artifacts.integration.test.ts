@@ -91,6 +91,9 @@ async function markerCandidate() {
  await command(['/usr/bin/codesign','--force','--sign','-',join(unpacked,'ccusage')],work);
  const manifest=await json(join(d,'runtime-manifest.json'));
  manifest.platforms[`darwin-${process.arch}`].binaries.ccusage=sha(await readFile(join(unpacked,'ccusage')));
+ // Intel's marker remains native x64. Also detach the ARM manifest binding so
+ // the static authenticated-app gate must reject before any host runtime probe.
+ if(process.arch==='x64')manifest.platforms['darwin-arm64'].binaries.ccusage='0'.repeat(64);
  await command(['/usr/bin/tar','-czf',archive,'-C',unpacked,'ccusage','no-short-usage','THIRD_PARTY_NOTICES.txt'],work);
  manifest.platforms[`darwin-${process.arch}`].sha256=sha(await readFile(archive));await writeJson(join(d,'runtime-manifest.json'),manifest);
  await rebind(d,`no-short-usage-darwin-${process.arch}.tar.gz`);await rebind(d,'runtime-manifest.json');
@@ -99,9 +102,9 @@ async function markerCandidate() {
 test('unauthenticated signed feed cannot execute any packaged reader',async()=>{
  const {existsSync}=await import('node:fs');const {d,work,marker}=await markerCandidate(),feed=join(work,'invalid.xml');await writeFile(feed,'invalid owner signature');
  let error='';try{await verifyRelease(d,version!,{signedFeed:feed});}catch(e){error=String(e);}
- expect(existsSync(marker)).toBe(false);expect(error).toContain('Owner-signed archive/feed verification failed');
+ expect(existsSync(marker)).toBe(false);expect(error).toContain(process.arch==='arm64'?'Owner-signed archive/feed verification failed':'Owner-signed verification requires ARM execution');
 },180000);
-test('TAR readers must bind to the owner app source binaries before execution',async()=>{
+test('ARM app source binding is checked before any host TAR reader execution',async()=>{
  const {existsSync}=await import('node:fs');const {d,marker}=await markerCandidate();
  let error='';try{await verifyRelease(d,version!);}catch(e){error=String(e);}
  expect(existsSync(marker)).toBe(false);expect(error).toContain('Runtime provenance mismatch');
