@@ -14,11 +14,11 @@ test('public ARM feed is signed by the bundled owner key and selects the immutab
  const key=createPublicKey({format:'der',type:'spki',key:Buffer.concat([Buffer.from('302a300506032b6570032100','hex'),Buffer.from(config.publicKey,'base64')])});
  assert.equal(bytes.subarray(0,length).toString('utf8')+block[0],text);
  assert.equal(verify(null,bytes.subarray(0,length),key,signature),true);
- const corrupt=Buffer.from(bytes.subarray(0,length));corrupt[corrupt.indexOf('0.7.0')]^=1;
+ const corrupt=Buffer.from(bytes.subarray(0,length));corrupt[corrupt.indexOf('0.7.2')]^=1;
  assert.equal(verify(null,corrupt,key,signature),false);
- assert.match(text,/<sparkle:version>0\.7\.0<\/sparkle:version>/);
+ assert.match(text,/<sparkle:version>0\.7\.2<\/sparkle:version>/);
  assert.match(text,/<sparkle:hardwareRequirements>arm64<\/sparkle:hardwareRequirements>/);
- assert.match(text,/https:\/\/github\.com\/longlonglong173\/no-short\/releases\/download\/v0\.7\.0\/NoShortUsage-0\.7\.0-arm64\.zip/);
+ assert.match(text,/https:\/\/github\.com\/longlonglong173\/no-short\/releases\/download\/v0\.7\.2\/NoShortUsage-0\.7\.2-arm64\.zip/);
  assert.match(text,/sparkle:edSignature="[A-Za-z0-9+/=]+" length="[1-9]\d*"/);
  assert.doesNotMatch(text,/127\.0\.0\.1|localhost|latest\/download/);
 });

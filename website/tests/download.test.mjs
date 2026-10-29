@@ -41,7 +41,7 @@ test('the guide resolves release-specific documentation against the recommended 
   const html = readFileSync(new URL('../usage.html', import.meta.url), 'utf8');
   const targets = [...html.matchAll(/href="([^"]+\/blob\/v[^/]+\/[^"]+)"/g)].map(match => match[1]);
   assert.deepEqual(targets, [
-    'https://github.com/longlonglong173/no-short/blob/v0.7.0/PRIVACY.md',
-    'https://github.com/longlonglong173/no-short/blob/v0.7.0/docs/no-short-usage-menubar.md'
+    'https://github.com/longlonglong173/no-short/blob/v0.7.2/PRIVACY.md',
+    'https://github.com/longlonglong173/no-short/blob/v0.7.2/docs/no-short-usage-menubar.md'
   ]);
 });
