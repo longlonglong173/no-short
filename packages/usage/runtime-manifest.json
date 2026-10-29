@@ -1,23 +1,23 @@
 {
-  "version": "0.7.1",
+  "version": "0.7.2",
   "ccusageVersion": "20.0.34",
-  "ccusagePatchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1-ns18-session-days-v1",
+  "ccusagePatchRevision": "ns20-session-scope-v2-ns16-pricing-provenance-v1-ns18-session-days-v1-ns21-cost-parts-v1",
   "ccusageSourceRevision": "d7555844929ad76ec97a113d1d51c31de92bee35",
   "platforms": {
     "darwin-arm64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.1/no-short-usage-darwin-arm64.tar.gz",
-      "sha256": "58b86374bb3a5fe882ec1dc7574ebda2e5c19ae953b670d5ef27866d6acbcfae",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.2/no-short-usage-darwin-arm64.tar.gz",
+      "sha256": "eb27661fd9ecfa439e9fa3ba17f3151a2dab29e2ba277924f26a8094ee970fa6",
       "binaries": {
-        "no-short-usage": "64c54289c7f400caaf4b476b7a7a2759ba1dd901d7ddff6dc665bc3b50094918",
-        "ccusage": "09f0591a1ba17267373e6490caa838c748224199b4bc196ea79de4ae9a287c90"
+        "no-short-usage": "477c59d06a3c5919c2f116e489ab8089bb7dc0ab122cf539280601451e2ebd07",
+        "ccusage": "3f950b3ef1ed9370bf98d06a32a5c064b501e09545929292e4ac125f353d255e"
       }
     },
     "darwin-x64": {
-      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.1/no-short-usage-darwin-x64.tar.gz",
-      "sha256": "ef740264845a83e8a62a95ebf913d5da6e88634bf891bbbe73dd9172f7e53b03",
+      "url": "https://github.com/longlonglong173/no-short/releases/download/v0.7.2/no-short-usage-darwin-x64.tar.gz",
+      "sha256": "252d13413a2f64832b9cbf934e52e94ce99ef58fb2d6b1a65f3b754d0ff18fc0",
       "binaries": {
-        "no-short-usage": "10f716b688c9e8370209ec5787e72aa54d61b0afd03364fce7a9a6d7a1c1b972",
-        "ccusage": "5227130f9194d69d3fa5beafa7dfc6e8ae7ef92e5ed089e1d75ab62ae07a9885"
+        "no-short-usage": "2ebc245f3b31ddaa2efbdf41d1f6d53f11077543bf1bafc6a62e84332f23ca07",
+        "ccusage": "a1432122d1907e3b0adcadd530f827b48c1aee465730021d3c42ec4ad34aefc1"
       }
     }
   }

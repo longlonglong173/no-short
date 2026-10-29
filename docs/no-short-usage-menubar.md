@@ -26,11 +26,11 @@ sync language through a server or shared browser storage.
 
 ## Install and open
 
-0.7.1 is not recommended while its data and updater packaging regressions are repaired. Verified 0.7.0 is the temporary Apple Silicon download. Mixed known/fallback model costs may show unknown and omit a known subtotal; they are not complete estimates. See the [recovery record](releases/0.7.1-recovery.md).
+The recovery target is **Experimental 0.7.2**. Install it only after the owner publishes the verified assets; private draft verification does not establish public availability. 0.7.1 is not recommended because of its data and updater packaging regressions. See the [0.7.2 recovery and installation notes](releases/0.7.2.md) for data/cache fixes, restored updater packaging, publication gates and evidence limits.
 
-Keep an installed 0.7.1 copy while recovery is prepared; do not downgrade automatically. The updater-less 0.7.1 ZIP will need one manual reinstall of the verified recovery release. Compatible 0.6.0–0.7.0 apps use the signed update channel with confirmation. The MCP plugin updates separately.
+Keep an installed 0.7.1 copy while recovery is prepared; do not downgrade automatically. After verified 0.7.2 assets are public, updater-less 0.7.1 ZIP installations require one manual reinstall: verify the release's `SHA256SUMS`, extract `NoShortUsage-0.7.2-arm64.zip`, quit the running app and move the app to Applications. Reopen it and confirm **v0.7.2**. Preserve provider logs and preferences. The app updater cannot retrofit itself. Compatible 0.6.0–0.7.0 apps can use the signed channel with explicit confirmation once the 0.7.2 feed is live. The MCP plugin updates separately through its host using `no-short-0.7.2.zip`; start a new chat afterwards.
 
-**The temporary verified Experimental Apple Silicon download is [v0.7.0](https://github.com/longlonglong173/no-short/releases/tag/v0.7.0).** Download `NoShortUsage-0.7.0-arm64.zip`, `SHA256SUMS` and `INSTALL.txt`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided. See the [release record](releases/0.7.0.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
+**After verified publication, download [v0.7.2 for Apple Silicon](https://github.com/longlonglong173/no-short/releases/tag/v0.7.2)**: `NoShortUsage-0.7.2-arm64.zip` and `SHA256SUMS`. It supports English, Vietnamese and Simplified Chinese, with setup/diagnostics, About/manual updates, provider filters, History, CSV/JSON export, optional budgets and cache management. The app is ad-hoc signed and **not notarized**, so macOS may block first launch. No Intel app download is provided; authenticated Intel native distribution remains M2. See the [release record](releases/0.7.2.md) and [Apple first-launch guidance](https://support.apple.com/en-us/102445).
 
 For the public Apple Silicon ZIP, extract it, move **No Short Usage.app** into Applications, and open it in Finder. The app has a menu bar item and no Dock window. Click the provider icon and amount to open the detail popover.
 
@@ -348,7 +348,7 @@ A configured Apple Silicon build uses **Check for Updates → review version/not
 
 Version/build and update status are shared by About and the menu. App-owned copy supports EN/VI/zh-CN; standard Sparkle dialogs follow the framework/macOS language, which can differ from the saved app language. Installation in a protected folder can require normal macOS authorization; never provide a password to this project.
 
-**Users of [0.5.0](https://github.com/longlonglong173/no-short/releases/tag/v0.5.0) (`NoShortUsage-0.5.0-arm64.zip`) install 0.7.0 manually once.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
+**Users of 0.5.0 or earlier, and updater-less 0.7.1 installations, install 0.7.2 manually once after verified publication.** The release0.6.0 Apple Silicon bundle pins the owner public key and canonical signed feed. Development builds without the public configuration still offer a manual ZIP fallback. Intel builds have no ARM update feed and remain outside public native acceptance. The MCP plugin is updated separately through its host/plugin installation workflow.
 
 See [maintainer key/feed and asset-first instructions](releases/in-app-updates.md), [local installation evidence and unverified production gates](releases/ns14-local-validation.md), and [privacy details](../PRIVACY.md#native-app-updates).
 
@@ -358,7 +358,7 @@ The main popover always shows its running version and update status, including i
 
 Daily information-only checks are on by default, with an on/off toggle in About and Settings. The app stores the last attempt across restarts and waits24hours between automatic attempts, including failures; manual checks remain available. Checks pause while sleeping, terminating, updating or doing cache maintenance. There is no separate daemon.
 
-To update 0.6.0 or 0.6.1 → 0.7.0, choose About → Check for Updates after the 0.7.0 signed feed is deployed, then confirm Install Update and Install and Relaunch. Check that the popover shows v0.7.0 after relaunch. Users of 0.5.0 or earlier install the new ZIP manually once.
+To update a compatible 0.6.0–0.7.0 installation → 0.7.2, choose About → Check for Updates after the 0.7.2 signed feed is deployed, then confirm Install Update and Install and Relaunch. Check that the popover shows v0.7.2 after relaunch. Users of 0.5.0 or earlier and updater-less 0.7.1 installations install the new ZIP manually once after verified publication.
 
 ## History and pricing additions — 0.7.0
 

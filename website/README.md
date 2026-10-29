@@ -186,3 +186,10 @@ Production download links now targetv0.6.0/NoShortUsage-0.6.0-arm64.zip. Users o
 ## In-app update test0.6.1 (2026-10-26)
 
 Current downloads/feed point to immutablev0.6.1 assets. A user on0.6.0 can choose Check for Updates in the app to install0.6.1; after relaunch the new version/status row and optional quiet daily discovery become available. No dummy0.6.2 is published. The existing owner key is reused and0.6.0 files remain unchanged. Translation scriptv24 updates the EN/VI/zh-CN version and test guidance. Signed XML is copied byte-for-byte after final signing and public-asset verification; feed media/cache policy stays the same.
+
+
+## 0.7.2 recovery metadata preparation
+
+The release branch now targets v0.7.2 across homepage/guide downloads, EN/VI/zh-CN release and recovery copy, tagged documentation, and app.js cache version26. The signed feed is copied byte-for-byte from the owner-signed canonical A3 candidate after all canonical CI gates and authenticated draft-download bytes/signatures/runtime behavior passed. Generated runtime manifest comes from the same verified assets, without rebuilding locally. Packaged README/guides/CHANGELOG/release notes remain frozen at A3. Updater-less 0.7.1 requires one manual reinstall; compatible 0.6.0–0.7.0 apps use the signed channel after feed activation; the MCP plugin updates separately. Experimental ARM/ad-hoc/non-notarized limits remain explicit.
+
+This is prepared metadata, not public rollout: the owner retains release publication and PR merge. Keep the draft Latest=false, publish/verify actual public assets first, then activate the reviewed recommendations/feed in order. Record source A3 and later metadata commit externally; do not edit the sealed metadataReleaseCommit=null. Intel same-payload CI execution is separate from owner-authenticated ARM trust; notarization, device acceptance and the actual owner upgrade remain pending.

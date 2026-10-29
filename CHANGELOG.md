@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.7.2 — Experimental recovery (preparation)
+
+- Restore distinct-session totals across log roots and preserve the identified cost subtotal when other model prices are unknown. Unknown/fallback costs remain incomplete API-equivalent estimates; no missing price becomes zero.
+- Fix concurrent cache-scope initialization so competing readers can share a newly created scope without an initialization error; keep maintenance guards and original provider logs protected.
+- Restore the complete Apple Silicon updater package, including pinned Sparkle 2.10.0 resources, nested signatures and the existing owner-signed channel. Updater-less 0.7.1 installations require one manual reinstall after verified 0.7.2 assets are published. Plugin updates remain separate.
+- Freeze source inputs before the canonical macOS 15 / Xcode 16.4 build; verify extracted runtime/helper/plugin payloads on ARM and the same bytes on hosted Intel before owner signing. Signed trust covers the ARM app/runtime only. Authenticated Intel native distribution remains M2; no public Intel app is offered.
+- Keep schema v1, bundle identity, ccusage 20.0.34 and the existing owner public key. The app remains Experimental, ad-hoc signed and not Apple-notarized. Public availability, clean-machine/macOS 14 acceptance and the owner's actual upgrade are separate gates. See [recovery and installation details](docs/releases/0.7.2.md).
+
 ## 0.7.0 — Experimental (2026-10-27)
 
 - NS-20: preserve logical session identity when merging log roots. Distinct sessions with matching timestamps/tokens remain separate; copied events in the same logical session are deduplicated. Build the checksum-locked patched ccusage reader from pinned source for both architectures.

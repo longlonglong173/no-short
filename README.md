@@ -8,21 +8,21 @@ Costs are **API-equivalent estimates**, not ChatGPT or Claude subscription charg
 
 ## Download the macOS app
 
-0.7.1 is not recommended while its data and updater packaging regressions are repaired. Verified 0.7.0 is the temporary Apple Silicon download. Mixed known/fallback model costs may show unknown and omit a known subtotal; they are not complete estimates. See the [recovery record](docs/releases/0.7.1-recovery.md).
+The recovery target is **Experimental 0.7.2**. Install it only after the owner publishes the verified assets; preparation and private draft uploads do not establish public availability. 0.7.1 is not recommended because of its data and updater packaging regressions. See the [0.7.2 recovery and installation notes](docs/releases/0.7.2.md) for fixes, publication gates and limits.
 
-[Temporary download for Apple Silicon — experimental v0.7.0](https://github.com/longlonglong173/no-short/releases/download/v0.7.0/NoShortUsage-0.7.0-arm64.zip)
+[Apple Silicon — Experimental v0.7.2 (after verified publication)](https://github.com/longlonglong173/no-short/releases/download/v0.7.2/NoShortUsage-0.7.2-arm64.zip)
 
 Requires a Mac with M1 or later and macOS 14+. Intel app downloads are not available yet. The app bundles its runtime; no Node/Bun installation or API key is required.
 
-1. Download and extract the ZIP.
+1. Download the ZIP and `SHA256SUMS` from the 0.7.2 release, verify its SHA-256, and extract it.
 2. Quit any older running copy and move **No Short Usage.app** to **Applications**.
 3. Open the app and click its menu bar icon.
 
-This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. The package passed local build, signature and runtime checks; installation on other downloaded/quarantined Macs and live source-editor interactions remain unverified. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.7.0.md).
+This experimental app is ad-hoc signed and **not notarized**; macOS may block its first launch. Build, signature and runtime results belong to the exact release artifacts and CI run. Installation on other downloaded/quarantined Macs, macOS 14 acceptance and live source-editor interactions remain separate checks. See the [user guide](https://no-short.io.vn/usage.html), [technical installation guide](docs/no-short-usage-menubar.md) and [release record](docs/releases/0.7.2.md).
 
-Keep an installed 0.7.1 copy while recovery is prepared; do not automatically downgrade. Updater-less 0.7.1 ZIPs require one manual reinstall of the verified recovery release; the app updater cannot retrofit itself. The MCP plugin updates separately.
+Keep an installed 0.7.1 copy while recovery is prepared; do not automatically downgrade. After verified 0.7.2 assets are public, updater-less 0.7.1 ZIPs require one manual reinstall: quit the running app, extract `NoShortUsage-0.7.2-arm64.zip`, move the app to Applications, then confirm **v0.7.2** in the menu bar. Preserve provider logs and preferences. The app updater cannot retrofit itself. Compatible 0.6.0–0.7.0 apps can use Check for Updates only after the signed 0.7.2 feed is live. The MCP plugin updates separately through its host using the complete `no-short-0.7.2.zip` package; start a new chat afterwards.
 
-Users of 0.5.0 or earlier install 0.7.0 manually once; users on compatible 0.6.0–0.7.0 apps can use Check for Updates with confirmation. [Previous 0.5.0 download](https://github.com/longlonglong173/no-short/releases/download/v0.5.0/NoShortUsage-0.5.0-arm64.zip).
+Users of 0.5.0 or earlier also install 0.7.2 manually once after verified publication. The temporary 0.7.0 fallback used during recovery had an incomplete mixed known/fallback subtotal; historical assets remain available, but recovery never forces an app/data downgrade.
 
 ## Features
 
@@ -84,11 +84,15 @@ See [CONTRIBUTING.md](CONTRIBUTING.md), [MCP build/package instructions](docs/no
 
 ## Releases and license
 
-Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks retain their own rights. See [NOTICE.md](NOTICE.md), [CHANGELOG.md](CHANGELOG.md) and the [release checklist](docs/releases/0.7.0.md).
+Original code is [MIT licensed](LICENSE); dependencies, fonts and provider marks retain their own rights. See [NOTICE.md](NOTICE.md), [CHANGELOG.md](CHANGELOG.md) and the [0.7.2 recovery and release gates](docs/releases/0.7.2.md).
 
 Usage binaries are distributed through GitHub releases. Apple signing/notarization and OpenAI Plugin Directory review have separate status.
 
-Since 0.6.1, the main popover shows the running version and last update-check status. Quiet daily checks only show in-app notices; downloads and installation require confirmation. Users already on 0.6.0 or 0.6.1 can install 0.7.0 through About → Check for Updates once its signed feed is deployed.
+Since 0.6.1, the main popover shows the running version and last update-check status. Quiet daily checks only show in-app notices; downloads and installation require confirmation. Compatible 0.6.0–0.7.0 installations can install 0.7.2 through About → Check for Updates once its signed feed is deployed. Updater-less 0.7.1 installations use the manual recovery above.
+
+## Recovery in 0.7.2
+
+Restore distinct-session totals and the known subtotal for incomplete model prices, fix concurrent cache initialization, and restore the complete owner-signed ARM updater package. The public native scope remains Experimental Apple Silicon; authenticated Intel native distribution remains M2. See the [0.7.2 notes](docs/releases/0.7.2.md) for exact evidence boundaries.
 
 ## New in 0.7.0
 

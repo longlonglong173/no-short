@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test';
-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { command, isolatedEnvironment } from './evidence';
@@ -12,12 +12,16 @@ async function detached(){
 }
 test('actual rustup proxy reproduces no-default failure after HOME is privatized without toolchain preservation',async()=>{
  const {d,source}=await detached();await mkdir(join(d,'empty-home'));
+ // rustup is a multicall executable: a rustc-named link invokes its real proxy
+ // dispatch, even when the installed layout has no CARGO_HOME/bin/rustc shim.
+ const rustup=Bun.which('rustup');if(!rustup)throw Error('Installed rustup is required for the actual no-default reproducer');
+ const proxy=join(d,'rustc');await symlink(rustup,proxy);
  const originalCargo=process.env.CARGO_HOME??join(process.env.HOME!,'.cargo');
  const env:NodeJS.ProcessEnv={...process.env,HOME:join(d,'empty-home'),CARGO_HOME:originalCargo};delete env.RUSTUP_HOME;delete env.RUSTUP_TOOLCHAIN;
- const child=Bun.spawn([join(originalCargo,'bin/rustc'),'--version'],{cwd:source,env,stdout:'pipe',stderr:'pipe'});
+ const child=Bun.spawn([proxy,'--version'],{cwd:source,env,stdout:'pipe',stderr:'pipe'});
  const [out,err,code]=await Promise.all([new Response(child.stdout).text(),new Response(child.stderr).text(),child.exited]);
  expect(code).not.toBe(0);expect(out).toBe('');expect(err).toContain('no default is configured');
- console.log(JSON.stringify({case:'actual-no-default-reproducer',code,stderr:err.trim()}));
+ console.log(JSON.stringify({case:'actual-no-default-reproducer',rustup,ownedProxy:proxy,code,stderr:err.trim()}));
 });
 test('actual installed pinned compiler and Cargo work from detached cwd, overriding a floating project toolchain, without changing defaults',async()=>{
  const {d,source}=await detached();
