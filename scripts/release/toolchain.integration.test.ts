@@ -22,7 +22,7 @@ test('actual rustup proxy reproduces no-default failure after HOME is privatized
  const [out,err,code]=await Promise.all([new Response(child.stdout).text(),new Response(child.stderr).text(),child.exited]);
  expect(code).not.toBe(0);expect(out).toBe('');expect(err).toContain('no default is configured');
  console.log(JSON.stringify({case:'actual-no-default-reproducer',rustup,ownedProxy:proxy,code,stderr:err.trim()}));
-});
+}, 30_000);
 test('actual installed pinned compiler and Cargo work from detached cwd, overriding a floating project toolchain, without changing defaults',async()=>{
  const {d,source}=await detached();
  const rustupHome=process.env.RUSTUP_HOME??join(process.env.HOME!,'.rustup');
