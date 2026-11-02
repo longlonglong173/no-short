@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'bun:test';
+import { afterEach, expect, setSystemTime, test } from 'bun:test';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -62,7 +62,7 @@ test('JSON and CSV export retain price origin, rates and the historical repricin
 });
 
 const dirs: string[] = [];
-afterEach(async () => { for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true }); });
+afterEach(async () => { setSystemTime(); for (const d of dirs.splice(0)) await rm(d, { recursive: true, force: true }); });
 test('pricing config rejects duplicate/nonfinite/negative rows and loads an absent file as defaults', async () => {
   const api = await import('../src/pricing-store').catch(() => null);
   expect(api).not.toBeNull();
@@ -78,6 +78,7 @@ test('pricing config rejects duplicate/nonfinite/negative rows and loads an abse
 });
 
 test('an existing service invalidates fresh snapshot cache on save and restore, and reports malformed config', async () => {
+  setSystemTime(options.now);
   const { createUsageService } = await import('../src/service');
   const root = await mkdtemp(join(tmpdir(), 'usage-pricing-service-')); dirs.push(root);
   const binary = join(root, 'report');
@@ -99,6 +100,7 @@ test('an existing service invalidates fresh snapshot cache on save and restore, 
 });
 
 test('a price change during a scan cannot publish an apparently current snapshot with old rates', async () => {
+  setSystemTime(options.now);
   const { createUsageService } = await import('../src/service');
   const root = await mkdtemp(join(tmpdir(), 'usage-pricing-race-')); dirs.push(root);
   const binary = join(root, 'report');

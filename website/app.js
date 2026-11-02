@@ -1,4 +1,16 @@
 const vietnamese = {
+  "flow.eyebrow": "CÁCH HOẠT ĐỘNG",
+  "flow.title": "Dữ liệu sử dụng được xử lý như thế nào",
+  "flow.intro": "Cách No Short Usage chuyển dữ liệu sử dụng thành ước tính.",
+  "flow.logsTitle": "Nhật ký sử dụng",
+  "flow.logs": "Nhật ký Codex và Claude Code đã cấu hình trên Mac.",
+  "flow.processTitle": "Xử lý trên máy",
+  "flow.process": "No Short đọc dữ liệu và tính chi phí ước tính theo giá API ngay trên Mac.",
+  "flow.viewTitle": "Xem kết quả",
+  "flow.view": "Xem trên thanh menu hoặc cài riêng panel Codex tùy chọn.",
+  "flow.pricing": "App có thể tải bảng giá mô hình công khai qua mạng. Số ước tính không phải hóa đơn hay hạn mức thuê bao còn lại.",
+  "flow.detail": "Xem sơ đồ kiến trúc kỹ thuật ↗",
+
   'download.recovery': 'ZIP 0.7.1 thiếu updater và app 0.5.0 trở về trước cần cài thủ công 0.7.2 một lần. App 0.6.0–0.7.0 tương thích có thể dùng Kiểm tra cập nhật khi feed 0.7.2 có chữ ký đã hoạt động, với xác nhận. Giữ nhật ký và cấu hình; không ép hạ phiên bản. Plugin MCP cập nhật riêng qua ứng dụng chủ; mở chat mới sau đó.',
   'download.history': 'Ghi chú bản khắc phục 0.7.2 ↗',
   'download.update': '0.7.2 khôi phục tổng của các phiên riêng biệt và phần chi phí đã biết, sửa lỗi khởi tạo cache đồng thời và khôi phục updater ARM có chữ ký. Khi thiếu giá, chi phí vẫn là ước tính theo giá API chưa đầy đủ.',
@@ -153,6 +165,18 @@ const vietnamese = {
 };
 
 const chinese = {
+  "flow.eyebrow": "工作原理",
+  "flow.title": "用量数据如何处理",
+  "flow.intro": "了解 No Short Usage 如何将用量转换为估算结果。",
+  "flow.logsTitle": "用量日志",
+  "flow.logs": "Mac 上的 Codex 和已配置的 Claude Code 日志。",
+  "flow.processTitle": "本地处理",
+  "flow.process": "No Short 在 Mac 上读取用量并计算 API 等价费用。",
+  "flow.viewTitle": "查看结果",
+  "flow.view": "在菜单栏查看，或另行安装可选的 Codex 面板。",
+  "flow.pricing": "应用可能在线获取公开模型价格。估算值不是账单或剩余订阅额度。",
+  "flow.detail": "查看技术架构图 ↗",
+
   'download.recovery': '缺少更新器的 0.7.1 ZIP 和 0.5.0 及更早版本需要手动安装一次 0.7.2。兼容的 0.6.0–0.7.0 应用可在 0.7.2 签名源上线后使用“检查更新”，并需确认。保留日志与设置，不要强制降级。MCP 插件通过宿主单独更新，随后请新建聊天。',
   'download.history': '0.7.2 修复版本说明 ↗',
   'download.update': '0.7.2 恢复独立会话总量和已知费用小计，修复并发缓存初始化，并恢复 ARM 签名更新器。缺少价格时，费用仍是不完整的 API 等价估算。',
