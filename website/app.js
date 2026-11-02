@@ -1,6 +1,6 @@
 const vietnamese = {
   "flow.eyebrow": "CÁCH HOẠT ĐỘNG",
-  "flow.title": "Từ nhật ký trên máy đến bức tranh rõ ràng hơn.",
+  "flow.title": "Dữ liệu sử dụng được xử lý như thế nào",
   "flow.intro": "Cách No Short Usage chuyển dữ liệu sử dụng thành ước tính.",
   "flow.logsTitle": "Nhật ký sử dụng",
   "flow.logs": "Nhật ký Codex và Claude Code đã cấu hình trên Mac.",
@@ -166,7 +166,7 @@ const vietnamese = {
 
 const chinese = {
   "flow.eyebrow": "工作原理",
-  "flow.title": "从本地日志到清晰的用量概览。",
+  "flow.title": "用量数据如何处理",
   "flow.intro": "了解 No Short Usage 如何将用量转换为估算结果。",
   "flow.logsTitle": "用量日志",
   "flow.logs": "Mac 上的 Codex 和已配置的 Claude Code 日志。",
