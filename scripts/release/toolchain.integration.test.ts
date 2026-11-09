@@ -1,7 +1,7 @@
 import { afterEach, expect, test } from 'bun:test';
 import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { command, isolatedEnvironment } from './evidence';
 const root=resolve(import.meta.dirname,'../..'),directories:string[]=[];
 afterEach(async()=>{for(const d of directories.splice(0))await rm(d,{recursive:true,force:true});}, 30_000);
@@ -12,16 +12,17 @@ async function detached(){
 }
 test('actual rustup proxy reproduces no-default failure after HOME is privatized without toolchain preservation',async()=>{
  const {d,source}=await detached();await mkdir(join(d,'empty-home'));
- // rustup is a multicall executable: a rustc-named link invokes its real proxy
- // dispatch, even when the installed layout has no CARGO_HOME/bin/rustc shim.
+ // Homebrew supplies shell wrappers that hardcode the invoked tool and a system
+ // fallback. Link to the actual multicall binary so rustc dispatch is preserved.
  const rustup=Bun.which('rustup');if(!rustup)throw Error('Installed rustup is required for the actual no-default reproducer');
- const proxy=join(d,'rustc');await symlink(rustup,proxy);
- console.log(JSON.stringify({rustup,realRustup:await realpath(rustup),proxy,realProxy:await realpath(proxy),path:process.env.PATH}));
+ const installed=await realpath(rustup);
+ const binary=(await readFile(installed)).subarray(0,2).toString()==='#!' ? join(dirname(dirname(installed)),'libexec/bin/rustup') : installed;
+ const proxy=join(d,'rustc');await symlink(binary,proxy);
  const originalCargo=process.env.CARGO_HOME??join(process.env.HOME!,'.cargo');
  const emptyHome=join(d,'empty-home');
  // Isolate rustup's fallback home explicitly: macOS runners can otherwise resolve
  // the account home even when HOME is overridden. Keep the real Cargo home.
- const env:NodeJS.ProcessEnv={...process.env,HOME:emptyHome,CFFIXED_USER_HOME:emptyHome,CARGO_HOME:originalCargo,RUSTUP_HOME:join(emptyHome,'.rustup')};delete env.RUSTUP_TOOLCHAIN;
+ const env:NodeJS.ProcessEnv={...process.env,HOME:emptyHome,CFFIXED_USER_HOME:emptyHome,CARGO_HOME:originalCargo,RUSTUP_HOME:join(emptyHome,'.rustup'),RUSTUP_AUTO_INSTALL:'0'};delete env.RUSTUP_TOOLCHAIN;delete env.RUSTUP_OVERRIDE_UNIX_FALLBACK_SETTINGS;
  const child=Bun.spawn([proxy,'--version'],{cwd:source,env,stdout:'pipe',stderr:'pipe'});
  const [out,err,code]=await Promise.all([new Response(child.stdout).text(),new Response(child.stderr).text(),child.exited]);
  expect(code, `stdout: ${out}\nstderr: ${err}`).not.toBe(0);expect(out).toBe('');expect(err).toContain('no default is configured');
