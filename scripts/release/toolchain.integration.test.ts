@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test';
-import { mkdtemp, mkdir, writeFile, readFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, symlink, realpath } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { command, isolatedEnvironment } from './evidence';
@@ -16,6 +16,7 @@ test('actual rustup proxy reproduces no-default failure after HOME is privatized
  // dispatch, even when the installed layout has no CARGO_HOME/bin/rustc shim.
  const rustup=Bun.which('rustup');if(!rustup)throw Error('Installed rustup is required for the actual no-default reproducer');
  const proxy=join(d,'rustc');await symlink(rustup,proxy);
+ console.log(JSON.stringify({rustup,realRustup:await realpath(rustup),proxy,realProxy:await realpath(proxy),path:process.env.PATH}));
  const originalCargo=process.env.CARGO_HOME??join(process.env.HOME!,'.cargo');
  const emptyHome=join(d,'empty-home');
  // Isolate rustup's fallback home explicitly: macOS runners can otherwise resolve
