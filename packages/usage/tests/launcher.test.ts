@@ -48,12 +48,18 @@ for (const owner of [null, '', 'not-a-pid']) {
     await mkdir(lock, { recursive: true });
     if (owner !== null) await writeFile(join(lock, 'pid'), owner);
     const old = new Date(Date.now() - 120_000); await utimes(lock, old, old);
-    const p = Bun.spawn(['/bin/sh', join(root, 'scripts/launch-usage-mcp.sh')], {
+    // Replace only the fixture's downloader so this lock test is deterministic
+    // and never leaves a live curl child waiting on the network.
+    const launcher = join(root, 'scripts/launch-usage-mcp.sh');
+    const downloader = join(root, 'fake-curl');
+    await writeFile(downloader, '#!/bin/sh\nprintf "DOWNLOAD_REACHED\\n" >&2\nexit 1\n', { mode: 0o755 });
+    const contents = await readFile(launcher, 'utf8');
+    expect(contents).toContain('/usr/bin/curl ');
+    await writeFile(launcher, contents.replace('/usr/bin/curl ', `"${downloader}" `));
+    const p = Bun.spawn(['/bin/sh', launcher], {
       env: { HOME: root, XDG_CACHE_HOME: cache, PATH: '/usr/bin:/bin:/usr/sbin:/sbin' }, stdout: 'pipe', stderr: 'pipe' });
-    let reachedDownload = false;
-    const read = (async () => { for await (const chunk of p.stderr) { if (new TextDecoder().decode(chunk).includes('đang tải runtime')) { reachedDownload = true; p.kill(); break; } } })();
-    try { await Promise.race([read, Bun.sleep(2500)]); }
-    finally { p.kill(); await p.exited; }
-    expect(reachedDownload).toBe(true);
+    const [code, stderr] = await Promise.all([p.exited, new Response(p.stderr).text()]);
+    expect(code).not.toBe(0);
+    expect(stderr).toContain('DOWNLOAD_REACHED');
   });
 }
